@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<!-- BACKUP -->
+<html>
+  <head>
+    <title>Road.</title>
+    <meta name="description" content="Road.">
+    <script src="https://aframe.io/releases/0.7.0/aframe.min.js"></script>
+    <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
+    <!--<script src="https://unpkg.com/aframe-entity-generator-component@^3.0.0/dist/aframe-entity-generator-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-layout-component@4.2/dist/aframe-layout-component.min.js"></script>-->
+    <script src="https://unpkg.com/aframe-animation-component/dist/aframe-animation-component.min.js"></script>
+    <script src="https://cdn.rawgit.com/zcanter/aframe-gradient-sky/master/dist/gradientsky.min.js"></script>
+    <script src="components/audioanalyser.js"></script>
+    <script src="components/entity-generator.js"></script>
+    <script src="components/layout.js"></script>
+    <script src="components/stuff.js"></script>
+    <script src="components/gpoly.js"></script>
+    <script src="components/colors.js"></script>
+    <script>
+    AFRAME.registerComponent('worldbuilder', {
+      schema: {
+        xmax: {default: 4},
+        zmax: {default: 8},
+        grid: {default: 15},
+      },
+      init: function () {
+        this.loading = true;
+        //this.rows = [];
+        this.x = 0;
+        this.z = this.data.zmax - 1;
+        this.xpos = 0;
+        this.zpos = this.z * this.data.grid;
+        
+        
+        var pos = this.el.getAttribute('position');
+        this.centerz = (this.zpos / 2) + pos.z;
+        this.loopstopper = 0;
+        this.id = 0;
+        
+        this.time = 0;
+        this.movedex = 0;
+        //var test = num.toString(2); TOBINARY
+        
+      },
+      tick: function (time, timeDelta) {
+        var el = this.el;
+        var data = this.data;
+        if (this.loading) {
+          // Create the row and add it immediately. It will need to be retrieved every tick anyway so we can do slow loading
+          if (this.x == 0) {
+            el.appendChild(document.createElement('a-entity'));
+          }
+          var windows = ['rect', 'circle', 'triangle', 'diamond', 'bars'];
+          var width = Math.floor(Math.random() * 2) + 1; // 1 to 2
+          var height = Math.floor(Math.random() * 6) + 1; // 1 to 6
+          var windex = Math.floor(Math.random() * 5); // 0 to 4
+          var building = document.createElement('a-entity');
+          //console.log("Placing building with z=" + this.z + ", zpos=" + this.zpos);
+          building.setAttribute('building', "windowtype: " + windows[windex] + "; width: " + width + "; height: " + height + "; buildingshape: box; id: " + this.id);
+          this.id++;
+          
+          // Make gap for road
+          var xcenter = Math.floor(data.xmax / 2);
+          if (this.x == xcenter) {
+            this.xpos += 8;
+          }
+          
+          // Flip buildings on right
+          var yrotation = 0;
+          if (this.x >= xcenter) {
+            yrotation = 180; 
+          }
+          
+          building.setAttribute('position', this.xpos + " 0 " + this.zpos);
+          building.setAttribute('rotation', "0 " + yrotation + " 0");
+
+          var row = el.children[data.zmax - this.z - 1];
+          row.appendChild(building);
+
+          this.x++;
+          this.xpos += data.grid;
+
+          if (this.x == data.xmax) {
+            this.x = 0;
+            this.xpos = this.x;
+
+            this.z--;
+            this.zpos -= data.grid;
+          }
+          if (this.z == -1) {
+            this.loading = false; 
+          }
+        }
+        // After loading, begin moving
+        else {
+           this.time += timeDelta;
+           var campos = document.querySelector('#camera').getAttribute('position');
+           if (campos.z < this.centerz) {
+             this.time = 0;
+             var row = el.children[this.movedex];
+             var pos = row.getAttribute('position');
+             
+             pos.z -= data.zmax * data.grid;
+             el.children[this.movedex].setAttribute('position', pos);
+             
+             this.movedex++;
+             this.centerz -= data.grid
+             if (this.movedex == data.zmax) {
+               this.movedex = 0; 
+             }
+           }
+        }
+      }
+    });
+      
+    
+    </script>
+  </head>
+  <body>
+    <a-scene fog="type: exponential; density: 0.05; color: #101010" animation__fog="property: fog.density; easing: easeOutCirc; to: 0.05; delay: 5000; dur: 5000">
+      <a-assets>
+        <img id="stars" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fstarfield.png?1513307410255">
+        <img id="green" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fgreenfield.jpg?1513824807936">
+        <img id="sunset" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2FSunset1.jpg?1513822555974">
+        <img id="sunset2" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fsunset_smudge.jpg?1513829169610">
+        <img id="sunsetblur" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fsunset_blur.jpg?1513871737795">
+        <img id="milky" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2F16025063950_61e0c94540_o.jpg?1513823844529">
+        
+        <audio id="song" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fside-of-the-road%5BMp3-Gratis.eu%20-%20Download%20Free%20Mp3%5D.mp3?1514392665329" autoplay loop></audio>
+        
+        <a-mixin id="rainbow" rainbowcycle="speed: 3"></a-mixin>
+        <a-mixin id="alterColors" animation="property: material.color; dir: alternate; dur: 594.06; easing: easeInOutSine; loop: true; to: #FF00FF"></a-mixin>
+        <a-mixin id="scale" animation__scale= "property: scale; dir: alternate; dur: 297.03; easing: easeInSine; loop: true; to: 1.2 1 1.2"       ></a-mixin>
+        <a-mixin id="cubes"
+          geometry="primitive: box; height: 0.5; width: 0.5; depth: 0.5"
+          material="color: #0000FF; shader: flat"
+        ></a-mixin>
+        
+        <a-mixin id="window"
+          material="color: #FFFF00; shader: flat"></a-mixin>
+        <a-mixin id="rect" mixin="window"
+          geometry="primitive: plane; width: 1; height: 2;"></a-mixin>
+        <a-mixin id="circle" mixin="window"
+          geometry="primitive: circle; radius: 0.75;"></a-mixin>
+        <a-mixin id="triangle" mixin="window" rotation="0 0 180"
+          geometry="primitive: triangle;" scale="3 3 2"></a-mixin>
+        <a-mixin id="diamond" mixin="window" rotation = "0 0 45"
+          geometry="primitive: plane; width: 1.5; height: 1.5" scale="1.25 1.25 1"></a-mixin>
+        <a-mixin id="bars" mixin="window" rotation = "0 0 0"
+          geometry="primitive: plane; width: 2.5; height: 1.5;"></a-mixin>
+        <a-mixin id="windows" entity-colors="mixin: rect; num: 4; color_type: flip; slower: 1; every: 2; 
+                                             fromcolor: #00FF00; tocolor: #FF0000; alternate: false" 
+                 layout="type: box; columns: 2; marginRow: 4; marginColumn: 3">
+        </a-mixin>     
+        <a-mixin id="buildingblock" entity-circle="mixin: windows; num: 3; axis: y; angle: 90;" layout="type: building; radius: 1"
+             geometry="primitive: box; width: 6.8; height: 7.5; depth: 6.8" material="color: #000000"></a-mixin>
+        <a-mixin id="building" building-builder></a-mixin>
+        
+        <a-mixin id="roadash" geometry="primitive: plane; width:0.25; height:2" material="color: #ffdf00; shader: flat" rotation="0 0 90"></a-mixin>
+        <a-mixin id="spot" light="type: spot; castShadow: true; angle: 30; color: #FFFF00"></a-mixin>
+        <a-mixin id="lit" geometry="primitive:circle; radius: 6"
+                 material="color: #fdffa3; shader:flat; opacity: 0.5 transparent:true; src:https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fwhiteblur.png?1513817944824"></a-mixin>
+        <a-mixin id="lcone" geometry="primitive:cone; radiusBottom: 3; height: 8" material="color: #fdffa3; shader: flat; opacity: 0.5"></a-mixin>
+        <a-mixin id="lamp" scale="2 2 2" gpoly="polyid:awUS2qoxeSa; API_KEY:AIzaSyAJ19aF1HSKdyzV4-OKtITR2MoKkSkh7rQ;"></a-mixin>
+        <a-mixin id="blur" scale="0.8 0.8" geometry="primitive:plane" 
+                 material="color: #fdffa3; shader:flat; transparent:true; src:https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fwhiteblur.png?1513817944824"></a-mixin>
+      <!--
+      Comment section
+      entity-generator="mixin: window; num: 16; rainbow: true; speed: 10"
+      <a-mixin id="rotating" animation__rotate="property: rotation; easing: easeInOutSine; dir: alternate; dur: 8000; loop: true; to: 0 360 0"></a-mixin>
+       <a-entity slide="speed: 0" entity-generator="mixin: spot; num: 5" layout="type: line; margin: 10" position="0 0.75 -0.2" rotation="0 0 0" scale="5 5 5" src="#blur-image" color="#FFFF00"></a-entity>
+      <a-plane rainbowcycle="offset: 200; speed: 30" visible="false" position="2 0 -5" rotation="0 0 0" width="5" height="2" shader="flat" shadow></a-plane>
+      <a-sky visible="true" id="image-360" src="#green" radius="1000" rotation="30 0 0" position="0 0 0"></a-sky>
+      entity-generator="mixin: lamp blur, lcone lit"
+      -->
+      </a-assets>   
+      
+      <a-sky visible="true" id="image-360" src="#sunsetblur" radius="1000" rotation="0 -60 0" position="0 -50 0"></a-sky>
+      <a-entity light="type: ambient; intensity: 0.3; distance: 50; decay: 2"
+          position="0 10 10"></a-entity>
+      
+      <!-- comment starter 
+      
+      <a-entity worldbuilder="grid: 12" class="slowdelete"
+                position = "-22 1.5 -150" rotation = "0 0 0" scale = "1 1 1"></a-entity>
+      <a-entity id="camera" camera="userHeight: 1.6; near: 0.5" look-controls wasd-controls="acceleration: 100;" slide="speed: 3; reset: -1" ></a-entity>-->
+      <!-- comment stopper -->
+      
+      <a-plane id="floor" position="0 0 0" rotation="-90 0 0" width="1000" height="1000" color="#303030" shadow></a-plane>
+      <a-plane id="road" position="0 0.05 -50" rotation="-90 0 0" width="8" height="1000" color="#606060" shadow></a-plane>
+      
+      <a-entity id="analyser" audioanalyser="src: #song; enableBeatDetection: false;" ></a-entity>
+      
+      <!--<a-entity id="roadline" followcamera="length:100; reverse: true;" 
+                entity-colors="analyserEl: #analyser; max: 50; multiplier: 0.01; 
+                               mixin: roadash; num: 25; rainbow: true; every: 4; slower: 4"
+                layout="type: line; margin: 4" position="0 0.1 -40" rotation="-90 -90 0"></a-entity>-->
+      <a-entity id="roadline2" followcamera="length:100; reverse: true;"
+                entity-colors="analyserEl: #analyser; max: 50; multiplier: 0.01; 
+                               mixin: roadash; num: 25; color_type: flip_audio; reverse: false;
+                               audio_property: scale"
+                layout="type: line; margin: 4" position="0 0.1 -40" rotation="-90 -90 0"></a-entity>
+     
+      <!--<a-entity id="streetlightsright" position="4 0 40" rotation="0 90 0"
+                entity-generator-merger="num: 10; mixins: blur, lamp, lcone, lit; 
+                                         positions: 0 6.33 -0.4, 0 5 0, 0 2.7 -1.35, 0 0.1 -2; 
+                                         rotations: 90 0 0, 0 0 0, 15 0 0, -90 0 0
+                                         layout_type:line; layout_margin: 30; flip_reverse: true"
+                                         followcamera="length: 300;"></a-entity>
+      <a-entity id="streetlightsleft" position="-4 0 -95" rotation="0 -90 0"
+                entity-generator-merger="num: 10; mixins: blur, lamp, lcone, lit; 
+                                         positions: 0 6.33 -0.4, 0 5 0, 0 2.7 -1.35, 0 0.1 -2; 
+                                         rotations: 90 0 0, 0 0 0, 15 0 0, -90 0 0
+                                         layout_type:line; layout_margin: 30; flip_delay: 0.25; flip_shift: 0"
+                                         followcamera="length: 300; reverse: true;"></a-entity>
+      <a-entity entity-colors="mixin: window; num: 1; rainbow: true;" ></a-entity>-->
+      <!-- beat: 594.059 half beat: 297.029 -->
+    </a-scene>
+  </body>
+</html>

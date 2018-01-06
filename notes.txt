@@ -1,0 +1,35 @@
+// Randoms!
+
+var randx = Math.floor(Math.random() * 60) - 30; // -30 to 30
+//Push all buildings at least 10m away from camera
+if (randx > 0) { // Left buildings face one way
+  randx = randx + 10
+  entity.setAttribute('rotation', "0 180 0");
+}
+else { // Right buildings face the other way
+  randx = randx - 10;
+  entity.setAttribute('rotation', "0 0 0");
+}
+var randz = Math.floor(Math.random() * 100) - 100; // -200 to -150
+
+// MIRRORS!
+        
+        /*var cubeGeom = new THREE.CubeGeometry(100, 100, 10, 1, 1, 1);
+        mirrorCubeCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
+        // mirrorCubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+        scene.add( mirrorCubeCamera );
+        var mirrorCubeMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorCubeCamera.renderTarget } );
+        mirrorCube = new THREE.Mesh( cubeGeom, mirrorCubeMaterial );
+        mirrorCube.position.set(-75,50,0);
+        mirrorCubeCamera.position = mirrorCube.position;
+        scene.add(mirrorCube);	
+
+        var sphereGeom =  new THREE.SphereGeometry( 50, 32, 16 ); // radius, segmentsWidth, segmentsHeight
+        mirrorSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
+        // mirrorCubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+        scene.add( mirrorSphereCamera );
+        var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+        mirrorSphere = new THREE.Mesh( sphereGeom, mirrorSphereMaterial );
+        mirrorSphere.position.set(75,50,0);
+        mirrorSphereCamera.position = mirrorSphere.position;
+        scene.add(mirrorSphere);*/
