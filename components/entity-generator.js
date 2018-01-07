@@ -153,6 +153,8 @@ AFRAME.registerComponent('building', {
     colortype: {default: 'flip', oneOf: ['shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio']},
     width : {default: 1},
     height: {default: 1},
+    color1: {default: ''},
+    color2: {default: ''},
     angle : {default: -1},
     optimize: {default: true},
     id: {default: 0}
@@ -175,11 +177,20 @@ AFRAME.registerComponent('building', {
       columnmargin += 0.1; 
     }
     if (data.windowtype == 'diamond') {
-      columnmargin += 0.25;
+      columnmargin += 0;
     }
     if (data.windowtype == 'bars') {
       windowidth = 1.25;
       columnmargin += 0.5;
+    }
+    
+    var color1 = data.color1;
+    if (!color1) {
+      color1 = getRandomColor();
+    }
+    var color2 = data.color2;
+    if (!color2) {
+      color2 = getRandomColor();
     }
     
     var windowZbuffer = 0.1;
@@ -192,7 +203,7 @@ AFRAME.registerComponent('building', {
     for (var i = 0; i < sides - data.optimize; i++) {
       var windowgrid = document.createElement('a-entity');
       windowgrid.setAttribute('entity-colors', "mixin: " + data.windowtype + "; num: " + numrows * numcolumns + 
-                              "; color_type: " + data.colortype + "; slower: 1; every: 2.5; fromcolor: " + getRandomColor() + "; tocolor: " + getRandomColor() + 
+                              "; color_type: " + data.colortype + "; slower: 1; every: 2.5; fromcolor: " + color1 + "; tocolor: " + color2 + 
                               "; alternate: false; id: " + data.id + '; analyserEl: #analyser; max: 50; multiplier: 0.01;');
       windowgrid.setAttribute('layout',"type: box; columns: " + numcolumns + "; xcenter: " + windowidth +
                               "; marginRow: " + rowmargin + "; marginColumn: " + columnmargin);

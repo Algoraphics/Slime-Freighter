@@ -9,26 +9,22 @@
     <script src="https://unpkg.com/aframe-layout-component@4.2/dist/aframe-layout-component.min.js"></script>-->
     <script src="https://unpkg.com/aframe-animation-component/dist/aframe-animation-component.min.js"></script>
     <script src="https://cdn.rawgit.com/zcanter/aframe-gradient-sky/master/dist/gradientsky.min.js"></script>
-    <script src="components/audioanalyser.js"></script>
+    <script src="components/includes.js"></script>
+    <!-- My files -->
     <script src="components/entity-generator.js"></script>
+    <script src="components/worldbuilders.js"></script>
     <script src="components/layout.js"></script>
     <script src="components/stuff.js"></script>
-    <script src="components/gpoly.js"></script>
     <script src="components/colors.js"></script>
     <script src="components/rng.js"></script>
-    <script src="shaders/building-shader.js"></script>
-    <script src="shaders/caustic-shader.js"></script>
-    <script src="shaders/disco-shader.js"></script>
-    <script src="shaders/fractal-shader.js"></script>
-    <script src="shaders/kal-shader.js"></script>
-    <script src="shaders/grid-shader.js"></script>
-    <script src="shaders/lightspeed-shader.js"></script>
+    <script src="shaders.js"></script>
+    <!-- Custom shaders -->
     <script>
     
     </script>
   </head>
   <body>
-    <a-scene fog="type: exponential; density: 0.1; color: #101010" animation__fog="property: fog.density; easing: easeOutCirc; to: 0; delay: 50000; dur: 20000">
+    <a-scene fog="type: exponential; density: 0; color: #101010" animation__fog="property: fog.density; easing: easeOutCirc; to: 0; delay: 50000; dur: 20000">
       <a-assets>
         <img id="stars" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fstarfield.png?1513307410255">
         <img id="green" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fgreenfield.jpg?1513824807936">
@@ -90,9 +86,11 @@
       <a-entity light="type: ambient; intensity: 0.3; distance: 50; decay: 2"
           position="0 10 10"></a-entity>
       
-      <!-- comment starter 
-      
-      <a-entity visible="false" worldbuilder=" buildingfunction: colorCity; blockx: 5; blockz: 15; numblockx: 1; numblockz: 1;
+      <!-- comment starter
+      Fractals!-->
+      <a-entity rng-shader="shader: fractal; width: 5; height: 6; shape: 0 1 0" position="0 2 10"></a-entity>
+
+      <!--<a-entity visible="false" worldbuilder=" buildingfunction: colorCity; blockx: 5; blockz: 15; numblockx: 1; numblockz: 1;
                               gapwidth: 2; widthprobs: 0.15 0.2 0.15 0.1 0.05; maxheight: 7; heightprobs: 1 1 1 1 1 1 1;
                               stopfollow: -700"
                 class="slowdelete" position = "-62 1.5 -500" rotation = "0 0 0" scale = "1 1 1"></a-entity>-->
@@ -116,43 +114,8 @@
                                mixin: roadash; num: 25; color_type: none; slower: 4;
                                audio_property: position; audio_levels: true;"
                 layout="type: line; margin: 4" position="0 0.1 -40" rotation="-90 -90 0"></a-entity>
-      <!--<a-entity geometry="primitive: box; height:2 depth:4 width:4;"
-                material="shader: grid-glitch; color1: #0000FF; color2: #FF0000; numrows: 4.0; speed: 1.0; 
-                          height: 0.95; width: 0.95;"
-                position="0 1.5 7"
-                rotation="-30 0 0">
-      </a-entity>
-      <a-entity geometry="primitive: cylinder; height:2 radius:4 width:4;"
-                material="shader: grid-shader; resolution: 6.0; intensity: 10.0; speed: 1.0;
-                          lightColor: #FF0000; baseColor: #00FF00"
-                position="0 1.5 7"
-                rotation="-30 0 0">
-      </a-entity>
-      <a-entity geometry="primitive: sphere; height:2 radius:4 width:4;"
-                material="shader: disco-shader; speed: 1.0; resolution: 1.0; color: #FF0000; color2: #00FF00;"
-                position="0 1.5 7"
-                rotation="-30 0 0">
-      </a-entity>
-      <a-entity geometry="primitive: sphere; width:8; radius: 4; height:8;"
-                material="side: double; shader: kal-shader; resolution: 2.0; zoom: 100.0"
-                position="0 4 10"
-                rotation="0 0 0">
-      </a-entity>
-      <a-entity geometry="primitive: sphere; height:4; radius:4; depth:4;"
-                material="side: double; shader: kal-shader; zoom: 200.0"
-                position="0 1.5 7"
-                rotation="0 0 0">
-      </a-entity>
-      <a-entity geometry="primitive: box; height:4; width:4; depth:4;"
-                material="side: double; shader: caustic-shader; speed: 1.0; brightness: 2.0; color: #0000ff; backgroundColor: #000000; res: 1.0"
-                position="0 1.5 7"
-                rotation="0 0 0">
-      </a-entity>-->
-      <a-entity geometry="primitive: box; height:4; width:4; depth:4;"
-                material="side: double; shader: lightspeed-shader; speed: 10.0; uniformity: 10.0; fadeaway: 0.5; resolution: 1.0; color: #00ff00"
-                position="0 1.5 7"
-                rotation="0 0 0">
-      </a-entity>
+      
+      <a-entity rng-building-flower="preset: cross; width: 1; height: 2; color1: #ffff00;" position="1 0 -15"></a-entity>
       
 
      
