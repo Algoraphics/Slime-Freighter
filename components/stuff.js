@@ -52,30 +52,38 @@ AFRAME.registerComponent('followcamera', {
     length: {default: 2},
     // Means origin point is away from camera (negative z)
     reverse: {default: false},
+    stopfollow: {default: NaN},
     delete: {default: NaN},
   },
   init: function () {
+    this.startpos = this.el.getAttribute('position');
+    this.stopfollow = false;
     // Use for slow delete
     this.deleting = false;
   },
   tick: function () {
+    var data = this.data;
+    
     var cam = document.querySelector('#camera');
     if (!cam) { return; }
     
     var campos = cam.getAttribute('position');
     var position = this.el.getAttribute('position');
-    var centerz = position.z - 3 * this.data.length / 5;
-    if (this.data.reverse) {
-      var centerz = position.z + 2* this.data.length / 5;
+    var centerz = position.z - 3 * data.length / 5;
+    if (data.reverse) {
+      var centerz = position.z + 2* data.length / 5;
     }
     var pass = campos.z < centerz;
     //console.log("campos is " + campos.z + ", posz is " + position.z + ", centerz is " + centerz + ", reverse is " + this.data.reverse);
-    if (pass) {
-      position.z -= this.data.length / 5;
+    if (pass && !this.stopfollow) {
+      position.z -= data.length / 5;
       this.el.setAttribute('position', position);
     }
-    if (!isNaN(this.data.delete)) {
-      if (campos.z < this.data.delete) {
+    if (campos.z < data.stopfollow) {
+      this.stopfollow = true;
+    }
+    if (!isNaN(data.delete)) {
+      if (campos.z < data.delete) {
         // Maybe factor into delete function?
         console.log(this.el.classList);
         if (this.el.classList.contains('slowdelete')) {

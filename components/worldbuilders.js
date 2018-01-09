@@ -153,6 +153,10 @@ AFRAME.registerComponent('worldbuilder', {
 
     var pos = this.el.getAttribute('position');
     this.centerz = (this.zpos / 2) + pos.z;
+    // Rise buildings from ground
+    var from = "" + pos.x + " " + pos.y + " " + pos.z;
+    var to = pos.x + " " + (pos.y + 351.5) + " " + pos.z;
+    this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 30000; startEvents: doneloading");
     
     // Offset to help with z-fighting
     this.offset = 0.01;
@@ -185,6 +189,7 @@ AFRAME.registerComponent('worldbuilder', {
         // Create the row and add it immediately. It will need to be retrieved every tick anyway so we can do slow loading
         if (this.x == 0) {
           el.appendChild(document.createElement('a-entity'));
+          
         }
         
         var buildingfunction = window[data.buildingfunction];
@@ -214,6 +219,7 @@ AFRAME.registerComponent('worldbuilder', {
         }
         if (this.z < 0) {
           console.log("Worldbuilder " + data.buildingfunction + " loading done.");
+          this.el.emit('doneloading');
           this.el.setAttribute('visible', true);
           this.loading = false;
         }
@@ -224,15 +230,16 @@ AFRAME.registerComponent('worldbuilder', {
     }
     // After loading, begin moving
     else {
-       this.time += timeDelta;
        if (campos.z < this.centerz && campos.z > data.stopfollow) {
-         //console.log("moving! campos is " + campos.z);
-         this.time = 0;
          var row = el.children[this.movedex];
          var pos = row.getAttribute('position');
 
          pos.z -= this.zmax * data.grid;
+         pos.y -= 350;
          el.children[this.movedex].setAttribute('position', pos);
+         var from = "" + pos.x + " " + pos.y + " " + pos.z;
+         var to = pos.x + " " + (pos.y + 350) + " " + pos.z;
+         el.children[this.movedex].setAttribute('animation__move',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 10000;");
 
          this.movedex++;
          this.centerz -= data.grid
@@ -266,14 +273,14 @@ function colorCity(builder, data) {
     var rngbuilding = document.createElement('a-entity');
     // TODO: either allow non-shaders in front row or make sure fog is still around when entering city
     if ((width < 3 && height < 4) && (builder.x < xcenter + 5 && builder.x > xcenter - 5)) {
-      rngbuilding.setAttribute('rng-building', "width: " + width + "; height: " + (height + 2) + "; windowtype: 1 1 0 1 1 1; colortype: 0 0 0 1 0");
+      rngbuilding.setAttribute('rng-building', "width: " + width + "; height: " + (height + 2) + "; windowtype: 1 0 1 1 1; colortype: 0 0 0 0 1 0");
       // Shift non-shaders so they're always in front. Looks better
       builder.xshift = 0.5;
       builder.zshift = 0.5;
     }
     else {  
-      rngbuilding.setAttribute('rng-shader', "width: " + width + "; height: " + height
-                               + "; grow_slide: 0 1; static: 1 1; axis: 1 1"
+      rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height
+                               + "; grow_slide: 0 1; static: 1 2; axis: 1 1"
                                + "; usecolor1: 1 1; usecolor2: 1 1; colorstyle: 1 4 4 1");
     }
 

@@ -87,7 +87,7 @@ float box(vec2 st, vec2 size, float smoothEdges){
 }
 
 void main() {
-  float time = 3.0 * timeMsec / 1000.0; // Convert from A-Frame milliseconds to typical time in seconds.
+  float time = (3.14159265358979 / 594.059) * timeMsec; // Convert from A-Frame milliseconds to typical time in seconds.
   // Use sin(time), which curves between -1 and 1 over time,
   // to determine the mix of two colors:
   //    (a) Dynamic color where 'R' and 'B' channels come
@@ -108,7 +108,7 @@ void main() {
 
 
   float slidedirection = (1.0 - slidereverse) * 1.0 + slidereverse * -1.0;
-  float slideval = step(1.0, slide) * time * 0.2 * speed * (1.0 - slidesine) * (1.0 - slideclamp);
+  float slideval = step(1.0, slide) * time * 0.15 * speed * (1.0 - slidesine) * (1.0 - slideclamp);
   slideval += clamp(speed * time, slidestart, slidestart + slide) * slideclamp * (1.0 - slidesine);
   slideval += (slide / 2.0) * (1.0 + sin(time)) * slidesine * (1.0 - slideclamp);
   st[0] += (1.0 - slideaxis) * slideval * slidedirection;
@@ -122,7 +122,7 @@ void main() {
 
   vec2 uv2 = vUv;
 
-  float rate = slidedirection * 0.2 * speed * colorslide / numrows;
+  float rate = slidedirection * 0.15 * speed * colorslide / numrows;
   uv2[0] += time * rate * (1.0 - coloraxis);
   uv2[1] += time * rate * coloraxis;
   uv2 *= 1.0 + ((numrows - 1.0) * colorgrid);
@@ -138,7 +138,7 @@ void main() {
 
   float usecolors = usecolor1 * usecolor2;
   float israinbow = rainbow1 * rainbow2;
-  float rainbowscillate = cos(time/2.0) * coloroffset + sin(time/2.0) * (1.0 - coloroffset);
+  float rainbowscillate = cos(time) * coloroffset + sin(time) * (1.0 - coloroffset);
   float oscillate = cos(time) * coloroffset + sin(time) * (1.0 - coloroffset);
   float combo = (1.0 - usecolors) * (rainbowscillate * 0.5 
                                   + israinbow * 0.7 
