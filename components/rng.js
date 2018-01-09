@@ -115,22 +115,42 @@ AFRAME.registerComponent('rng-shader', {
   }
 });
 
-function arcBuildings(building, buildingAttrs, mult, depth) {
+// Global vars used by assets to time animations to music
+var beat = 594.059;
+var dur = beat * 4;
+var animAttrs = ' dir: alternate; loop: true; ';
+
+function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) {
   if (depth > 1) {
-    var dur = 594.059 * 4;
-    var xoffset = 0.1 * mult;
-    var yoffset = 0.2 * mult;
-    var angle = 5 * mult;
-    var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
+    var xoffset = 0; var yoffset = -10; var zoffset = 0;
+    var xangle = 0; var yangle = 0;
+    //var angle = 0;
+    // Calibrated for a 1x1 block
+    if (axis == 'y') {
+      var xoffset = 0.1 * (angle / 5);
+      var yoffset = 6 + (0.1 * (angle / 5));
+      yangle = angle;
+    }
+    // Calibrated for a 1x2 block
+    else if (axis == 'x') {
+      var xoffset = dist - 0.1 * (angle / 5);
+      var zoffset = 0.25 * (angle / 5);
+      xangle = angle;
+    }
+    
+    //var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
     var mover = document.createElement('a-entity');
-    mover.setAttribute('animation__move', 'property: position; from: 0 -10 0; to: ' + -xoffset + ' ' + (-4 - yoffset) + ' 0;' + animAttrs);
+    mover.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + -xoffset + ' ' + yoffset + ' ' + zoffset + ';'
+                       + animAttrs + 'easing: easeInOutExpo; dur: ' + dur);
 
     var nextbuilding = document.createElement('a-entity');
     nextbuilding.setAttribute('building', buildingAttrs);
-    nextbuilding.setAttribute('position', "0 10 0");
-    nextbuilding.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 0 ' + angle + ';' + animAttrs);
+    nextbuilding.setAttribute('position', "0 0 0");
+    nextbuilding.setAttribute('scale', scale + " " + scale + " " + scale);
+    nextbuilding.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 ' + xangle + ' ' + yangle + ';'
+                              + animAttrs + 'easing: easeInOutExpo; dur: ' + dur);
 
-    arcBuildings(nextbuilding, buildingAttrs, mult, depth - 1);
+    arcBuildings(nextbuilding, buildingAttrs, angle, dist, scale, axis, depth - 1);
     
     mover.appendChild(nextbuilding);
     building.appendChild(mover);
@@ -146,7 +166,12 @@ AFRAME.registerComponent('rng-building-arc', {
     color2: {default: ''},
     width: {default: 1},
     height: {default: 1},
-    curve: {default: -1}, // If not specified, will be 0 through 6
+    angle: {default: -1}, // If not specified, will be 0 through 6
+    axis: {default: 'y'},
+    spread: {default: 1}, // How far apart to spread buildings. 1 is flush
+    num: {default: 7},
+    slide: {default: false},
+    scale: {default: 1},
   },
   init: function () {
     var data = this.data;
@@ -160,26 +185,31 @@ AFRAME.registerComponent('rng-building-arc', {
     var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
                           + "; width: " + width + "; height: " + height + "; optimize: false";
     building.setAttribute('building', buildingAttrs);
-    building.setAttribute('position', "0 6 0");
     
-    curve = data.curve
-    if (curve >= 0) {
-      var curve = rng([0, 1, 2, 3, 4, 5, 6, 9], '2 2 1 1 1 1 2 1');
+    angle = data.angle;
+    if (angle < 0) {
+      var angle = rng([0, 5, 10, 15, 20, 25, 30, 45], '2 2 1 1 1 1 2 1');
     }
     
-    arcBuildings(building, buildingAttrs, curve, 7);
+    if (data.axis == 'y') {
+      building.setAttribute('position', "0 6 0");
+      
+      var bottom = document.createElement('a-entity');
+      bottom.setAttribute('building', buildingAttrs);
+      this.el.appendChild(bottom);
+    }
+    else if (data.axis == 'x') {
+      angle = -angle;
+    }
     
-    var bottom = document.createElement('a-entity');
-    bottom.setAttribute('building', buildingAttrs);
+    var dist = 4.8 * data.spread;
+    arcBuildings(building, buildingAttrs, angle, dist, data.scale, data.axis, data.num);
     
+    var rotation = rng([0, 90, 180, 270], '1 1 1 1');
+    building.setAttribute('rotation', '0 ' + rotation + ' 0');
     this.el.appendChild(building);
-    this.el.appendChild(bottom);
   }
 });
-
-var dur = 594.059 * 4;
-var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
-var animAttrsSine = ' dir: alternate; loop: true; easing: easeInOutQuart; dur: ' + dur;
 
 AFRAME.registerComponent('rng-building-flower', {
   schema: {
@@ -217,17 +247,104 @@ AFRAME.registerComponent('rng-building-flower', {
     var angle = 0;
     for (var i = 0; i < 4; i++) {
       var mover = document.createElement('a-entity');
-      mover.setAttribute('animation__turn', 'property: rotation; from: 0 ' + angle + ' 0; to: 0 ' + angle + ' ' + fallover + ';' + animAttrsSine);
+      mover.setAttribute('animation__turn', 'property: rotation; from: 0 ' + angle + ' 0; to: 0 ' + angle + ' ' + fallover + ';'
+                         + animAttrs + 'easing: easeInOutQuart; dur: ' + dur);
       var building = document.createElement('a-entity');
       var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
                             + "; width: " + width + "; height: " + height + "; optimize: false";
       building.setAttribute('building', buildingAttrs);
-      building.setAttribute('animation__move', 'property: position; from: 0 2 0; to: ' + moveup + ' ' + fallout + ' 0;' + animAttrsSine);
+      building.setAttribute('animation__move', 'property: position; from: 0 2 0; to: ' + moveup + ' ' + fallout + ' 0;'
+                            + animAttrs + 'easing: easeInOutQuart; dur: ' + dur);
       mover.appendChild(building);
       this.el.appendChild(mover);
       angle += 90;
     }
     this.el.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 90 0; dir: alternate; loop: true; easing: easeInOutSine; dur: ' + (dur * 2));
+  }
+});
+
+AFRAME.registerComponent('rng-building-slider', {
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    width: {default: 1},
+    height: {default: 1},
+  },
+  init: function () {
+
+    var data = this.data;
+    
+    this.reverse = 1;
+    this.flip = 1;
+    this.time = 0;
+    
+    var height = data.height;
+    var width = data.width;
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    this.firstpos = this.el.getAttribute('position');
+    
+    var delay = 0;
+    for (var i = 0; i < 4; i++) {
+      var building = document.createElement('a-entity');
+      var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+                            + "; width: " + width + "; height: " + height + "; optimize: false";
+      building.setAttribute('building', buildingAttrs);
+      building.setAttribute('rotation', "0 0 0");
+      this.el.appendChild(building);
+    }
+  },
+  tick: function (time, timeDelta) {
+    this.time += timeDelta;
+    var curpos = this.firstpos;
+    var pi = 3.14159265358979;
+    if (this.time > 4*beat) {
+      this.reverse = -this.reverse;
+      this.time = 0;
+    }
+    for (var i = 0; i < this.el.children.length; i++) {
+      
+      var sinval = (this.time - beat*i/8)*(pi/(2*beat));
+      
+      var dist = 12;
+      //curpos.x = dist*Math.sin(sinval*this.reverse);
+      if (sinval > pi/2 && sinval < 3*pi/2) {
+        curpos.x = dist*Math.sin(sinval*this.reverse);
+        curpos.y = -dist*Math.cos(sinval*this.reverse);
+      }
+      else {
+        //console.log("sinval is " + sinval + " and reverse is " + this.reverse);
+        if ((this.reverse < 0 && sinval < 3*pi/2) || (this.reverse > 0 && sinval > pi/2)) {
+          dist = -dist;
+        }
+        curpos.x = dist;
+        curpos.y = 0;
+      }
+      this.el.children[i].setAttribute('position', curpos);
+    }
+  }
+});
+
+AFRAME.registerComponent('beat-emitter', {
+  schema: {
+    target: {default: ''}, 
+  },
+  init: function () {
+    this.beatbar = beat;
+    this.target = document.querySelector(this.data.target);
+  },
+  tick: function (time, timeDelta) {
+    while (time > this.beatbar) {
+      this.beatbar += beat * 2;
+      if (time > 2000) {
+        //console.log("beat emit!");
+        this.target.emit('beat', 'deets', true);
+      }
+    }
   }
 });
 
@@ -285,7 +402,7 @@ AFRAME.registerComponent('rng-building-shader', {
     height: {default: 1},
     static: {default: '1 1'},
     grows: {default: '1 1 1 1'},
-    grow_slide: {default: ''},
+    grow_slide: {default: '1 1'},
     usecolor1: {default: '1 1'},
     usecolor2: {default: '1 1'},
     colorstyle: {default: '1 1 1 1'}, // single color, two color, one color to gradient, gradient
