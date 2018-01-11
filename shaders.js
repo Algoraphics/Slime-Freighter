@@ -87,7 +87,8 @@ float box(vec2 st, vec2 size, float smoothEdges){
 }
 
 void main() {
-  float time = (3.14159265358979 / 594.059) * timeMsec; // Convert from A-Frame milliseconds to typical time in seconds.
+  //TODO: beat should be a parameter
+  float time = (3.14159265358979 / (2.0*594.059)) * timeMsec; // Convert from A-Frame milliseconds to typical time in seconds.
   // Use sin(time), which curves between -1 and 1 over time,
   // to determine the mix of two colors:
   //    (a) Dynamic color where 'R' and 'B' channels come

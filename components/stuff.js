@@ -1,4 +1,4 @@
-/* global AFRAME, THREE */
+/* global AFRAME, THREE, beat */
 
 function rotato(el) {
   var rotationTmp = this.rotationTmp = this.rotationTmp || {x: 0, y: 0, z: 0};
@@ -43,6 +43,104 @@ AFRAME.registerComponent('justrotate', {
     rotato(this.el);
   }
 });
+
+AFRAME.registerComponent('audio-react', {
+  schema: {
+    analyserEl: {type: 'selector'},
+    property: {default: 'scale'},
+    multiplier: {default: 1}, //
+    build: {default: 0}, // Slowly build to full volume (num is speed)
+    stablebase: {default: true}, // Stabilize bottom of scaling asset
+  },
+  init: function () {
+    this.build = 0;
+    if (!this.data.build) {
+      this.build = 1;
+      this.initialy = this.el.getAttribute('position').y;
+    }
+  },
+  tick: function () {
+    var data = this.data;
+    var analyserEl = data.analyserEl;
+    var volume = 0;
+    var levels;
+    
+    if (analyserEl) {
+       volume = analyserEl.components.audioanalyser.volume * data.multiplier * 0.05;
+    }
+    else return;
+    
+    if (this.build < 1) {
+      this.build += 0.001 * data.build;
+    }
+    var val = volume;
+    var curprop = this.el.getAttribute(data.property);
+    if (data.property == 'position') {
+      if (data.reverse) {
+        val = -val; 
+      }
+      this.el.setAttribute(data.property, {
+        x: curprop.x,
+        y: val,
+        z: curprop.z
+      });
+    }
+    else if (data.property == 'scale') {
+      val = val / 2;
+      this.el.setAttribute(data.property, {
+        x: val,
+        y: val,
+        z: val
+      });
+      if (data.stablebase) {
+        var curpos = this.el.getAttribute('position');
+        this.el.setAttribute('position', {
+          x: curpos.x,
+          // TODO this may not work with moving objects, will always reset y position to initial
+          y: this.initialy + val/2,
+          z: curpos.z
+        });
+      }
+    }
+  }
+});
+
+
+AFRAME.registerComponent('beat-emitter', {
+  schema: {
+    target: {default: ''}, 
+  },
+  init: function () {
+    this.beatbar = beat;
+    this.target = document.querySelector(this.data.target);
+  },
+  tick: function (time, timeDelta) {
+    while (time > this.beatbar) {
+      this.beatbar += beat * 2;
+      if (time > 2000) {
+        //console.log("beat emit!");
+        this.target.emit('beat', 'deets', true);
+      }
+    }
+  }
+});
+
+// Working emit listener from defunct component. Goes in init function
+/*this.el.addEventListener('beat', function (event) {
+  if (this.flip) {
+    if (this.slid) {
+      console.log("drop");
+      this.children[0].emit('drop');
+      this.slid = false;
+    }
+  }
+  else {
+    console.log("slide");
+    this.children[0].children[0].emit('slide');
+    this.slid = true;
+  }
+  this.flip = !this.flip;
+});*/
 
 // Math may seem arbitrary but there's a logic to it. Divides entity into 5 slices. 
 // Basically, the goal is to keep the camera in the center slice. Ensures there are always 2/5th of the 

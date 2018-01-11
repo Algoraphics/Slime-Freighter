@@ -9,7 +9,13 @@ string of relative probabilities. The value of those variables will be chosen at
 random using said probabilities, from a list of options set inside the rng component.
 */
 
+// Global vars used by assets to time animations to music
+var beat = 594.059;
+var dur = beat * 4;
+var animAttrs = ' dir: alternate; loop: true; ';
+
 /*
+  Main rng function.
   options come in the form [a, b, c, d]
   probstr in the form '1 2 3 0'
   This function will return a single chosen option using the specified probabilities
@@ -22,7 +28,7 @@ function rng(options, probstr) {
 
 /*
   Builds choose array from which rng options are chosen.
-  Ex: for [a, b, c, d] and '1 2 3 0' answer looks like [a, b, b, c, c, c]
+  Ex: for [a, b, c, d] and '1 2 3 0' choose_array looks like [a, b, b, c, c, c]
 */
 function chooseArr(options, probstr) {
   var probs = probArr(options, probstr);
@@ -49,13 +55,660 @@ function probArr(options, probstr) {
   return probs;
 }
 
-/*
-Want rng option for trippy shaders. Options:
-Disco shader with both colors random
-Caustic shader with one color set
-Grid shader with other color set
-*/
+// TODO: explanation, can generalize and remove the word building from a lot of these
+function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) {
+  if (depth > 1) {
+    var xoffset = 0; var yoffset = -10; var zoffset = 0;
+    var xangle = 0; var yangle = 0;
+    //var angle = 0;
+    // Calibrated for a 1x1 block
+    if (axis == 'y') {
+      var xoffset = 0;//0.05 * (angle / 5);
+      var yoffset = 6 + (0.1 * (angle / 5));
+      yangle = angle;
+    }
+    // Calibrated for a 1x2 block
+    else if (axis == 'x') {
+      var xoffset = dist - 0.1 * (angle / 5);
+      var yoffset = 0;
+      var zoffset = 0.25 * (angle / 5);
+      xangle = angle;
+    }
+    
+    //var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
+    var mover = document.createElement('a-entity');
+    mover.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + -xoffset + ' ' + yoffset + ' ' + zoffset + ';'
+                       + animAttrs + 'easing: easeInOutExpo; dur: ' + dur);
 
+    var nextbuilding = document.createElement('a-entity');
+    nextbuilding.setAttribute('building', buildingAttrs);
+    //nextbuilding.setAttribute('position', "0 0 0");
+    nextbuilding.setAttribute('scale', scale + " " + scale + " " + scale);
+    nextbuilding.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 ' + xangle + ' ' + yangle + ';'
+                              + animAttrs + 'easing: easeInOutExpo; dur: ' + dur);
+
+    arcBuildings(nextbuilding, buildingAttrs, angle, dist, scale, axis, depth - 1);
+    
+    mover.appendChild(nextbuilding);
+    building.appendChild(mover);
+  }
+}
+
+AFRAME.registerComponent('rng-building-arc', {
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    width: {default: 1},
+    height: {default: 1},
+    angle: {default: -1}, // If not specified, will be 0 through 6
+    axis: {default: 'y'},
+    spread: {default: 1}, // How far apart to spread buildings. 1 is flush
+    num: {default: 4},
+    slide: {default: false},
+    scale: {default: 1},
+  },
+  init: function () {
+    var data = this.data;
+    
+    var height = data.height;
+    var width = data.width;
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    var building = document.createElement('a-entity');
+    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + width + "; height: " + height + "; optimize: false";
+    building.setAttribute('building', buildingAttrs);
+    
+    angle = data.angle;
+    if (angle < 0) {
+      var angle = rng([0, 5, 10, 15, 20, 25, 30, 45], '2 2 1 1 1 1 2 1');
+    }
+    
+    if (data.axis == 'y') {
+      building.setAttribute('position', "0 6 0");
+      
+      var bottom = document.createElement('a-entity');
+      bottom.setAttribute('building', buildingAttrs);
+      this.el.appendChild(bottom);
+    }
+    else if (data.axis == 'x') {
+      angle = -angle;
+    }
+    
+    var dist = 4.8 * data.spread;
+    arcBuildings(building, buildingAttrs, angle, dist, data.scale, data.axis, data.num);
+    
+    var rotation = rng([0, 90, 180, 270], '1 1 1 1');
+    building.setAttribute('rotation', '0 ' + rotation + ' 0');
+    this.el.appendChild(building);
+  }
+});
+
+AFRAME.registerComponent('rng-building-flower', {
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    width: {default: 1},
+    height: {default: 1},
+    preset: {default: 'flower'},
+    num: {default: '2 0 1'},
+  },
+  init: function () {
+    var data = this.data;
+    
+    var height = data.height;
+    var width = data.width;
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    var num = rng([2, 3, 4], data.num);
+    
+    var moveup = 0;
+    var fallout = 0;
+    var fallover = 0;
+    if (data.preset == 'flower') {
+      moveup = 0;
+      fallout = 1;
+      fallover = 45;
+    }
+    if (data.preset == 'cross') {
+      moveup = 10;
+      fallout = 0;
+      fallover = 90;
+    }
+    
+    var angle = 0;
+    for (var i = 0; i < num; i++) {
+      var mover = document.createElement('a-entity');
+      mover.setAttribute('animation__turn', 'property: rotation; from: 0 ' + angle + ' 0; to: 0 ' + angle + ' ' + fallover + ';'
+                         + animAttrs + 'easing: easeInOutQuart; dur: ' + dur);
+      var building = document.createElement('a-entity');
+      var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+                            + "; width: " + width + "; height: " + height + "; optimize: false";
+      building.setAttribute('building', buildingAttrs);
+      building.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + moveup + ' ' + fallout + ' 0;'
+                            + animAttrs + 'easing: easeInOutQuart; dur: ' + dur);
+      mover.appendChild(building);
+      this.el.appendChild(mover);
+      angle += 360/num;
+    }
+    this.el.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 90 0; dir: alternate; loop: true' 
+                         + '; easing: easeInOutSine; dur: ' + (dur * 2));
+  }
+});
+
+
+
+/*
+  Tick function for sine animation which allows pausing. Can either continue to move in the same direction
+  or alternate back and forth. Takes in component used to configure
+*/
+function sinmove(comp) {
+    if (!comp.started) {
+      var cam = document.querySelector('#camera');
+      if (!cam) { return; }
+
+      var campos = cam.getAttribute('position');
+      if (campos.z > comp.start + comp.firstpos.z) {
+        return;
+      } else {
+        comp.started = true;
+        comp.el.emit('started', '', true);
+      }
+    }
+  
+    var dist = comp.data.dist;
+    var curpos = {x: 0, y: 0, z: 0};
+    var pi = 3.14159265358979;
+    var push = dist*2;
+    var offset = dist/2;
+    if (comp.time > 4*beat) {
+      comp.reverse = -comp.reverse;
+      comp.time = 0;
+      if (comp.cont) {
+        comp.pos += push;
+      }
+    }
+    for (var i = 0; i < comp.el.children.length; i++) {
+      
+      var sinval = (comp.time - beat*i/8)*(pi/(2*beat));
+      
+      if (sinval > pi/2 && sinval < 3*pi/2) {
+        if (comp.cont) {
+          curpos.x = comp.pos + dist*Math.sin(-sinval);
+        } else {
+          curpos.x = dist*Math.sin(sinval*comp.reverse);
+          if (comp.diag) {
+            curpos.z = curpos.x;
+          }
+        }
+        if (comp.reverse < 0 && comp.skip) {
+          curpos.y = -dist*Math.cos(sinval*comp.reverse);
+        }
+      }
+      else {
+        
+        // Local variable avoids swapping per element
+        var outpos = dist;
+        if (comp.cont) {
+          if ((sinval > 3*pi/2)) {
+            outpos = -dist;
+          }
+          curpos.x = comp.pos - outpos;
+        } else {
+          if ((comp.reverse < 0 && sinval < 3*pi/2) || (comp.reverse > 0 && sinval > pi/2)) {
+            outpos = -dist;
+          }
+          curpos.x = outpos;
+          if (comp.diag) {
+            curpos.z = curpos.x;
+          }
+        }
+        curpos.y = 0;
+      }
+      // Offset so that starting point is beginning of animation
+      if (!comp.center) {
+        curpos.x = curpos.x + dist;
+        if (comp.diag) {
+          curpos.z = curpos.z + dist;
+        }
+      }
+      comp.el.children[i].setAttribute('position', curpos);
+    } 
+}
+
+AFRAME.registerComponent('rng-building-sine', {
+  // TODO: can schema be a variable?
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    width: {default: 1},
+    height: {default: 2},
+    num: {default: 4}, // Number of elements
+    numbeats: {default: 2}, // Number of beats per movement
+    reverse: {default: false},
+    start: {default: 0},
+    dist: {default: 12},
+    cont: {default: false},
+    skip: {default: false},
+    diag: {default: false},
+  },
+  init: function () {
+    var data = this.data;
+    
+    this.pos = 0;
+    this.cont = this.data.cont;
+    this.skip = this.data.skip;
+    
+    this.start = data.start;
+    this.started = false;
+    this.reverse = 1;
+    if (data.reverse) {
+      this.reverse = -1;
+    }
+    this.diag = this.data.diag;
+    
+    this.time = 0;
+    
+    var height = data.height;
+    var width = data.width;
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    this.firstpos = this.el.getAttribute('position');
+    
+    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+                    + "; width: " + width + "; height: " + height + "; optimize: false";
+    
+    for (var i = 0; i < data.num; i++) {
+      var building = document.createElement('a-entity');
+      building.setAttribute('building', buildingAttrs);
+      building.setAttribute('rotation', "0 0 0");
+      
+      this.el.appendChild(building);
+    }
+  },
+  tick: function (time, timeDelta) {
+    this.time += timeDelta * (4 / this.data.numbeats);
+    sinmove(this);
+  }
+});
+
+AFRAME.registerComponent('rng-building-pulse', {
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    width: {default: 1},
+    height: {default: 2},
+    start: {default: 0},
+  },
+  init: function () {
+    var data = this.data;
+    
+    var height = data.height;
+    var width = data.width;
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + width + "; height: " + height + "; optimize: false";
+    
+    var center = document.createElement('a-entity');
+    center.setAttribute('building', buildingAttrs);
+    this.el.appendChild(center);
+    
+    var front = document.createElement('a-entity');
+    front.setAttribute('rng-building-sine', "color1: #ffff00; num:1; dist:4.5; start: -" + data.start);
+    front.setAttribute('rotation', "0 90 0");
+    front.setAttribute('position', "0 0 5");
+    this.el.appendChild(front);
+    var side = document.createElement('a-entity');
+    side.setAttribute('rng-building-sine', "color1: #ffff00; num:1; dist:4.5; start: -" + data.start);
+    side.setAttribute('position', "-5 0 0");
+    this.el.appendChild(side);
+  }
+});
+
+AFRAME.registerComponent('rng-building-split', {
+  // TODO: can schema be a variable?
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    numbeats: {default: 4}, // Number of beats per movement
+    start: {default: 0},
+    dist: {default: 6},
+  },
+  init: function () {
+    var data = this.data;
+    
+    this.pos = 0;
+    
+    this.started = false;
+    this.reverse = false;
+    
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    this.firstpos = this.el.getAttribute('position');
+    
+    var pos = this.el.getAttribute('position');
+    
+    var angle = 0;
+    for (var z = 0; z < 2; z++) {
+      for (var x = 0; x < 2; x++) {
+        var piece = document.createElement('a-entity');
+        var dist = 3.75;
+        var reverse = false;
+        if (x == 1 && z == 1) {
+          //reverse = false;
+          angle = 180;
+        }
+        piece.setAttribute('position', (x*20) + " -24.5 " + (z*20));
+        piece.setAttribute('rng-building-sine', "num: 1; numbeats: 4; height: 6; color1: #ffff00; diag: true"
+                           + "; dist: " + dist + "; reverse: " + reverse + "; start: " + (pos.z + data.start - z*20));
+        piece.setAttribute('rotation', "0 " + angle + " 0");
+        //piece.setAttribute('scale', "1.05 1.05 1.05");
+        this.el.appendChild(piece);
+        angle -= 90;
+      }
+      angle = 90;
+    }
+    var from = "" + pos.x + " " + pos.y + " " + pos.z;
+    var to = pos.x + " " + (pos.y + 25) + " " + pos.z;
+    this.el.setAttribute('animation__up', 'property: position; from: ' + from + '; to: ' + to + '; dir: alternate; loop: true' 
+                         + '; easing: easeInOutQuint; startEvents: started; delay: 1000; dur: ' + dur);
+    this.el.addEventListener('started', function (event) {
+      //this.el.emit('started');
+    });
+    
+  },
+  tick: function () {
+  }
+});
+
+
+/* 
+  Walking building. Not particularly configurable, doesn't need to be.
+*/
+AFRAME.registerComponent('rng-building-robot', {
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    numbeats: {default: 4}, // Number of beats per movement
+    start: {default: 50}, // Delay walking
+    dist: {default: 8},
+    reverse: {default: false},
+  },
+  init: function () {
+    var data = this.data;
+    
+    this.pos = 0;
+    this.cont = true;
+    
+    this.start = data.start;
+    this.started = false;
+    this.reverse = 1;
+    this.time = 0;
+    
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    this.firstpos = this.el.getAttribute('position');
+    
+    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: 1; height: 3; optimize: false";
+    
+    var left = document.createElement('a-entity');
+    var right = document.createElement('a-entity');
+    
+    left.setAttribute('position', "0 0 4.25");
+    right.setAttribute('position', "0 0 -4.25");
+    
+    left.setAttribute('rng-robotlegs', 'color1: ' + data.color1 + '; numbeats: ' + data.numbeats
+                      + '; start: ' + (this.firstpos.z + data.start - 4.25) + '; dist: ' + data.dist);
+    right.setAttribute('rng-robotlegs', 'reverse: true; color1: ' + data.color1 + '; numbeats: ' + data.numbeats
+                       + "; start: " + (this.firstpos.z + data.start + 4.25) + '; dist: ' + data.dist);
+    
+    var core = document.createElement('a-entity');
+    //core.setAttribute('position', corepos);
+    core.appendChild(left);
+    core.appendChild(right);
+    
+    for (var i = 0; i < 3; i++) {
+      var center = document.createElement('a-entity');
+      center.setAttribute('position', (2.5 + 4.5*i) + " 10 0");
+      
+      var cpos = center.getAttribute('position');
+      center.setAttribute('rotation', "0 0 0");
+      center.setAttribute('building', buildingAttrs);
+      core.appendChild(center);
+    }
+    
+    this.el.appendChild(core);
+    if (data.reverse) {
+      this.el.setAttribute('rotation', "0 0 0");
+    }
+    else this.el.setAttribute('rotation', "0 180 0");
+  },
+  tick: function (time, timeDelta) {
+    this.time += timeDelta * (4 / this.data.numbeats);
+    sinmove(this);
+  }
+});
+
+/*
+  Legs for walking building. Needed to be a separate component so it could have its own layout and movement mechanics
+*/
+AFRAME.registerComponent('rng-robotlegs', {
+  // TODO: can schema be a variable?
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    numbeats: {default: 8}, // Number of beats per movement
+    reverse: {default: false},
+    start: {default: 0},
+    dist: {default: 8},
+    cont: {default: false},
+  },
+  init: function () {
+    var data = this.data;
+    
+    this.pos = 0;
+    this.cont = this.data.cont;
+    this.skip = true;
+    
+    this.start = data.start;
+    this.started = false;
+    this.reverse = 1;
+    if (data.reverse) {
+      this.reverse = -1;
+    }
+    this.time = 0;
+    
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    this.firstpos = this.el.getAttribute('position');
+    
+    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + 1 + "; height: " + 2 + "; optimize: false";
+
+    var core = document.createElement('a-entity');
+    
+    var bar = document.createElement('a-entity');
+    bar.setAttribute('position', "6 10.3 0");
+    bar.setAttribute('rotation', "0 0 90");
+    bar.setAttribute('building', buildingAttrs);
+    core.appendChild(bar);
+    
+    var front = document.createElement('a-entity');
+    front.setAttribute('position', "8 0 0");
+    front.setAttribute('building', buildingAttrs);
+    core.appendChild(front);
+    
+    var back = document.createElement('a-entity');
+    back.setAttribute('position', "-8 0 0");
+    back.setAttribute('building', buildingAttrs);
+    core.appendChild(back);
+
+    this.el.appendChild(core);
+  },
+  tick: function (time, timeDelta) {
+    this.time += timeDelta * (4 / this.data.numbeats);
+    sinmove(this);
+  }
+});
+
+/* 
+  Generate buildings which do not use shaders. These are made using
+  individual plane geometries for windows. They use more GPU resources,
+  but they are affected by environment fog and allow for a different set
+  of animations than buildings made with custom shaders.
+*/
+AFRAME.registerComponent('rng-building', {
+  schema: {
+    // Input probabilities
+    windowtype: {default: ''},
+    colortype: {default: ''},
+    color1: {default: ''},
+    color2: {default: ''},
+    width: {default: 1},
+    height: {default: 1},
+  },
+  init: function () {
+    var data = this.data;
+    
+    var height = data.height;
+    var width = data.width;
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    //console.log("width is " + width + ", height is " + height + ", windowtype is " + window);
+    
+    var building = document.createElement('a-entity');
+    building.setAttribute('building', "windowtype: " + window + "; colortype: " + colortype + "; color1: "
+                          + data.color1 + "; color2: " + data.color2 + "; width: " + width + "; height: " + height);
+    this.el.appendChild(building);
+    this.id++;
+  }
+});
+
+/*
+  Generate city buildings using building-shader. Takes advantage of a large
+  number of customizeable options in the shader, but not all.
+*/
+AFRAME.registerComponent('rng-building-shader', {
+  schema: {
+    axis: {default: '1 1'},
+    width: {default: 1},
+    height: {default: 1},
+    static: {default: '1 1'},
+    grows: {default: '1 1 1 1'},
+    grow_slide: {default: '1 1'},
+    usecolor1: {default: '1 1'},
+    usecolor2: {default: '1 1'},
+    colorstyle: {default: '1 1 1 1'}, // single color, two color, one color to gradient, gradient
+  },
+  init: function () {
+    var data = this.data;
+    
+    var height = data.height;
+    var width = data.width;
+    var winheight = 0.5;
+    var winwidth = 0.5;
+    var slidereverse = 0.0;
+    var numrows = 2 * width;
+    var colorgrid = 1.0;
+    var invertcolors = 0.0;
+    
+    var slide = 0.0;
+    var grow = 0.0;
+    var move = rng([0.0, 1.0], data.static);
+    var axis = rng([0.0, 1.0], data.axis);
+    if (move) {
+      var ngs = rng([0.0, 1.0], data.grow_slide);
+      slidereverse = Math.floor(Math.random() * 2);
+      slide = ngs;
+      grow = 1 - ngs;
+    }
+    var growsine = grow;
+    if (grow) {
+      numrows = rng([numrows, 50.0, 150.0, 200.0], data.grows);
+      if (numrows > 100) {
+        invertcolors += 1;
+        winheight = 0.95;
+        winwidth = 0.95;
+      }
+      else {
+        grow *= 16;
+      }
+      colorgrid = 0.0;
+    }
+
+    var buildingwidth = 5 * width;
+    var buildingheight = 2 * buildingwidth;
+    var setheight = (buildingheight - buildingheight / 2);
+    
+    var color1 = getRandomColor();
+    var color2 = getRandomColor();
+    var usecolor1 = 1.0;
+    var usecolor2 = 1.0;
+    var colorstyle = rng(['single', 'double', 'singlegrad', 'doublegrad'], data.colorstyle);
+    if (colorstyle == 'single') {
+      color2 = color1;
+    }
+    else if (colorstyle == 'singlegrad') {
+      usecolor1 = rng([0.0, 1.0], data.usecolor1);
+      usecolor2 = 1.0 - usecolor1;
+    }
+    else if (colorstyle == 'doublegrad') {
+      usecolor1 = 0.0;
+      usecolor2 = 0.0;
+    }
+    var offset = Math.floor(Math.random() * 2);
+    //console.log("usecolor1 is " + usecolor1 + " and usecolor2 is " + usecolor2);
+    
+    for (var i = 0; i < height; i++) {
+      var building = document.createElement('a-entity');
+      building.setAttribute('material', "shader: building-shader;"
+                            + "; color1: " + color1 + "; color2: " + color2 + "; numrows: " + numrows 
+                            + "; grow: " + grow + "; growsine: " + growsine + "; invertcolors: " + invertcolors
+                            + "; slide: " + slide + "; slidereverse: " + slidereverse + "; slideaxis: " + axis 
+                            + "; colorslide: " + slide + "; coloraxis: " + axis + "; colorgrid: " + colorgrid
+                            + "; speed: 1.0; height: " + winheight + "; width: " + winwidth
+                            + "; coloroffset: " + 0 + "; usecolor1: " + usecolor1 + "; usecolor2: " + usecolor2);
+      building.setAttribute('geometry', "primitive: box; width: " + buildingwidth + "; height: " + buildingheight + "; depth: " + buildingwidth);
+      building.setAttribute('position', "0 " + setheight + " 0");
+      setheight += buildingheight;
+      this.el.appendChild(building);
+    }
+  }
+});
+
+/*
+Rng component for customizeable objects with complex shaders.
+*/
 AFRAME.registerComponent('rng-shader', {
   schema: {
     
@@ -112,375 +765,5 @@ AFRAME.registerComponent('rng-shader', {
                     + "; resolution: " + resolution + "; fadeaway: " + fadeaway + "; uniformity: " + uniformity
                     + "; zoom: " + zoom + "; intensity: " + intensity + "; skip: " + skip);
     this.el.appendChild(entity);
-  }
-});
-
-// Global vars used by assets to time animations to music
-var beat = 594.059;
-var dur = beat * 4;
-var animAttrs = ' dir: alternate; loop: true; ';
-
-function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) {
-  if (depth > 1) {
-    var xoffset = 0; var yoffset = -10; var zoffset = 0;
-    var xangle = 0; var yangle = 0;
-    //var angle = 0;
-    // Calibrated for a 1x1 block
-    if (axis == 'y') {
-      var xoffset = 0.1 * (angle / 5);
-      var yoffset = 6 + (0.1 * (angle / 5));
-      yangle = angle;
-    }
-    // Calibrated for a 1x2 block
-    else if (axis == 'x') {
-      var xoffset = dist - 0.1 * (angle / 5);
-      var zoffset = 0.25 * (angle / 5);
-      xangle = angle;
-    }
-    
-    //var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
-    var mover = document.createElement('a-entity');
-    mover.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + -xoffset + ' ' + yoffset + ' ' + zoffset + ';'
-                       + animAttrs + 'easing: easeInOutExpo; dur: ' + dur);
-
-    var nextbuilding = document.createElement('a-entity');
-    nextbuilding.setAttribute('building', buildingAttrs);
-    nextbuilding.setAttribute('position', "0 0 0");
-    nextbuilding.setAttribute('scale', scale + " " + scale + " " + scale);
-    nextbuilding.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 ' + xangle + ' ' + yangle + ';'
-                              + animAttrs + 'easing: easeInOutExpo; dur: ' + dur);
-
-    arcBuildings(nextbuilding, buildingAttrs, angle, dist, scale, axis, depth - 1);
-    
-    mover.appendChild(nextbuilding);
-    building.appendChild(mover);
-  }
-}
-
-AFRAME.registerComponent('rng-building-arc', {
-  schema: {
-    // Input probabilities
-    windowtype: {default: '1 0 0 0 0'},
-    colortype: {default: '1 0 0 0 0 0'},
-    color1: {default: ''},
-    color2: {default: ''},
-    width: {default: 1},
-    height: {default: 1},
-    angle: {default: -1}, // If not specified, will be 0 through 6
-    axis: {default: 'y'},
-    spread: {default: 1}, // How far apart to spread buildings. 1 is flush
-    num: {default: 7},
-    slide: {default: false},
-    scale: {default: 1},
-  },
-  init: function () {
-    var data = this.data;
-    
-    var height = data.height;
-    var width = data.width;
-    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
-    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
-    
-    var building = document.createElement('a-entity');
-    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                          + "; width: " + width + "; height: " + height + "; optimize: false";
-    building.setAttribute('building', buildingAttrs);
-    
-    angle = data.angle;
-    if (angle < 0) {
-      var angle = rng([0, 5, 10, 15, 20, 25, 30, 45], '2 2 1 1 1 1 2 1');
-    }
-    
-    if (data.axis == 'y') {
-      building.setAttribute('position', "0 6 0");
-      
-      var bottom = document.createElement('a-entity');
-      bottom.setAttribute('building', buildingAttrs);
-      this.el.appendChild(bottom);
-    }
-    else if (data.axis == 'x') {
-      angle = -angle;
-    }
-    
-    var dist = 4.8 * data.spread;
-    arcBuildings(building, buildingAttrs, angle, dist, data.scale, data.axis, data.num);
-    
-    var rotation = rng([0, 90, 180, 270], '1 1 1 1');
-    building.setAttribute('rotation', '0 ' + rotation + ' 0');
-    this.el.appendChild(building);
-  }
-});
-
-AFRAME.registerComponent('rng-building-flower', {
-  schema: {
-    // Input probabilities
-    windowtype: {default: '1 0 0 0 0'},
-    colortype: {default: '1 0 0 0 0 0'},
-    color1: {default: ''},
-    color2: {default: ''},
-    width: {default: 1},
-    height: {default: 1},
-    preset: {default: 'flower'},
-  },
-  init: function () {
-    var data = this.data;
-    
-    var height = data.height;
-    var width = data.width;
-    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
-    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
-    
-    var moveup = 0;
-    var fallout = 0;
-    var fallover = 0;
-    if (data.preset == 'flower') {
-      moveup = 0;
-      fallout = 3;
-      fallover = 45;
-    }
-    if (data.preset == 'cross') {
-      moveup = 10;
-      fallout = 0;
-      fallover = 90;
-    }
-    
-    var angle = 0;
-    for (var i = 0; i < 4; i++) {
-      var mover = document.createElement('a-entity');
-      mover.setAttribute('animation__turn', 'property: rotation; from: 0 ' + angle + ' 0; to: 0 ' + angle + ' ' + fallover + ';'
-                         + animAttrs + 'easing: easeInOutQuart; dur: ' + dur);
-      var building = document.createElement('a-entity');
-      var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                            + "; width: " + width + "; height: " + height + "; optimize: false";
-      building.setAttribute('building', buildingAttrs);
-      building.setAttribute('animation__move', 'property: position; from: 0 2 0; to: ' + moveup + ' ' + fallout + ' 0;'
-                            + animAttrs + 'easing: easeInOutQuart; dur: ' + dur);
-      mover.appendChild(building);
-      this.el.appendChild(mover);
-      angle += 90;
-    }
-    this.el.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 90 0; dir: alternate; loop: true; easing: easeInOutSine; dur: ' + (dur * 2));
-  }
-});
-
-AFRAME.registerComponent('rng-building-slider', {
-  schema: {
-    // Input probabilities
-    windowtype: {default: '1 0 0 0 0'},
-    colortype: {default: '1 0 0 0 0 0'},
-    color1: {default: ''},
-    color2: {default: ''},
-    width: {default: 1},
-    height: {default: 1},
-  },
-  init: function () {
-
-    var data = this.data;
-    
-    this.reverse = 1;
-    this.flip = 1;
-    this.time = 0;
-    
-    var height = data.height;
-    var width = data.width;
-    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
-    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
-    
-    this.firstpos = this.el.getAttribute('position');
-    
-    var delay = 0;
-    for (var i = 0; i < 4; i++) {
-      var building = document.createElement('a-entity');
-      var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                            + "; width: " + width + "; height: " + height + "; optimize: false";
-      building.setAttribute('building', buildingAttrs);
-      building.setAttribute('rotation', "0 0 0");
-      this.el.appendChild(building);
-    }
-  },
-  tick: function (time, timeDelta) {
-    this.time += timeDelta;
-    var curpos = this.firstpos;
-    var pi = 3.14159265358979;
-    if (this.time > 4*beat) {
-      this.reverse = -this.reverse;
-      this.time = 0;
-    }
-    for (var i = 0; i < this.el.children.length; i++) {
-      
-      var sinval = (this.time - beat*i/8)*(pi/(2*beat));
-      
-      var dist = 12;
-      //curpos.x = dist*Math.sin(sinval*this.reverse);
-      if (sinval > pi/2 && sinval < 3*pi/2) {
-        curpos.x = dist*Math.sin(sinval*this.reverse);
-        curpos.y = -dist*Math.cos(sinval*this.reverse);
-      }
-      else {
-        //console.log("sinval is " + sinval + " and reverse is " + this.reverse);
-        if ((this.reverse < 0 && sinval < 3*pi/2) || (this.reverse > 0 && sinval > pi/2)) {
-          dist = -dist;
-        }
-        curpos.x = dist;
-        curpos.y = 0;
-      }
-      this.el.children[i].setAttribute('position', curpos);
-    }
-  }
-});
-
-AFRAME.registerComponent('beat-emitter', {
-  schema: {
-    target: {default: ''}, 
-  },
-  init: function () {
-    this.beatbar = beat;
-    this.target = document.querySelector(this.data.target);
-  },
-  tick: function (time, timeDelta) {
-    while (time > this.beatbar) {
-      this.beatbar += beat * 2;
-      if (time > 2000) {
-        //console.log("beat emit!");
-        this.target.emit('beat', 'deets', true);
-      }
-    }
-  }
-});
-
-/* 
-  Generate buildings which do not use shaders. These are made using
-  individual plane geometries for windows. They use more GPU resources,
-  but they are affected by environment fog and allow for a different set
-  of animations than buildings made with custom shaders.
-*/
-AFRAME.registerComponent('rng-building', {
-  schema: {
-    // Input probabilities
-    windowtype: {default: ''},
-    colortype: {default: ''},
-    color1: {default: ''},
-    color2: {default: ''},
-    width: {default: 1},
-    height: {default: 1},
-  },
-  init: function () {
-    var data = this.data;
-    
-    var height = data.height;
-    var width = data.width;
-    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
-    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
-    
-    //console.log("width is " + width + ", height is " + height + ", windowtype is " + window);
-    
-    var building = document.createElement('a-entity');
-    building.setAttribute('building', "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                          + "; width: " + width + "; height: " + height);
-    this.el.appendChild(building);
-    this.id++;
-  }
-});
-
-/*function getRandomColor2() {
-  var letters = '0123456789ABCDEF';
-  var color = '#';
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}*/
-
-/*
-  Generate city buildings using building-shader. Takes advantage of a large
-  number of customizeable options in the shader, but not all.
-*/
-AFRAME.registerComponent('rng-building-shader', {
-  schema: {
-    axis: {default: '1 1'},
-    width: {default: 1},
-    height: {default: 1},
-    static: {default: '1 1'},
-    grows: {default: '1 1 1 1'},
-    grow_slide: {default: '1 1'},
-    usecolor1: {default: '1 1'},
-    usecolor2: {default: '1 1'},
-    colorstyle: {default: '1 1 1 1'}, // single color, two color, one color to gradient, gradient
-  },
-  init: function () {
-    var data = this.data;
-    
-    //var width = rng([1.0, 2.0], data.width);
-    //var height = rng([1.0, 2.0, 3.0, 4.0, 5.0], data.height);
-    var height = data.height;
-    var width = data.width;
-    var winheight = 0.5;
-    var winwidth = 0.5;
-    var slidereverse = 0.0;
-    var numrows = 2 * width;
-    var colorgrid = 1.0;
-    var invertcolors = 0.0;
-    
-    var slide = 0.0;
-    var grow = 0.0;
-    var move = rng([0.0, 1.0], data.static);
-    var axis = rng([0.0, 1.0], data.axis);
-    if (move) {
-      var ngs = rng([0.0, 1.0], data.grow_slide);
-      slidereverse = Math.floor(Math.random() * 2);
-      slide = ngs;
-      grow = 1 - ngs;
-    }
-    var growsine = grow;
-    if (grow) {
-      numrows = rng([numrows, 50.0, 150.0, 200.0], data.grows);
-      if (numrows > 100) {
-        invertcolors += 1;
-        winheight = 0.95;
-        winwidth = 0.95;
-      }
-      else {
-        grow *= 16;
-      }
-      colorgrid = 0.0;
-    }
-
-    var buildingwidth = 5 * width;
-    var buildingheight = 2 * buildingwidth;
-    var setheight = (buildingheight - buildingheight / 2 - 1.5);
-    
-    var color1 = getRandomColor();
-    var color2 = getRandomColor();
-    var usecolor1 = 1.0;
-    var usecolor2 = 1.0;
-    var colorstyle = rng(['single', 'double', 'singlegrad', 'doublegrad'], data.colorstyle);
-    if (colorstyle == 'single') {
-      color2 = color1;
-    }
-    else if (colorstyle == 'singlegrad') {
-      usecolor1 = rng([0.0, 1.0], data.usecolor1);
-      usecolor2 = 1.0 - usecolor1;
-    }
-    else if (colorstyle == 'doublegrad') {
-      usecolor1 = 0.0;
-      usecolor2 = 0.0;
-    }
-    var offset = Math.floor(Math.random() * 2);
-    //console.log("usecolor1 is " + usecolor1 + " and usecolor2 is " + usecolor2);
-    
-    for (var i = 0; i < height; i++) {
-      var building = document.createElement('a-entity');
-      building.setAttribute('material', "shader: building-shader;"
-                            + "; color1: " + color1 + "; color2: " + color2 + "; numrows: " + numrows 
-                            + "; grow: " + grow + "; growsine: " + growsine + "; invertcolors: " + invertcolors
-                            + "; slide: " + slide + "; slidereverse: " + slidereverse + "; slideaxis: " + axis 
-                            + "; colorslide: " + slide + "; coloraxis: " + axis + "; colorgrid: " + colorgrid
-                            + "; speed: 1.0; height: " + winheight + "; width: " + winwidth
-                            + "; coloroffset: " + offset + "; usecolor1: " + usecolor1 + "; usecolor2: " + usecolor2);
-      building.setAttribute('geometry', "primitive: box; width: " + buildingwidth + "; height: " + buildingheight + "; depth: " + buildingwidth);
-      building.setAttribute('position', "0 " + setheight + " 0");
-      setheight += buildingheight;
-      this.el.appendChild(building);
-    }
   }
 });
