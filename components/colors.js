@@ -113,7 +113,7 @@ AFRAME.registerComponent('entity-colors', {
      this.delaysynch = this.beat * data.delaysynch;
      this.time = -data.delay * this.beat;
      this.counter = 0; // DEBUG
-     this.build = !data.audio_build;
+     this.build = !data.audio_buildup;
      for (var i = 0; i < data.num; i++) {
        var entity = document.createElement('a-entity');
        entity.setAttribute('mixin', data.mixin);
@@ -182,7 +182,7 @@ AFRAME.registerComponent('entity-colors', {
            levels = analyserEl.components.audioanalyser.levels;
          }
          if (this.build < 1) {
-           this.build += 0.001 * data.audio_build;
+           this.build += 0.001 * data.audio_buildup;
          }
          var children = this.el.children;
          for (var i = 0; i < children.length; i++) {
@@ -196,7 +196,7 @@ AFRAME.registerComponent('entity-colors', {
            var curprop = children[i].getAttribute(data.audio_property);
            if (data.audio_property == 'position') {
              val -= leval;
-             
+
              // TODO: this can't be the same flag as flip directional reverse
              if (data.reverse) {
                val = -val; 

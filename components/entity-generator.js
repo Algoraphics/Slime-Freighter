@@ -224,7 +224,7 @@ AFRAME.registerComponent('building', {
       var z = buildingwidth * Math.cos(rad) / 2;
 
       windowgrid.setAttribute('rotation', "0 " + angle * i + " 0");
-      windowgrid.setAttribute('position', x + " 0 " + z);
+      windowgrid.setAttribute('position', x + " " + 1.75 + " " + z);
       
       this.el.appendChild(windowgrid);
     }
@@ -234,7 +234,7 @@ AFRAME.registerComponent('building', {
     
     building.setAttribute('geometry', "primitive: box; width: " + buildingwidth + "; height: " + buildingheight + "; depth: " + buildingwidth);
     building.setAttribute('material', "color: #000000");
-    var buildingy = (numrows * rowmargin) / 2 - (rowmargin / 2);
+    var buildingy = (numrows * rowmargin) / 2 - (rowmargin / 2) + 1.75;
     building.setAttribute('position', "0 " + buildingy + " 0");
     this.el.appendChild(building);
   }
