@@ -109,6 +109,7 @@ AFRAME.registerComponent('rng-building-arc', {
     num: {default: 4},
     slide: {default: false},
     scale: {default: 1},
+    start: {default: -150},
   },
   init: function () {
     var data = this.data;
@@ -218,6 +219,7 @@ function sinmove(comp) {
       if (campos.z > comp.start + comp.firstpos.z) {
         return;
       } else {
+        console.log("Starting! campos passed " + comp.start + " + " + comp.firstpos.z);
         comp.started = true;
         comp.el.emit('started', '', true);
       }
@@ -296,7 +298,7 @@ AFRAME.registerComponent('rng-building-sine', {
     num: {default: 4}, // Number of elements
     numbeats: {default: 2}, // Number of beats per movement
     reverse: {default: false},
-    start: {default: 0},
+    start: {default: -250},
     dist: {default: 12},
     cont: {default: false},
     skip: {default: false},
@@ -453,7 +455,7 @@ AFRAME.registerComponent('rng-building-robot', {
     color1: {default: ''},
     color2: {default: ''},
     numbeats: {default: 4}, // Number of beats per movement
-    start: {default: 50}, // Delay walking
+    start: {default: -200}, // Delay walking
     dist: {default: 8},
     reverse: {default: false},
   },
@@ -759,11 +761,12 @@ AFRAME.registerComponent('rng-shader', {
     var shape = rng(['box', 'sphere', 'cylinder'], data.shape);
     var entity = document.createElement('a-entity');
     entity.setAttribute('geometry', "primitive: " + shape + "; height: " + data.height + "; width: " + data.width 
-                         + "; depth: " + data.width + "; radius: " + (data.width / 2));
+                         + "; depth: " + data.width + "; radius: " + (data.width / 2) + "segmentsWidth: 80; segmentsHeight: 80;");
     entity.setAttribute('material', "side: double; shader: " + shader + "-shader; speed: " + speed
                     + "; brightness: " + brightness + "; color: " + color + "; backgroundColor: " + bgcolor 
                     + "; resolution: " + resolution + "; fadeaway: " + fadeaway + "; uniformity: " + uniformity
-                    + "; zoom: " + zoom + "; intensity: " + intensity + "; skip: " + skip);
+                    + "; zoom: " + zoom + "; intensity: " + intensity + "; skip: " + skip
+                    + "; frequency: " + 15 + "; amplitude: " + 0.2 + "; displacement: " + 1.0 + "; scale: " + 4.0);
     this.el.appendChild(entity);
   }
 });
