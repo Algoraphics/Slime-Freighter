@@ -200,7 +200,8 @@ AFRAME.registerComponent('slide', {
     reset: {default: 8},
     axis: {default: 'z'},
     speed: {default: 5},
-    loop: {default: true}
+    loop: {default: true},
+    stop: {default: 100000000},
   },
   init: function () {
     var el = this.el;
@@ -209,6 +210,10 @@ AFRAME.registerComponent('slide', {
   },
   tick: function (time, timeDelta) {
     var el = this.el;
+    // TODO: generalize for all axes and set reasonable default
+    if (el.getAttribute('position').z < -800) {
+      return; 
+    }
     var data= this.data;
     var positionTmp = this.positionTmp = this.positionTmp || {x: 0, y: 0, z: 0};
     var position = el.getAttribute('position');

@@ -20,8 +20,9 @@ AFRAME.registerComponent('worldbuilder', {
     heightprobs: {default: '1 1 1 1 1'},
     buildingfunction: {default: "none"}, // Function to call to determine what kind of buildings get placed
     stopfollow: {default: 0}, // When the city should stop following the camera
+    loadmult: {default: 1}, // Multiplier for how early we should load. 1 is earliest
     buildgrids: {default: true},
-    unload: {default: -100000000},
+    unload: {default: -1000},
   },
   init: function () {
     var data = this.data;
@@ -45,7 +46,7 @@ AFRAME.registerComponent('worldbuilder', {
     // Rise buildings from ground
     if (data.buildingfunction == 'colorCity') {
       var from = "" + pos.x + " " + pos.y + " " + pos.z;
-      var to = pos.x + " " + (pos.y + 351.5) + " " + pos.z;
+      var to = pos.x + " " + (pos.y + 350) + " " + pos.z;
       this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 30000; startEvents: doneloading");
     }
     // Offset to help with z-fighting
@@ -55,7 +56,8 @@ AFRAME.registerComponent('worldbuilder', {
     this.zshift = 0;
     
     // Set the line at which buildings should begin to be loaded. Zpos here is the full z length of the world
-    this.loadbar = pos.z + 1.5 * this.zpos;
+    this.loadbar = pos.z + data.loadmult * this.zpos;
+    this.unload = pos.z + data.unload;
     // Debug
     this.startbar = this.loadbar;
 
@@ -63,10 +65,11 @@ AFRAME.registerComponent('worldbuilder', {
     this.time = 0;
     this.movedex = 0;
     this.follow = true;
+    this.stopfollow = data.stopfollow + this.zpos/2;
     
     // Useful info for planning multiple worlds in sequence
     console.log("Worldbuilder " + data.buildingfunction + " starts at " + (pos.z + this.zpos) + " and ends at " + (pos.z) + ", center is " + this.centerz +
-                ". loadbar is " + this.loadbar + ", will stop following at " + data.stopfollow + ", will de-load at " + data.unload);
+                ". loadbar is " + this.loadbar + ", will stop following at " + (data.stopfollow) + ", will de-load at " + this.unload);
   },
   tick: function (time, timeDelta) {
     var el = this.el;
@@ -74,16 +77,18 @@ AFRAME.registerComponent('worldbuilder', {
     var campos = document.querySelector('#camera').getAttribute('position');
     
       //console.log("Beginning to load worldbuilder " + data.buildingfunction);
-    if (campos.z < data.unload) {
+    if (campos.z < this.unload) {
+      console.log("Removing worldbuilder " + data.buildingfunction);
+      el.setAttribute('visible', false);
       this.unloading = true;
       this.loading = false;
     }
-    //console.log("campos is " + campos.z);
     if (this.loading && campos.z < this.loadbar) {
+      // TODO this does not work (prints continuously) if loadbar isn't being moved, e.g. high speed load is being used
       if (this.startbar == this.loadbar) {
-        console.log("Started loading " + data.buildingfunction);
+        //console.log("Started loading " + data.buildingfunction);
       }
-      this.loadbar -= 5;
+      //this.loadbar -= 5;
 
       // Create the row and add it immediately. It will need to be retrieved every tick anyway so we can do slow loading
       if (this.x == 0) {
@@ -123,24 +128,24 @@ AFRAME.registerComponent('worldbuilder', {
       }
     }
     else if (this.unloading) {
-      
+      el.parentNode.removeChild(el);
     }
     // After loading, begin moving
     else {
-       if (campos.z < this.centerz && campos.z > data.stopfollow) {
+       //console.log("campos is " + campos.z);
+       if (campos.z < this.centerz && campos.z > (this.stopfollow)) {
          var row = el.children[this.movedex];
          var pos = row.getAttribute('position');
+         // TODO: cycling, although may not be necessary with smart pre-loading. Maybe add optional feature to remove rows as we go?
 
          pos.z -= this.zmax * data.grid;
-         // TODO: needs to be custom value
-         pos.y -= 350;
-         el.children[this.movedex].setAttribute('position', pos);
-         var from = "" + pos.x + " " + pos.y + " " + pos.z;
-         var to = pos.x + " " + (pos.y + 350) + " " + pos.z;
-         el.children[this.movedex].setAttribute('animation__move',"property: position; from: " + from + "; to: " + to + "; easing: easeInCubic; dur: 594.094;");
-
+         // TODO: posy offset for animation needs to be custom value
+         var from = "" + pos.x + " " + (pos.y - 350) + " " + pos.z;
+         var to = pos.x + " " + pos.y + " " + pos.z;
+         row.setAttribute('animation__move',"property: position; from: " + from + "; to: " + to + "; easing: easeInCubic; dur: 594.094;");
+         //console.log("moving to position " + pos.z + ". campos is " + campos.z);
          this.movedex++;
-         this.centerz -= data.grid
+         this.centerz -= data.grid;
          if (this.movedex == this.zmax) {
            this.movedex = 0; 
          }
@@ -298,6 +303,11 @@ function colorCity(builder, data) {
       builder.xshift = 0.5;
       builder.zshift = 0.5;
     }
+    else {  
+      rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height
+                               + "; grow_slide: 1 1; static: 1 2; axis: 1 1"
+                               + "; usecolor1: 1 1; usecolor2: 1 1; colorstyle: 1 4 4 1");
+    }
 
     // Flip buildings on right
     var yrotation = 0;
@@ -318,6 +328,10 @@ function colorCity(builder, data) {
 
 function movingCity(builder, data) {
 
+  builder.loadbar -= 5;
+  var start = builder.el.getAttribute('position').z - builder.zpos;
+  console.log("setting start to " + start);
+  
   var width = 1;
   var height = 2;
   
@@ -327,7 +341,7 @@ function movingCity(builder, data) {
   var xcenter = (builder.xmax - data.numblockx * data.gapwidth) / 2;
   var rngbuilding = document.createElement('a-entity');
   var typestr = "; windowtype: 1 0 1 1 1; colortype: 1 0 0 0 0 0";
-  var type = rng(['arcy', 'arcx', 'flower', 'sine'], '1 1 1 1');
+  var type = rng(['arcy', 'arcx', 'flower', 'sine'], '0 0 0 1');
   if (builder.x == 0) {
     type = rng([type, 'robot'], '1 1');
   }
@@ -344,16 +358,18 @@ function movingCity(builder, data) {
   }
   else if (type == 'sine') {
     height = rng([1,2,3],'3 2 1');
-    rngbuilding.setAttribute('rng-building-sine', "color1: #ffff00; width: 1; height: " + height + typestr);
+    rngbuilding.setAttribute('rng-building-sine', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
   }
   else if (type == 'robot') {
     // TODO: transfer windowtype to legs
     builder.x = builder.xmax - 1;
     var reverse = rng([true, false], '1 1');
-    rngbuilding.setAttribute('rng-building-robot', "color1: #ffff00; reverse: " + reverse + "; width: 1; height: " + height + typestr);
-    xoffset = 200;
+    start -= 100;
+    rngbuilding.setAttribute('rng-building-robot', "color1: #ffff00; reverse: " + reverse
+                             + "; width: 1; height: " + height + typestr + "; start: " + start);
+    xoffset = 208;
     if (reverse) {
-      xoffset = -xoffset
+      xoffset = -xoffset/2 + 8;
     }
   }
 
