@@ -24,7 +24,7 @@
     </script>
   </head>
   <body>
-    <a-scene fog="type: exponential; density: 0.0; color: #101010" animation__fog="property: fog.density; easing: easeOutCirc; to: 0; delay: 50000; dur: 20000">
+    <a-scene fog="type: exponential; density: 0.0; color: #101010" animation__fog="property: fog.density; easing: easeOutCirc; to: 0; delay: 100000; dur: 20000">
       <a-assets>
         <img id="stars" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fstarfield.png?1513307410255">
         <img id="green" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fgreenfield.jpg?1513824807936">
@@ -120,23 +120,26 @@
       Fractals!
       <a-entity rng-shader="shader: fractal-test; width: 10; height: 5; shape: 0 1 0; resolution: 0 0 1 0;" position="0 5 10" rotation="0 -90 180"></a-entity>
       <!--<a-entity rng-shader="shader: fractal-test; width: 10; height: 5; shape: 0 1 0; resolution: 0 0 1 0;" position="0 5 10" rotation="0 -90 180"
-                animation__move="property: position; from: 0 1000 -1100; to: 0 6 -800; easing: easeOutCubic; delay: 100000; dur: 50000;"></a-entity>-->
+                animation__move="property: position; from: 0 1000 -1100; to: 0 6 -1000; easing: easeOutCubic; delay: 100000; dur: 50000;"></a-entity>
 
       <a-entity visible="false" worldbuilder=" buildingfunction: colorCity; blockx: 5; blockz: 15; numblockx: 6; numblockz: 3;
                               gapwidth: 2; widthprobs: 0.15 0.2 0.15 0.1 0.05; maxheight: 7; heightprobs: 1 1 1 1 1 1 1;
                               loadmult: 3; stopfollow: -1000;"
-                class="slowdelete" rotation = "0 0 0" position="-62 -350 -750" scale = "1 1 1"></a-entity>
-      <a-entity visible="false" worldbuilder=" buildingfunction: movingCity; blockx: 4; blockz: 6; 
-                                               grid: 30; buildgrids: false; loadmult: 2; stopfollow: -500"
-                class="slowdelete" rotation = "0 0 0" position="-48 0 -300" scale = "1 1 1"></a-entity>
+                class="slowdelete" rotation = "0 0 0" position="-62 -350 -750" scale = "1 1 1"></a-entity>-->
+      <a-entity visible="false" worldbuilder=" buildingfunction: movingCity; blockx: 4; blockz: 8; 
+                                        grid: 30; buildgrids: false; loadmult: 2; stopfollow: -500"
+                animation__rise="property: position; from: -48 -15 -300; to: -48 0 -300; easing: easeInCubic; dur: 594.059; delay: 30000"
+                class="slowdelete" position = "-48 -15 -300" rotation = "0 0 0"></a-entity>
       
       <!-- comment stopper -->
       <a-entity id="camera" camera="userHeight: 1.6; near: 0.5" look-controls wasd-controls="acceleration: 500;" 
                 slide="speed: 5; reset: -1" position="0 1 10" rotation="30 0 0"></a-entity>
       
       <!--<a-entity visible="true" id="slider" rng-building-robot="skip: true; color1: #ffff00; num:4; start: 60" position="-143 0 -100" rotation="0 0 0"></a-entity>
-      <a-entity beat-emitter="target: #slider"></a-entity>-->
+      <a-entity beat-emitter="target: #slider"></a-entity>
       <a-box material="color:red" audio-react="analyserEl: #analyser" position="0 3 -5"></a-box>
+
+      <a-entity rng-building-arc="start: 20" position="0 0 -20"></a-entity>
       <!-- beat: 594.059 half beat: 297.029 -->
     </a-scene>
   </body>

@@ -51,13 +51,15 @@ AFRAME.registerComponent('audio-react', {
     multiplier: {default: 1}, //
     build: {default: 0}, // Slowly build to full volume (num is speed)
     stablebase: {default: true}, // Stabilize bottom of scaling asset
+    start: {default: 0},
   },
   init: function () {
     this.build = 0;
+    this.firstpos = this.el.getAttribute('position');
     if (!this.data.build) {
       this.build = 1;
-      this.initialy = this.el.getAttribute('position').y;
     }
+    console.log("Will start dancing at " + this.data.start);
   },
   tick: function () {
     var data = this.data;
@@ -65,7 +67,10 @@ AFRAME.registerComponent('audio-react', {
     var volume = 0;
     var levels;
     
-    if (analyserEl) {
+    var cam = document.querySelector('#camera');
+    var campos = cam.getAttribute('position');
+    //console.log("campos is " + campos + " and start is " + data.start);
+    if (analyserEl && campos.z < (data.start + this.firstpos.z)) {
        volume = analyserEl.components.audioanalyser.volume * data.multiplier * 0.05;
     }
     else return;
@@ -97,7 +102,7 @@ AFRAME.registerComponent('audio-react', {
         this.el.setAttribute('position', {
           x: curpos.x,
           // TODO this may not work with moving objects, will always reset y position to initial
-          y: this.initialy + val/2,
+          y: this.firstpos.y + val/2,
           z: curpos.z
         });
       }
@@ -211,7 +216,7 @@ AFRAME.registerComponent('slide', {
   tick: function (time, timeDelta) {
     var el = this.el;
     // TODO: generalize for all axes and set reasonable default
-    if (el.getAttribute('position').z < -800) {
+    if (el.getAttribute('position').z < -1000) {
       return; 
     }
     var data= this.data;
