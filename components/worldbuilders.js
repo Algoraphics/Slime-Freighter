@@ -22,7 +22,7 @@ AFRAME.registerComponent('worldbuilder', {
     stopfollow: {default: 0}, // When the city should stop following the camera
     loadmult: {default: 1}, // Multiplier for how early we should load. 1 is earliest
     buildgrids: {default: true},
-    unload: {default: -1000},
+    unload: {default: -300},
   },
   init: function () {
     var data = this.data;
@@ -328,55 +328,109 @@ function colorCity(builder, data) {
 
 function movingCity(builder, data) {
 
-  builder.loadbar -= 5;
   var start = builder.el.getAttribute('position').z - builder.zpos;
-  console.log("setting start to " + start);
   
   var width = 1;
   var height = 2;
   
   var xoffset = 0;
   var zoffset = 0;
+  var gridset = data.grid / 3;
+  var fullrange = Math.random() * 2 * gridset - gridset;
+  
+  var yrotation = 0;
   
   var xcenter = (builder.xmax - data.numblockx * data.gapwidth) / 2;
   var rngbuilding = document.createElement('a-entity');
-  var typestr = "; windowtype: 1 0 1 1 1; colortype: 1 0 0 0 0 0";
-  var type = rng(['arcy', 'arcx', 'flower', 'sine'], '0 0 0 1');
-  if (builder.x == 0) {
-    type = rng([type, 'robot'], '1 1');
+  var typestr = "; windowtype: 1 0 0 0 0; colortype: 1 0 0 0 0 0";
+  var type = rng(['arcy', 'arcx', 'flower', 'sine', 'pulse', 'split', 'dance'], '2 1 1 2 2 1 4');
+  if (builder.x == 0 && builder.z == 4) {
+    type = 'robot';//rng([type, 'robot'], '0 1');
   }
+  // TODO: include shrinking for arcs
   if (type == 'arcy') {
-    rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; width: 1; height: 1" + typestr);
+    yrotation = rng([90, 180, 270], '1 6 1');
+    xoffset = fullrange;
+    zoffset = fullrange;
+    rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; width: 1; height: 1"
+                             + typestr + "; start: " + start);
   }
   else if (type == 'arcx') {
-    height = rng([1,2],'1 1');
-    rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; axis: x; width: 1; height: " + height + typestr);
+    height = rng([1,2,3],'1 1 1');
+    rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; axis: x; width: 1; height: "
+                             + height + typestr + "; start: " + start);
+    yrotation = rng([90, 180, 270], '1 4 1');
+    if (yrotation == 180) {
+      xoffset -= gridset - 5;
+      if (builder.x >= xcenter) {
+        xoffset = -xoffset;
+      }
+      zoffset = fullrange;
+    }
+    else {
+      zoffset = fullrange / 4;
+    }
+  }
+  else if (type == 'dance') {
+    height = rng([1,2,3],'1 1 2');
+    width = rng([1,2], '1 1');
+    rngbuilding.setAttribute('rng-building-dance', "color1: #ffff00; width: " + width + "; height: " + height + typestr + "; start: " + start);
   }
   else if (type == 'flower') {
     height = rng([1,2],'1 1');
-    rngbuilding.setAttribute('rng-building-flower', "color1: #ffff00; width: 1; height: " + height + typestr);
+    xoffset = fullrange;
+    zoffset = fullrange;
+    rngbuilding.setAttribute('rng-building-flower', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
+  }
+  else if (type == 'pulse') {
+    height = rng([1,2,3],'1 1 2');
+    xoffset = fullrange - 3;
+    if (builder.x >= xcenter) {
+      xoffset = -xoffset;
+    }
+    zoffset = fullrange;
+    rngbuilding.setAttribute('rng-building-pulse', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
+  }
+  else if (type == 'split') {
+    rngbuilding.setAttribute('rng-building-split', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
+    xoffset = -10;
+    if (builder.x >= xcenter) {
+        xoffset = -xoffset;
+    }
   }
   else if (type == 'sine') {
     height = rng([1,2,3],'3 2 1');
-    rngbuilding.setAttribute('rng-building-sine', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
+    var skip = rng([true, false], '1 1');
+    rngbuilding.setAttribute('rng-building-sine', "color1: #ffff00; width: 1; dist: 10; skip: " + skip
+                             + "; height: " + height + typestr + "; start: " + start);
+    yrotation = rng([0, 90, 270], '1 1 1');
+    if (yrotation == 0) {
+      xoffset -= gridset;
+      if (builder.x >= xcenter) {
+        xoffset = -xoffset;
+      }
+    }
+    else {
+      xoffset = fullrange;
+      zoffset = fullrange; 
+    }
   }
   else if (type == 'robot') {
-    // TODO: transfer windowtype to legs
     builder.x = builder.xmax - 1;
     var reverse = rng([true, false], '1 1');
-    start -= 100;
+    var thistart = data.stopfollow + 115;
     rngbuilding.setAttribute('rng-building-robot', "color1: #ffff00; reverse: " + reverse
-                             + "; width: 1; height: " + height + typestr + "; start: " + start);
-    xoffset = 208;
+                             + "; width: 1; height: " + height + typestr + "; start: " + thistart);
+    xoffset = 203;
     if (reverse) {
-      xoffset = -xoffset/2 + 8;
+      xoffset = -xoffset/2;
     }
   }
 
   // Flip buildings on right
-  var yrotation = 0;
   if (builder.x >= xcenter) {
-    yrotation = 180;
+    yrotation -= 180;
+    xoffset += 5;
   }
 
   rngbuilding.setAttribute('position', (builder.xpos + xoffset) + " 0 " + (builder.zpos + zoffset));

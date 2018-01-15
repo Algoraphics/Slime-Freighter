@@ -21,7 +21,6 @@ var animAttrs = ' dir: alternate; loop: true; ';
   This function will return a single chosen option using the specified probabilities
 */
 function rng(options, probstr) {
-  //console.log("TATER");
   var choose_array = chooseArr(options, probstr);
   return choose_array[Math.floor(Math.random() * choose_array.length)];
 }
@@ -55,6 +54,34 @@ function probArr(options, probstr) {
   return probs;
 }
 
+function defineStart(comp, startclass) {
+  comp.firstpos = comp.el.getAttribute('position');
+  comp.start = comp.data.start;
+  comp.started = false;
+  comp.startclass = startclass;
+}
+
+function delayMove(comp) {
+  if (!comp.started) {
+    var cam = document.querySelector('#camera');
+    if (!cam) { return; }
+
+    var campos = cam.getAttribute('position');
+    if (campos.z > comp.start + comp.firstpos.z) {
+      return;
+    } else {
+      //console.log("Starting! campos passed " + comp.start + " + " + comp.firstpos.z);
+      comp.started = true;
+      // TODO make query class configurable (so flower can use it too)
+      var els = comp.el.querySelectorAll('.' + comp.startclass);
+      for (var i = 0; i < els.length; i++) {
+        els[i].emit('started');
+      }
+      comp.el.emit('started');
+    }
+  }
+}
+
 // TODO: explanation, can generalize and remove the word building from a lot of these
 function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) {
   if (depth > 1) {
@@ -78,17 +105,18 @@ function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) 
     //var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
     var mover = document.createElement('a-entity');
     mover.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + -xoffset + ' ' + yoffset + ' ' + zoffset + ';'
-                       + animAttrs + 'easing: easeInOutExpo; dur: ' + dur);
+                       + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + dur);
+    mover.setAttribute('class', "arc");
 
     var nextbuilding = document.createElement('a-entity');
     nextbuilding.setAttribute('building', buildingAttrs);
     //nextbuilding.setAttribute('position', "0 0 0");
     nextbuilding.setAttribute('scale', scale + " " + scale + " " + scale);
     nextbuilding.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 ' + xangle + ' ' + yangle + ';'
-                              + animAttrs + 'easing: easeInOutExpo; dur: ' + dur);
+                              + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + dur);
+    nextbuilding.setAttribute('class', "arc");
 
     arcBuildings(nextbuilding, buildingAttrs, angle, dist, scale, axis, depth - 1);
-    
     mover.appendChild(nextbuilding);
     building.appendChild(mover);
   }
@@ -113,6 +141,8 @@ AFRAME.registerComponent('rng-building-arc', {
   },
   init: function () {
     var data = this.data;
+    
+    defineStart(this, 'arc');
     
     var height = data.height;
     var width = data.width;
@@ -143,9 +173,12 @@ AFRAME.registerComponent('rng-building-arc', {
     var dist = 4.8 * data.spread;
     arcBuildings(building, buildingAttrs, angle, dist, data.scale, data.axis, data.num);
     
-    var rotation = rng([0, 90, 180, 270], '1 1 1 1');
-    building.setAttribute('rotation', '0 ' + rotation + ' 0');
+    //var rotation = rng([0, 90, 180, 270], '1 1 1 1');
+    building.setAttribute('rotation', '0 ' + 0 + ' 0');
     this.el.appendChild(building);
+  },
+  tick: function () {
+    delayMove(this);
   }
 });
 
@@ -160,6 +193,7 @@ AFRAME.registerComponent('rng-building-flower', {
     height: {default: 1},
     preset: {default: 'flower'},
     num: {default: '2 0 1'},
+    start: {default: -150},
   },
   init: function () {
     var data = this.data;
@@ -169,6 +203,8 @@ AFRAME.registerComponent('rng-building-flower', {
     var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
     var num = rng([2, 3, 4], data.num);
+    
+    defineStart(this, 'flower');
     
     var moveup = 0;
     var fallout = 0;
@@ -188,22 +224,57 @@ AFRAME.registerComponent('rng-building-flower', {
     for (var i = 0; i < num; i++) {
       var mover = document.createElement('a-entity');
       mover.setAttribute('animation__turn', 'property: rotation; from: 0 ' + angle + ' 0; to: 0 ' + angle + ' ' + fallover + ';'
-                         + animAttrs + 'easing: easeInOutQuart; dur: ' + dur);
+                         + animAttrs + 'easing: easeInOutQuart; startEvents: started; dur: ' + dur);
+      mover.setAttribute('class', "flower");
       var building = document.createElement('a-entity');
       var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
                             + "; width: " + width + "; height: " + height + "; optimize: false";
       building.setAttribute('building', buildingAttrs);
       building.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + moveup + ' ' + fallout + ' 0;'
-                            + animAttrs + 'easing: easeInOutQuart; dur: ' + dur);
+                            + animAttrs + 'easing: easeInOutQuart; startEvents: started; dur: ' + dur);
+      mover.setAttribute('class', "flower");
       mover.appendChild(building);
       this.el.appendChild(mover);
       angle += 360/num;
     }
     this.el.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 90 0; dir: alternate; loop: true' 
-                         + '; easing: easeInOutSine; dur: ' + (dur * 2));
+                         + '; easing: easeInOutSine; startEvents: started; dur: ' + (dur * 2));
+  },
+  tick: function () {
+    delayMove(this);
   }
 });
 
+AFRAME.registerComponent('rng-building-dance', {
+  schema: {
+    // Input probabilities
+    windowtype: {default: '1 0 0 0 0'},
+    colortype: {default: '1 0 0 0 0 0'},
+    color1: {default: ''},
+    color2: {default: ''},
+    width: {default: 1},
+    height: {default: 1},
+    start: {default: -150},
+  },
+  init: function () {
+    var data = this.data;
+    
+    var height = data.height;
+    var width = data.width;
+    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
+    
+    defineStart(this, 'dance');
+    
+    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+                            + "; width: " + width + "; height: " + height + "; optimize: false";
+    this.el.setAttribute('building', buildingAttrs);
+    this.el.setAttribute('audio-react',"analyserEl: #analyser; multiplier: 0.75; start: " + (data.start + 10));
+  },
+  tick: function () {
+    delayMove(this);
+  }
+});
 
 
 /*
@@ -219,7 +290,7 @@ function sinmove(comp) {
       if (campos.z > comp.start + comp.firstpos.z) {
         return;
       } else {
-        console.log("Starting! campos passed " + comp.start + " + " + comp.firstpos.z);
+        //console.log("Starting! campos passed " + comp.start + " + " + comp.firstpos.z);
         comp.started = true;
         comp.el.emit('started', '', true);
       }
@@ -311,6 +382,8 @@ AFRAME.registerComponent('rng-building-sine', {
     this.cont = this.data.cont;
     this.skip = this.data.skip;
     
+    this.firstpos = this.el.getAttribute('position');
+    //console.log("start is " + data.start);
     this.start = data.start;
     this.started = false;
     this.reverse = 1;
@@ -323,10 +396,15 @@ AFRAME.registerComponent('rng-building-sine', {
     
     var height = data.height;
     var width = data.width;
-    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    var window = '';
+    if (data.windowtype.split(' ').length <= 1) {
+      window = data.windowtype;
+    }
+    else {
+      window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
+    }
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
     
-    this.firstpos = this.el.getAttribute('position');
     
     var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
                     + "; width: " + width + "; height: " + height + "; optimize: false";
@@ -358,6 +436,7 @@ AFRAME.registerComponent('rng-building-pulse', {
   },
   init: function () {
     var data = this.data;
+    this.firstpos = this.el.getAttribute('position');
     
     var height = data.height;
     var width = data.width;
@@ -372,12 +451,14 @@ AFRAME.registerComponent('rng-building-pulse', {
     this.el.appendChild(center);
     
     var front = document.createElement('a-entity');
-    front.setAttribute('rng-building-sine', "color1: #ffff00; num:1; dist:4.5; start: -" + data.start);
+    front.setAttribute('rng-building-sine', "windowtype: " + window + "; width: " + width + ";height: " + height
+                       + "; color1: #ffff00; num:1; dist:4.5; start: " + (data.start + this.firstpos.z));
     front.setAttribute('rotation', "0 90 0");
     front.setAttribute('position', "0 0 5");
     this.el.appendChild(front);
     var side = document.createElement('a-entity');
-    side.setAttribute('rng-building-sine', "color1: #ffff00; num:1; dist:4.5; start: -" + data.start);
+    side.setAttribute('rng-building-sine', "windowtype: " + window + "; width: " + width + ";height: " + height
+                      + "; color1: #ffff00; num:1; dist:4.5; start: " + (data.start + this.firstpos.z));
     side.setAttribute('position', "-5 0 0");
     this.el.appendChild(side);
   }
@@ -484,9 +565,9 @@ AFRAME.registerComponent('rng-building-robot', {
     left.setAttribute('position', "0 0 4.25");
     right.setAttribute('position', "0 0 -4.25");
     
-    left.setAttribute('rng-robotlegs', 'color1: ' + data.color1 + '; numbeats: ' + data.numbeats
+    left.setAttribute('rng-robotlegs', 'windowtype: ' + window + '; color1: ' + data.color1 + '; numbeats: ' + data.numbeats
                       + '; start: ' + (this.firstpos.z + data.start - 4.25) + '; dist: ' + data.dist);
-    right.setAttribute('rng-robotlegs', 'reverse: true; color1: ' + data.color1 + '; numbeats: ' + data.numbeats
+    right.setAttribute('rng-robotlegs', 'reverse: true; windowtype: ' + window + '; color1: ' + data.color1 + '; numbeats: ' + data.numbeats
                        + "; start: " + (this.firstpos.z + data.start + 4.25) + '; dist: ' + data.dist);
     
     var core = document.createElement('a-entity');
@@ -523,8 +604,8 @@ AFRAME.registerComponent('rng-robotlegs', {
   // TODO: can schema be a variable?
   schema: {
     // Input probabilities
-    windowtype: {default: '1 0 0 0 0'},
-    colortype: {default: '1 0 0 0 0 0'},
+    windowtype: {default: 'rect'},
+    colortype: {default: 'static'},
     color1: {default: ''},
     color2: {default: ''},
     numbeats: {default: 8}, // Number of beats per movement
@@ -548,12 +629,9 @@ AFRAME.registerComponent('rng-robotlegs', {
     }
     this.time = 0;
     
-    var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
-    var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
-    
     this.firstpos = this.el.getAttribute('position');
     
-    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
+    var buildingAttrs = "windowtype: " + data.windowtype + "; colortype: " + data.colortype + "; color1: " + data.color1 + "; color2: " + data.color2
                           + "; width: " + 1 + "; height: " + 2 + "; optimize: false";
 
     var core = document.createElement('a-entity');

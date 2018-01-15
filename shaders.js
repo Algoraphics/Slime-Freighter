@@ -888,21 +888,21 @@ varying float vNoise;
 
 void main(void){
   //float time = (timeMsec + 50.0 * skip * 2000.0) / 2000.0; // Convert from A-Frame milliseconds to typical time in seconds.
-  // 80 for ripples
-  float time = (3.14159265358979 / (4.0*594.059)) * (timeMsec + 80.0 * 2000.0); 
+  // 200 for ripples
+  float time = (3.14159265358979 / (4.0*594.059)) * (timeMsec + 200.0 * 2000.0); 
   vec2 resolution = vec2(resolution, resolution);
-	vec2 v = (vUv - 0.5) * 1.0;// * resolution;
+	vec2 v = (vUv - 0.5) * 5.0;// * resolution;
 	vec2 vv = v; vec2 vvv = v;
 	float tm = time*0.01*1.0;
 
-  float shiftsine = sin(time * 0.01);
-	vec2 shift = vec2(0, shiftsine * 0.4 + 0.75); // Shift to set overall fractal
-  float mshift = 0.5 + (shiftsine/2.1); // Shift for noise-dependent patterns
+  float shiftsine = sin(time * 0.01) * 0.4 + 0.75;
+	vec2 shift = vec2(0, shiftsine); // Shift to set overall fractal
+  float mshift = shiftsine/2.0 + 0.2; // Shift for noise-dependent patterns
 
   // TODO: all constants here can be random factors between 0 and 1;
   float msptx = (sin(tm)+sin(3.0*tm)/3.0+cos(5.0*tm)/5.0+cos(7.0*tm)/7.0+sin(9.0*tm)/9.0+sin(11.0*tm)/11.0+cos(0.0*tm) + 0.85);
   float mspty = (cos(tm)+sin(2.0*tm)/2.0+sin(4.0*tm)/4.0+sin(6.0*tm)/6.0+sin(8.0*tm)/8.0+cos(10.0*tm)/10.0+sin(0.1*tm) + 1.0) * 0.5;
-  float msptsum = sin(tm)+cos(tm*0.2)+sin(tm*0.5)+cos(tm*-0.4)+sin(tm*1.3) + cos(tm)+sin(tm*0.1)+cos(tm*0.8)+sin(tm*-1.1)+cos(tm*1.5);
+  float msptsum = sin(tm)+cos(tm*0.5)+sin(tm*-0.5)+cos(tm*0.1)+sin(tm*0.2) + cos(tm)+sin(tm*0.1)+cos(tm*0.8)+sin(tm*-1.1)+cos(tm*1.5);
   float noise = (vNoise == 0.0)? 1.0 : vNoise;
   msptx *= (0.005*(vNoise/(5.0*mshift)));
 
@@ -910,8 +910,8 @@ void main(void){
   float test2 = cos(tm)*8.5 + 8.0 + vNoise;
 
 	vec2 mspt = (vec2(
-			sin(tm)+cos(tm*0.5)+sin(tm*-0.5)+cos(tm*0.1)+sin(tm*1.) + (vNoise / (200.0*mshift*msptsum)),
-			cos(tm)+sin(tm*0.1)+cos(tm*0.8)+sin(tm*-1.1)+cos(tm*1.5) + (vNoise / (200.0*mshift*msptsum))
+			sin(tm)+cos(tm*0.5)+sin(tm*-0.5)+cos(tm*0.1)+sin(tm*0.2) + (vNoise / (50.0*mshift)),
+			cos(tm)+sin(tm*0.1)+cos(tm*0.8)+sin(tm*-1.1)+cos(tm*1.5) + (vNoise / (50.0*mshift))
 			)+4.4)*0.06; //5x harmonics, scale back to [0,1]
 	float R = 0.0;
 	float RR = 0.0;
