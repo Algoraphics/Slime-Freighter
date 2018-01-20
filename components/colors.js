@@ -73,7 +73,6 @@ function rainbowCycle(state, color, speed) {
   return [state, rgbToHex(r, g, b)];
 }
 
-// TODO: 
 AFRAME.registerComponent('entity-colors', {
    schema: {
      mixin: {default: ''},
@@ -114,6 +113,7 @@ AFRAME.registerComponent('entity-colors', {
      this.time = -data.delay * this.beat;
      this.counter = 0; // DEBUG
      this.build = !data.audio_buildup;
+     this.buildfactor = 0.00001;
      for (var i = 0; i < data.num; i++) {
        var entity = document.createElement('a-entity');
        entity.setAttribute('mixin', data.mixin);
@@ -181,8 +181,9 @@ AFRAME.registerComponent('entity-colors', {
          if (data.audio_levels) {
            levels = analyserEl.components.audioanalyser.levels;
          }
-         if (this.build < 1) {
-           this.build += 0.001 * data.audio_buildup;
+         if (this.build < 1 && volume > 0) {
+           this.build += this.buildfactor * data.audio_buildup;
+           this.buildfactor += 0.0000001;
          }
          var children = this.el.children;
          for (var i = 0; i < children.length; i++) {
@@ -195,7 +196,7 @@ AFRAME.registerComponent('entity-colors', {
 
            var curprop = children[i].getAttribute(data.audio_property);
            if (data.audio_property == 'position') {
-             val -= leval;
+             val -= leval * this.build;
 
              // TODO: this can't be the same flag as flip directional reverse
              if (data.reverse) {

@@ -1,4 +1,4 @@
-/* global AFRAME, THREE, beat */
+/* global AFRAME, THREE, beat, Uint8Array */
 
 function rotato(el) {
   var rotationTmp = this.rotationTmp = this.rotationTmp || {x: 0, y: 0, z: 0};
@@ -44,6 +44,134 @@ AFRAME.registerComponent('justrotate', {
   }
 });
 
+// Single audio context.
+var context;
+
+/**
+ * Audio visualizer system for A-Frame. Share AnalyserNodes between components that share the
+ * the `src`.
+ */
+AFRAME.registerSystem('myaudioanalyser', {
+  init: function () {
+    this.analysers = {};
+  },
+
+  getOrCreateAnalyser: function (data) {
+    if (!context) { context = new AudioContext(); }
+    var analysers = this.analysers;
+    var analyser = context.createAnalyser();
+    var audioEl = data.src;
+    var src = audioEl.getAttribute('src');
+
+    if (analysers[src]) { return analysers[src]; }
+
+    var source = context.createMediaElementSource(audioEl)
+    source.connect(analyser);
+    analyser.connect(context.destination);
+    analyser.smoothingTimeConstant = data.smoothingTimeConstant;
+    analyser.fftSize = data.fftSize;
+
+    // Store.
+    analysers[src] = analyser;
+    return analysers[src];
+  }
+});
+
+/**
+ * Audio visualizer component for A-Frame using AnalyserNode.
+ */
+AFRAME.registerComponent('myaudioanalyser', {
+  schema: {
+    enableBeatDetection: {default: true},
+    enableLevels: {default: true},
+    enableWaveform: {default: true},
+    enableVolume: {default: true},
+    fftSize: {default: 2048},
+    smoothingTimeConstant: {default: 0.8},
+    src: {type: 'selector'},
+    unique: {default: false}
+  },
+
+  init: function () {
+    this.analyser = null;
+    this.levels = null;
+    this.waveform = null;
+    this.volume = 0;
+  },
+
+  update: function () {
+    var data = this.data;
+    var self = this;
+    var system = this.system;
+
+    if (!data.src) { return; }
+
+    // Get or create AnalyserNode.
+    if (data.unique) {
+      init(system.createAnalyser(data));
+    } else {
+      init(system.getOrCreateAnalyser(data));
+    }
+
+    function init (analyser) {
+      self.analyser = analyser;
+      self.levels = new Uint8Array(self.analyser.frequencyBinCount);
+      self.waveform = new Uint8Array(self.analyser.fftSize);
+      self.el.emit('audioanalyser-ready', {analyser: analyser});
+    }
+  },
+
+  /**
+   * Update spectrum on each frame.
+   */
+  tick: function () {
+    var data = this.data;
+    if (!this.analyser) { return; }
+
+    // Levels (frequency).
+    if (data.enableLevels || data.enableVolume) {
+      this.analyser.getByteFrequencyData(this.levels);
+    }
+
+    // Waveform.
+    if (data.enableWaveform) {
+      this.analyser.getByteTimeDomainData(this.waveform);
+    }
+
+    // Average volume.
+    if (data.enableVolume || data.enableBeatDetection) {
+      var sum = 0;
+      for (var i = 0; i < this.levels.length; i++) {
+        sum += this.levels[i];;
+      }
+      this.volume = sum / this.levels.length;
+    }
+
+    // Beat detection.
+    if (data.enableBeatDetection) {
+      var BEAT_DECAY_RATE = 0.99;
+      var BEAT_HOLD = 60;
+      var BEAT_MIN = 0.15;  // Volume less than this is no beat.
+
+      var volume = this.volume;
+      if (!this.beatCutOff) { this.beatCutOff = volume; }
+      if (volume > this.beatCutOff && volume > BEAT_MIN) {
+        console.log('[audioanalyser] Beat detected.');
+        this.el.emit('audioanalyser-beat');
+        this.beatCutOff = volume * 1.5;
+        this.beatTime = 0;
+      } else {
+        if (this.beatTime <= BEAT_HOLD) {
+          this.beatTime++;
+        } else {
+          this.beatCutOff *= BEAT_DECAY_RATE;
+          this.beatCutOff = Math.max(this.beatCutOff, BEAT_MIN);
+        }
+      }
+    }
+  }
+});
+
 AFRAME.registerComponent('audio-react', {
   schema: {
     analyserEl: {type: 'selector'},
@@ -51,15 +179,22 @@ AFRAME.registerComponent('audio-react', {
     multiplier: {default: 1}, //
     build: {default: 0}, // Slowly build to full volume (num is speed)
     stablebase: {default: true}, // Stabilize bottom of scaling asset
-    start: {default: 0},
+    startbeat: {default: 0},
   },
   init: function () {
     this.build = 0;
+    var analyser = document.createElement('a-entity');
+    
+    this.analyserEl = analyser;
     this.firstpos = this.el.getAttribute('position');
     if (!this.data.build) {
       this.build = 1;
     }
-    console.log("Will start dancing at " + this.data.start);
+    else this.build = 0.5;
+    this.el.setAttribute('class', 'beatlistener' + this.data.startbeat);
+    this.el.addEventListener('beat', function (event) {
+      this.started = true;
+    })
   },
   tick: function () {
     var data = this.data;
@@ -69,8 +204,13 @@ AFRAME.registerComponent('audio-react', {
     
     var cam = document.querySelector('#camera');
     var campos = cam.getAttribute('position');
-    //console.log("campos is " + campos + " and start is " + data.start);
-    if (analyserEl && campos.z < (data.start + this.firstpos.z)) {
+    
+    if (!this.el.started) {
+      return;
+    }
+    
+    if (analyserEl) {
+       //var sound = song.components.sound;
        volume = analyserEl.components.audioanalyser.volume * data.multiplier * 0.05;
     }
     else return;
@@ -78,7 +218,7 @@ AFRAME.registerComponent('audio-react', {
     if (this.build < 1) {
       this.build += 0.001 * data.build;
     }
-    var val = volume;
+    var val = volume * this.build;
     var curprop = this.el.getAttribute(data.property);
     if (data.property == 'position') {
       if (data.reverse) {
@@ -101,7 +241,7 @@ AFRAME.registerComponent('audio-react', {
         var curpos = this.el.getAttribute('position');
         this.el.setAttribute('position', {
           x: curpos.x,
-          // TODO this may not work with moving objects, will always reset y position to initial
+          // TODO: this may not work with moving objects, will always reset y position to initial
           y: this.firstpos.y + val/2,
           z: curpos.z
         });
@@ -111,41 +251,50 @@ AFRAME.registerComponent('audio-react', {
 });
 
 
-AFRAME.registerComponent('beat-emitter', {
+AFRAME.registerComponent('music-manager', {
   schema: {
-    target: {default: ''}, 
+    target: {default: ''},
+    startpos: {default: -50},
   },
   init: function () {
-    this.beatbar = beat;
+    this.beatbar = -beat;
+    this.beatcount = 0;
+    this.time = 0;
     this.target = document.querySelector(this.data.target);
+    var song = document.querySelector('#side');
   },
   tick: function (time, timeDelta) {
-    while (time > this.beatbar) {
-      this.beatbar += beat * 2;
-      if (time > 2000) {
-        //console.log("beat emit!");
-        this.target.emit('beat', 'deets', true);
+    this.time += timeDelta;
+    var data = this.data;
+    var cam = document.querySelector('#camera');
+    if (!cam) { 
+      console.error("Music manager can't find the camera!");
+      return; 
+    }
+    while (this.time > this.beatbar) {
+      this.beatbar += beat;
+      
+      if (this.started) {
+        var els = this.el.sceneEl.querySelectorAll('.beatlistener' + this.beatcount);
+        for (var i = 0; i < els.length; i++) {
+          els[i].emit('beat', '', false);
+        }
+        console.log('beat' + this.beatcount);
+        this.beatcount++;
+      }
+      else {
+        var campos = cam.getAttribute('position');
+        if (campos.z < data.startpos) { // && this.target != null) {
+          this.started = true;
+          this.time = 0;
+          this.beatbar = beat;
+          var song = document.querySelector('#side');
+          song.play();
+        }
       }
     }
   }
 });
-
-// Working emit listener from defunct component. Goes in init function
-/*this.el.addEventListener('beat', function (event) {
-  if (this.flip) {
-    if (this.slid) {
-      console.log("drop");
-      this.children[0].emit('drop');
-      this.slid = false;
-    }
-  }
-  else {
-    console.log("slide");
-    this.children[0].children[0].emit('slide');
-    this.slid = true;
-  }
-  this.flip = !this.flip;
-});*/
 
 // Math may seem arbitrary but there's a logic to it. Divides entity into 5 slices. 
 // Basically, the goal is to keep the camera in the center slice. Ensures there are always 2/5th of the 
@@ -216,7 +365,7 @@ AFRAME.registerComponent('slide', {
   tick: function (time, timeDelta) {
     var el = this.el;
     // TODO: generalize for all axes and set reasonable default
-    if (el.getAttribute('position').z < -1000) {
+    if (el.getAttribute('position').z < -1445) {
       return; 
     }
     var data= this.data;

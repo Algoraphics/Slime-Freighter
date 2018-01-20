@@ -763,8 +763,9 @@ void main() {
     float time = timeMsec / 2000.0;
     vUv = uv;
     vPosition = position;
-    vNoise = cnoise(normalize(position) * scale + ( time * speed * 0.1) );
-    vec3 pos = position + normal * vNoise * vec3(displacement);
+    float sinemult = (sin(time*0.1) + 1.0) * 0.5;
+    vNoise = cnoise(normalize(position) * scale + ( time * speed * 0.075*sinemult) );
+    vec3 pos = position + normal * vNoise * vec3(displacement*sinemult);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
 }
 `
@@ -891,7 +892,7 @@ void main(void){
   // 200 for ripples
   float time = (3.14159265358979 / (4.0*594.059)) * (timeMsec + 200.0 * 2000.0); 
   vec2 resolution = vec2(resolution, resolution);
-	vec2 v = (vUv - 0.5) * 5.0;// * resolution;
+	vec2 v = (vUv - 0.5) * 2.0;// * resolution;
 	vec2 vv = v; vec2 vvv = v;
 	float tm = time*0.01*1.0;
 

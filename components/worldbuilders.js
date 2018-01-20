@@ -15,14 +15,15 @@ AFRAME.registerComponent('worldbuilder', {
     grid: {default: 5}, // distance between grid points (generally width of single building)
     gapwidth: {default: 0}, //Width of road gaps between blocks
     maxwidth: {default: 5}, // List of widths
-    widthprobs: {default: '0.2 0.2 0.2 0.2 0.2'}, // Relative probabilities of the input widths
+    widthprobs: {default: '0.1 0.1 0.1 0.1 0.1'}, // Relative probabilities of the input widths
     maxheight: {default: 5},
     heightprobs: {default: '1 1 1 1 1'},
     buildingfunction: {default: "none"}, // Function to call to determine what kind of buildings get placed
     stopfollow: {default: 0}, // When the city should stop following the camera
     loadmult: {default: 1}, // Multiplier for how early we should load. 1 is earliest
     buildgrids: {default: true},
-    unload: {default: -300},
+    unload: {default: -500},
+    showbar: {default: 50},
   },
   init: function () {
     var data = this.data;
@@ -47,7 +48,7 @@ AFRAME.registerComponent('worldbuilder', {
     if (data.buildingfunction == 'colorCity') {
       var from = "" + pos.x + " " + pos.y + " " + pos.z;
       var to = pos.x + " " + (pos.y + 350) + " " + pos.z;
-      this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 30000; startEvents: doneloading");
+      this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 30000; startEvents: showtime");
     }
     // Offset to help with z-fighting
     this.offset = 0.01;
@@ -58,6 +59,7 @@ AFRAME.registerComponent('worldbuilder', {
     // Set the line at which buildings should begin to be loaded. Zpos here is the full z length of the world
     this.loadbar = pos.z + data.loadmult * this.zpos;
     this.unload = pos.z + data.unload;
+    this.showbar = pos.z + this.zpos + data.showbar;
     // Debug
     this.startbar = this.loadbar;
 
@@ -65,11 +67,11 @@ AFRAME.registerComponent('worldbuilder', {
     this.time = 0;
     this.movedex = 0;
     this.follow = true;
-    this.stopfollow = data.stopfollow + this.zpos/2;
+    this.stopfollow = pos.z + data.stopfollow + this.zpos/2;
     
     // Useful info for planning multiple worlds in sequence
     console.log("Worldbuilder " + data.buildingfunction + " starts at " + (pos.z + this.zpos) + " and ends at " + (pos.z) + ", center is " + this.centerz +
-                ". loadbar is " + this.loadbar + ", will stop following at " + (data.stopfollow) + ", will de-load at " + this.unload);
+                ". loadbar is " + this.loadbar + ", showbar is " + this.showbar + ", will stop following at " + (pos.z + data.stopfollow) + ", will de-load at " + this.unload);
   },
   tick: function (time, timeDelta) {
     var el = this.el;
@@ -122,7 +124,6 @@ AFRAME.registerComponent('worldbuilder', {
       }
       if (this.z < 0) {
         console.log("Worldbuilder " + data.buildingfunction + " loading done.");
-        this.el.emit('doneloading');
         this.el.setAttribute('visible', true);
         this.loading = false;
       }
@@ -132,24 +133,38 @@ AFRAME.registerComponent('worldbuilder', {
     }
     // After loading, begin moving
     else {
-       //console.log("campos is " + campos.z);
-       if (campos.z < this.centerz && campos.z > (this.stopfollow)) {
-         var row = el.children[this.movedex];
-         var pos = row.getAttribute('position');
-         // TODO: cycling, although may not be necessary with smart pre-loading. Maybe add optional feature to remove rows as we go?
+      if (campos.z > this.stopfollow) {
+        // After passing showbar, we're done with dancing city and should show colored city
+        if (!this.showing && campos.z < this.showbar) {
+           this.showing = true;
+           this.el.emit('showtime');
+        }
+        //console.log("campos is " + campos.z);
+        if (campos.z < this.centerz) {
+        var row = el.children[this.movedex];
+          var pos = row.getAttribute('position');
+          // TODO: cycling, although may not be necessary with smart pre-loading. Maybe add optional feature to remove rows as we go?
 
-         pos.z -= this.zmax * data.grid;
-         // TODO: posy offset for animation needs to be custom value
-         var from = "" + pos.x + " " + (pos.y - 350) + " " + pos.z;
-         var to = pos.x + " " + pos.y + " " + pos.z;
-         row.setAttribute('animation__move',"property: position; from: " + from + "; to: " + to + "; easing: easeInCubic; dur: 594.094;");
-         //console.log("moving to position " + pos.z + ". campos is " + campos.z);
-         this.movedex++;
-         this.centerz -= data.grid;
-         if (this.movedex == this.zmax) {
-           this.movedex = 0; 
-         }
-       }
+          pos.z -= this.zmax * data.grid;
+          // TODO: posy offset for animation needs to be custom value
+          var from = "" + pos.x + " " + (pos.y - 350) + " " + pos.z;
+          var to = pos.x + " " + pos.y + " " + pos.z;
+          row.setAttribute('animation__move',"property: position; from: " + from + "; to: " + to + "; easing: easeInCubic; dur: 594.094;");
+          //console.log("moving to position " + pos.z + ". campos is " + campos.z);
+          this.movedex++;
+          this.centerz -= data.grid;
+          if (this.movedex == this.zmax) {
+            this.movedex = 0; 
+          }
+        }
+      }
+      else if (!this.donefollow) {
+        this.donefollow = true;
+        // Function specific emit calls
+        if (data.buildingfunction == 'movingCity') {
+          this.el.sceneEl.emit('donedancing');
+        }
+      }
     }
   }
 });
@@ -186,6 +201,7 @@ function buildGrids(wb) {
   var widthcoords = [];
   var probs = data.widthprobs.split(' ');
   for (var i = 0; i < probs.length; i++) {
+    // TODO constant or input variable or something, this determines overall building probability
     probs[i] = parseFloat(probs[i]);
   }
   var heightoptions = [];
@@ -277,6 +293,7 @@ function buildGrids(wb) {
 }
 
 function colorCity(builder, data) {
+  
   var height = builder.heights[builder.z][builder.x];
   var width = builder.widths[builder.z][builder.x];
 
@@ -311,7 +328,7 @@ function colorCity(builder, data) {
 
     // Flip buildings on right
     var yrotation = 0;
-    if (builder.x >= xcenter) {
+    if (builder.x >= xcenter + 5) {
       yrotation = 180;
       builder.xshift = -builder.xshift;
     }
@@ -327,8 +344,9 @@ function colorCity(builder, data) {
 
 
 function movingCity(builder, data) {
-
-  var start = builder.el.getAttribute('position').z - builder.zpos;
+  var row = builder.el.children[builder.zmax - builder.z - 1];
+  
+  var start = 48;
   
   var width = 1;
   var height = 2;
@@ -343,9 +361,25 @@ function movingCity(builder, data) {
   var xcenter = (builder.xmax - data.numblockx * data.gapwidth) / 2;
   var rngbuilding = document.createElement('a-entity');
   var typestr = "; windowtype: 1 0 0 0 0; colortype: 1 0 0 0 0 0";
-  var type = rng(['arcy', 'arcx', 'flower', 'sine', 'pulse', 'split', 'dance'], '2 1 1 2 2 1 4');
+  var type;
+  var robostart;
+  var jumpstart;
   if (builder.x == 0 && builder.z == 4) {
+    robostart = 82;
+    jumpstart = 62;
     type = 'robot';//rng([type, 'robot'], '0 1');
+  }
+  else if (builder.x == 0 && builder.z == 7) {
+    robostart = 66;
+    jumpstart = 48;
+    type = 'robot';//rng([type, 'robot'], '0 1');
+  }
+  // Some number of spaces will not have buildings, but robots are an exception
+  else if (rng([true, false], '3 5')) {
+    return;    
+  }
+  else {
+    var type = rng(['arcy', 'arcx', 'flower', 'sine', 'pulse', 'split', 'dance'], '2 1 1 2 2 1 3');// 4');
   }
   // TODO: include shrinking for arcs
   if (type == 'arcy') {
@@ -356,7 +390,7 @@ function movingCity(builder, data) {
                              + typestr + "; start: " + start);
   }
   else if (type == 'arcx') {
-    height = rng([1,2,3],'1 1 1');
+    height = rng([1,2,3],'1 1 3');
     rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; axis: x; width: 1; height: "
                              + height + typestr + "; start: " + start);
     yrotation = rng([90, 180, 270], '1 4 1');
@@ -372,9 +406,11 @@ function movingCity(builder, data) {
     }
   }
   else if (type == 'dance') {
-    height = rng([1,2,3],'1 1 2');
+    height = rng([1,2,3],'1 1 4');
     width = rng([1,2], '1 1');
-    rngbuilding.setAttribute('rng-building-dance', "color1: #ffff00; width: " + width + "; height: " + height + typestr + "; start: " + start);
+    xoffset = fullrange / 2;
+    zoffset = fullrange / 2;
+    rngbuilding.setAttribute('rng-building-dance', "color1: #ffff00; width: " + width + "; height: " + height + typestr + "; start: " + (start + 2));
   }
   else if (type == 'flower') {
     height = rng([1,2],'1 1');
@@ -392,7 +428,7 @@ function movingCity(builder, data) {
     rngbuilding.setAttribute('rng-building-pulse', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
   }
   else if (type == 'split') {
-    rngbuilding.setAttribute('rng-building-split', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
+    rngbuilding.setAttribute('rng-building-split', "color1: #ffff00" + typestr + "; start: " + start);
     xoffset = -10;
     if (builder.x >= xcenter) {
         xoffset = -xoffset;
@@ -418,13 +454,20 @@ function movingCity(builder, data) {
   else if (type == 'robot') {
     builder.x = builder.xmax - 1;
     var reverse = rng([true, false], '1 1');
-    var thistart = data.stopfollow + 115;
-    rngbuilding.setAttribute('rng-building-robot', "color1: #ffff00; reverse: " + reverse
-                             + "; width: 1; height: " + height + typestr + "; start: " + thistart);
-    xoffset = 203;
+    rngbuilding.setAttribute('rng-building-robot', "color1: #ffff00; reverse: " + reverse + typestr + "; start: " + robostart);
+    xoffset = 187;
+    yrotation = 180;
     if (reverse) {
-      xoffset = -xoffset/2;
+      xoffset = -101.5;
+      yrotation = 0;
     }
+    
+    var jumper = document.createElement('a-entity');
+    jumper.setAttribute('rng-building-sine', "color1: #ffff00; width: 2; dist: 20; skip: true; cont: true; num: 3" +
+                             + "; height: 2" + typestr + "; start: " + jumpstart);
+    jumper.setAttribute('position', (builder.xpos + xoffset) + " 0 " + (builder.zpos + zoffset));
+    jumper.setAttribute('rotation', "0 " + yrotation + " 0");
+    row.appendChild(jumper);
   }
 
   // Flip buildings on right
@@ -436,8 +479,6 @@ function movingCity(builder, data) {
   rngbuilding.setAttribute('position', (builder.xpos + xoffset) + " 0 " + (builder.zpos + zoffset));
   rngbuilding.setAttribute('rotation', "0 " + yrotation + " 0");
 
-  // TODO: this.children gets child if you're in the component. For some reason you have to call .el to get the children once passed to a function
-  var row = builder.el.children[builder.zmax - builder.z - 1];
   row.appendChild(rngbuilding);
 }
 
