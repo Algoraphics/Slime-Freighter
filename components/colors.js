@@ -89,7 +89,8 @@ AFRAME.registerComponent('entity-colors', {
      audio_buildup: {default: 0}, // Slowly build from no visualizing into normal amounts. Number is speed of build
      color_type: {default: 'off', oneOf: ['shimmer', // Alternate between fromcolor and tocolor with offset per element
                                           'rainbow', // Cycle through full rainbow with offset
-                                          'rainbow_shimmer', // Alternate between a range of colors
+                                          'rainbow_shimmer', // Alternate between two randomly chosen colors
+                                          'animflip', // Alternate between two colors using animation
                                           'flip', // Flip between fromcolor and tocolor
                                           'flip_audio']}, // Same as flip but animation activates from volume passing a threshold
      speed: {default: 8},
@@ -124,9 +125,14 @@ AFRAME.registerComponent('entity-colors', {
          entity.setAttribute('material', material);
          entity.setAttribute('colorstate', 0);
        }
-       // Run two-tone animation on all windows with shimmer effect
+       // Run two-tone animation on all assets
+       else if (data.color_type == 'animflip') {
+         entity.setAttribute('class', 'beatlistener48');
+         entity.setAttribute('animation', "property: material.color; from: " + data.fromcolor + "; to: " + data.tocolor + "; dir: alternate; dur: " + 2*this.beat + "; easing: easeInOutExpo; loop: true; startEvents: beat");
+       }
+       // Two-tone animation with offset TODO: not currently in use. Tested to work, though
        else if (data.color_type == 'shimmer') {
-         entity.setAttribute('animation', "property: material.color; from: " + data.fromcolor + "; to: " + data.tocolor + "; delay: " + 2*i + "00; dir: alternate; dur: " + 2*this.beat + "; easing: easeInOutSine; loop: true;");
+         entity.setAttribute('animation', "property: material.color; from: " + data.fromcolor + "; to: " + data.tocolor + "; delay: " + 2*i + "00; dir: alternate; dur: " + 2*this.beat + "; easing: easeInOutSine; loop: true; startEvents: beat");
        }
        // Same as shimmer but tones are also shifted per window
        else if (data.color_type == 'rainbow_shimmer') {

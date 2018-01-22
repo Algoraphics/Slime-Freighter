@@ -1,5 +1,14 @@
 /* global AFRAME */
 
+// Pick a random color
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
 /**
   * Entity Generator component for A-Frame.
   * Create number of entities given a mixin.
@@ -25,6 +34,11 @@ AFRAME.registerComponent('entity-generator', {
    }
  });
 
+/* Merge a group of mixins into a single layout. Useful if a single collection of
+  mixins with relative positions, rotations, etc. need to use one consistent layout.
+  
+  Input includes a list of positions and rotations ordered by input mixin
+*/
 AFRAME.registerComponent('entity-generator-merger' , {
   schema: {
     mixins: {default: ''},
@@ -48,11 +62,17 @@ AFRAME.registerComponent('entity-generator-merger' , {
     }
     
     // TODO: don't want to flip for all elements. just lights. Maybe use "light" in the name for the ones that will flip
-    for (var i = 0; i < data.num; i++) {
+    for (var i = 0; i < mixins.length; i++) {
       var entity = document.createElement('a-entity');
-      entity.setAttribute('entity-colors', "mixin: " + mixins[i] + "; num: " + data.num + 
-                          '; color_type: flip; every: 4; slower: 4; reverse: ' + data.flip_reverse + 
-                          '; delay: ' + data.flip_delay + '; shift: ' + data.flip_shift);
+      console.log("mixin is " + mixins[i]);
+      // TODO make parameter
+      var colortype = 'animflip'
+      // Disable color changing for lamp
+      if (mixins[i] == 'lamp') {
+        colortype = 'off';
+      }
+        entity.setAttribute('entity-colors', "mixin: " + mixins[i] + "; num: " + data.num + 
+                            '; color_type: ' + colortype);
       entity.setAttribute('position', positions[i]);
       entity.setAttribute('rotation', rotations[i]);
       entity.setAttribute('layout', "type: " + data.layout_type + "; margin: " + data.layout_margin);
@@ -136,15 +156,10 @@ function numSides(type) {
   return numSides;
 }
 
-function getRandomColor() {
-  var letters = '0123456789ABCDEF';
-  var color = '#';
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
-
+/*
+  Create a non-shader building asset. Accepts various window shapes (will adjust height/width to accommodate),
+  building shapes (using a circular layout to add sides), and color patterns.
+*/
 // TODO: building shapes not working. Need to determine radius multiplier and use cylinders with radial segments for shape
 AFRAME.registerComponent('building', {
   schema: {
