@@ -1,4 +1,4 @@
-/* global AFRAME, getRandomColor */
+/* global AFRAME, getRandomColor, bind */
 
 /* RNG (Random Number Generator)
 This file contains RNG components used mostly by worldbuilders.
@@ -656,8 +656,8 @@ AFRAME.registerComponent('rng-robotlegs', {
 AFRAME.registerComponent('rng-building', {
   schema: {
     // Input probabilities
-    windowtype: {default: ''},
-    colortype: {default: ''},
+    windowtype: {default: '1 1 1 1 1'},
+    colortype: {default: '1 0 0 0 0 0'},
     color1: {default: ''},
     color2: {default: ''},
     width: {default: 1},
@@ -776,6 +776,7 @@ AFRAME.registerComponent('rng-building-shader', {
 /*
 Rng component for customizeable objects with complex shaders.
 */
+//TODO fractal shader needs separate function at this point
 AFRAME.registerComponent('rng-shader', {
   schema: {
     
@@ -800,9 +801,12 @@ AFRAME.registerComponent('rng-shader', {
   init: function () {
     var data = this.data;
     
-    var speed = rng([0.5, 1.0, 2.0], data.speed);
-    var brightness = rng([1.0, 2.0, 3.0], data.brightness);
-    var resolution = rng([0.5, 1.0, 2.0, 3.0], data.resolution);
+    this.mouse = 0;
+    this.shift = 0.0;
+    
+    this.speed = rng([0.5, 1.0, 2.0], data.speed);
+    this.brightness = rng([1.0, 2.0, 3.0], data.brightness);
+    this.resolution = rng([0.5, 1.0, 2.0, 3.0], data.resolution);
     // Lightspeed uses these
     var fadeaway = 0.5;
     var uniformity = 10.0;
@@ -827,11 +831,60 @@ AFRAME.registerComponent('rng-shader', {
     var entity = document.createElement('a-entity');
     entity.setAttribute('geometry', "primitive: " + shape + "; height: " + data.height + "; width: " + data.width 
                          + "; depth: " + data.width + "; radius: " + (data.width / 2) + "segmentsWidth: 80; segmentsHeight: 80;");
-    entity.setAttribute('material', "side: double; shader: " + shader + "-shader; speed: " + speed
-                    + "; brightness: " + brightness + "; color: " + color + "; backgroundColor: " + bgcolor 
-                    + "; resolution: " + resolution + "; fadeaway: " + fadeaway + "; uniformity: " + uniformity
+    entity.setAttribute('material', "side: double; shader: " + shader + "-shader; speed: " + this.speed
+                    + "; brightness: " + this.brightness + "; color: " + color + "; backgroundColor: " + bgcolor 
+                    + "; resolution: " + this.resolution + "; fadeaway: " + fadeaway + "; uniformity: " + uniformity
                     + "; zoom: " + zoom + "; intensity: " + intensity + "; skip: " + skip
                     + "; frequency: " + 15 + "; amplitude: " + 0.2 + "; displacement: " + 0.5 + "; scale: " + 4.0);
     this.el.appendChild(entity);
+    
+    this.onMouseDown = bind(this.onMouseDown, this);
+    this.onMouseMove = bind(this.onMouseMove, this);
+    
+    this.el.sceneEl.canvas.addEventListener('mousedown', this.onMouseDown, false);
+    window.addEventListener('mousemove', this.onMouseMove, false);
+    window.addEventListener('mouseup', this.onMouseUp, false);
+    window.addEventListener("keydown", function(e){
+      if(e.keyCode === 81) { // q key to shift back
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['val']['value'] -= 0.001;
+      }
+      if(e.keyCode === 69) { // e key to shift forward
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['val']['value'] += 0.001;
+      }
+      if(e.keyCode === 90) { // z key to zoom in
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['resolution']['value'] -= 0.1;
+      }
+      if(e.keyCode === 88) { // x key to zoom out
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['resolution']['value'] += 0.1;
+      }
+    })
+  },
+  tick: function (event) {
+    if (this.shift != 0) {
+      //console.log("shifting by " + this.shift);
+      this.el.children[0].getObject3D('mesh').material.uniforms['val']['value'] += this.shift;
+    }
+  },
+  onMouseMove: function (event) {
+    // TODO use mouse for something?
+    if (false && !this.mouseDown) {
+      var previousMouseEvent = this.previousMouseEvent;
+      var movementX;
+      var movementY;
+
+       // Calculate delta.
+      movementX = event.movementX || event.mozMovementX;
+      movementY = event.movementY || event.mozMovementY;
+      if (movementX === undefined || movementY === undefined) {
+        movementX = event.screenX - previousMouseEvent.screenX;
+        movementY = event.screenY - previousMouseEvent.screenY;
+      }
+      this.previousMouseEvent = event;
+
+      this.el.children[0].getObject3D('mesh').material.uniforms['val']['value'] -= movementX * 0.0002;
+    }
+  },
+  onMouseDown: function(event) {
+    this.mouseDown = !this.mouseDown
   }
 });

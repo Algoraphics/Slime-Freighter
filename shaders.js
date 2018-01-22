@@ -762,10 +762,11 @@ float cnoise(vec3 P) {
 void main() {
     float time = timeMsec / 2000.0;
     vUv = uv;
+    //vMouse = mouse;
     vPosition = position;
-    float sinemult = (sin(time*0.1) + 1.0) * 0.5;
-    vNoise = cnoise(normalize(position) * scale + ( time * speed * 0.075*sinemult) );
-    vec3 pos = position + normal * vNoise * vec3(displacement*sinemult);
+    float sinemult = (sin(time*0.1) + 1.0) * 0.5; // 0 to 1
+    vNoise = cnoise(normalize(position) * scale + time * speed * 0.2) * sinemult;
+    vec3 pos = position + normal * vNoise * vec3(displacement * sinemult);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
 }
 `
@@ -780,6 +781,97 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `
+
+AFRAME.registerShader('fractal-test-shader', {
+  schema: {
+    timeMsec: {type: 'time', is: 'uniform'},
+    resolution: {type: 'float', is: 'uniform'},
+    skip: {type: 'float', is: 'uniform'},
+    displacement: {type: 'float', is: 'uniform'},
+    amplitude: {type: 'float', is: 'uniform'},
+    speed: {type: 'float', is: 'uniform'},
+    scale: {type: 'float', is: 'uniform'},
+    val: {type: 'float', is: 'uniform'},
+  },
+
+// TODO: use concatenation like below to make a lot of this generic
+  vertexShader: randomripple,
+  fragmentShader: `
+precision highp float;
+
+varying vec2 vUv;
+
+uniform float val;
+
+uniform float timeMsec;
+uniform float resolution;
+uniform float skip;
+
+varying float vNoise;
+
+//#define timeMsec (timeMsec + 100.0 * 2000.0)
+
+void main(void){
+  //float time = (timeMsec + 50.0 * skip * 2000.0) / 2000.0; // Convert from A-Frame milliseconds to typical time in seconds.
+  // 200 for ripples
+  float time = (3.14159265358979 / (4.0*594.059)) * (timeMsec + 200.0 * 2000.0); 
+  vec2 resolution = vec2(resolution, resolution);
+	vec2 v = (vUv - 0.5) * resolution;
+	vec2 vv = v; vec2 vvv = v;
+	float tm = time*0.01*1.0;
+
+  float shiftsine = sin(tm) * 0.4 + 0.75;
+	vec2 shift = vec2(0, shiftsine); // Shift to set overall fractal
+  float mshift = shiftsine/2.0 + 0.2; // Shift for noise-dependent patterns
+
+	vec2 mspt = (vec2(
+			sin(tm)+cos(tm*0.5)+sin(tm*-0.5)+cos(tm*0.1)+sin(tm*0.2) + (vNoise / (20.0*mshift)),
+			cos(tm)+sin(tm*0.1)+cos(tm*0.8)+sin(tm*-1.1)+cos(tm*1.5) + (vNoise / (50.0*mshift))
+			)+4.4)*0.06; //5x harmonics, scale back to [0,1]
+	float R = 0.0;
+	float RR = 0.0;
+	float RRR = 0.0;
+  // TODO make this not 10 unless mouse is working
+	float a = (.6-mspt.x+val)*6.2;
+	float C = cos(a);
+	float S = sin(a);
+	vec2 xa=vec2(C, -S);
+	vec2 ya=vec2(S, C);
+	float Z = 1.0 + mspt.y;//*6.0;
+	float ZZ = 1.0 + mspt.y;//*6.2;
+	float ZZZ = 1.0 + (mspt.y);//*6.9;
+	
+	for ( int i = 0; i < 40; i++ ){
+    // dot product leaves square of magnitude of v
+		float r = dot(v,v);
+		if ( r > 1.0 )
+		{
+			r = (1.0)/r ;
+			v.x = v.x * r;
+			v.y = v.y * r;
+		}
+		R *= .99;
+		R += r;
+		if(i < 39){
+			RR *= .99;
+			RR += r;
+			if(i < 38){
+				RRR *= .99;
+				RRR += r;
+			}
+		}
+		
+		v = vec2( dot(v, xa), dot(v, ya)) * Z * ZZ + shift;
+	}
+	float c = ((mod(R,2.0)>1.0)?1.0-fract(R):fract(R));
+	float cc = ((mod(RR,2.0)>1.0)?1.0-fract(RR):fract(RR));
+	float ccc = ((mod(RRR,2.0)>1.0)?1.0-fract(RRR):fract(RRR));
+  
+	gl_FragColor = vec4(ccc, cc, c, 1.0); 
+}
+`
+});
+
 
 AFRAME.registerShader('fractal-shader', {
   schema: {
@@ -826,7 +918,7 @@ void main(void){
 	float S = sin(a);
 	vec2 xa=vec2(C, -S);
 	vec2 ya=vec2(S, C);
-	vec2 shift = vec2( 0, sin(time * 0.1) * 0.5 + 0.75);
+	vec2 shift = vec2( 0, sin(-time * 0.1) * 0.5 + 0.75);
 	float Z = 1.0 + mspt.y*6.0;
 	float ZZ = 1.0 + (mspt.y)*6.2;
 	float ZZZ = 1.0 + (mspt.y)*6.9;
@@ -856,102 +948,6 @@ void main(void){
 	float cc = ((mod(RR,2.0)>1.0)?1.0-fract(RR):fract(RR));
 	float ccc = ((mod(RRR,2.0)>1.0)?1.0-fract(RRR):fract(RRR));
   float noisemult = clamp( 1.0-vNoise*3.0, 0.0, 1.0 );
-	gl_FragColor = vec4(ccc, cc, c, 1.0); 
-}
-`
-});
-
-AFRAME.registerShader('fractal-test-shader', {
-  schema: {
-    timeMsec: {type: 'time', is: 'uniform'},
-    resolution: {type: 'float', is: 'uniform'},
-    skip: {type: 'float', is: 'uniform'},
-    displacement: {type: 'float', is: 'uniform'},
-    amplitude: {type: 'float', is: 'uniform'},
-    speed: {type: 'float', is: 'uniform'},
-    scale: {type: 'float', is: 'uniform'},
-  },
-
-// TODO: use concatenation like below to make a lot of this generic
-  vertexShader: randomripple,
-  fragmentShader: `
-precision highp float;
-
-varying vec2 vUv;
-
-uniform float timeMsec;
-uniform float resolution;
-uniform float skip;
-
-varying float vNoise;
-
-//#define timeMsec (timeMsec + 100.0 * 2000.0)
-
-void main(void){
-  //float time = (timeMsec + 50.0 * skip * 2000.0) / 2000.0; // Convert from A-Frame milliseconds to typical time in seconds.
-  // 200 for ripples
-  float time = (3.14159265358979 / (4.0*594.059)) * (timeMsec + 200.0 * 2000.0); 
-  vec2 resolution = vec2(resolution, resolution);
-	vec2 v = (vUv - 0.5) * 2.0;// * resolution;
-	vec2 vv = v; vec2 vvv = v;
-	float tm = time*0.01*1.0;
-
-  float shiftsine = sin(time * 0.01) * 0.4 + 0.75;
-	vec2 shift = vec2(0, shiftsine); // Shift to set overall fractal
-  float mshift = shiftsine/2.0 + 0.2; // Shift for noise-dependent patterns
-
-  // TODO: all constants here can be random factors between 0 and 1;
-  float msptx = (sin(tm)+sin(3.0*tm)/3.0+cos(5.0*tm)/5.0+cos(7.0*tm)/7.0+sin(9.0*tm)/9.0+sin(11.0*tm)/11.0+cos(0.0*tm) + 0.85);
-  float mspty = (cos(tm)+sin(2.0*tm)/2.0+sin(4.0*tm)/4.0+sin(6.0*tm)/6.0+sin(8.0*tm)/8.0+cos(10.0*tm)/10.0+sin(0.1*tm) + 1.0) * 0.5;
-  float msptsum = sin(tm)+cos(tm*0.5)+sin(tm*-0.5)+cos(tm*0.1)+sin(tm*0.2) + cos(tm)+sin(tm*0.1)+cos(tm*0.8)+sin(tm*-1.1)+cos(tm*1.5);
-  float noise = (vNoise == 0.0)? 1.0 : vNoise;
-  msptx *= (0.005*(vNoise/(5.0*mshift)));
-
-  float test = sin(tm)*8.5 + 8.0 + vNoise;
-  float test2 = cos(tm)*8.5 + 8.0 + vNoise;
-
-	vec2 mspt = (vec2(
-			sin(tm)+cos(tm*0.5)+sin(tm*-0.5)+cos(tm*0.1)+sin(tm*0.2) + (vNoise / (50.0*mshift)),
-			cos(tm)+sin(tm*0.1)+cos(tm*0.8)+sin(tm*-1.1)+cos(tm*1.5) + (vNoise / (50.0*mshift))
-			)+4.4)*0.06; //5x harmonics, scale back to [0,1]
-	float R = 0.0;
-	float RR = 0.0;
-	float RRR = 0.0;
-	float a = (.6-mspt.x)*6.2;
-	float C = cos(a);
-	float S = sin(a);
-	vec2 xa=vec2(C, -S);
-	vec2 ya=vec2(S, C);
-	float Z = 1.0 + mspt.y;//*6.0;
-	float ZZ = 1.0 + mspt.y;//*6.2;
-	float ZZZ = 1.0 + (mspt.y);//*6.9;
-	
-	for ( int i = 0; i < 40; i++ ){
-    // dot product leaves square of magnitude of v
-		float r = dot(v,v);
-		if ( r > 1.0 )
-		{
-			r = (1.0)/r ;
-			v.x = v.x * r;
-			v.y = v.y * r;
-		}
-		R *= .99;
-		R += r;
-		if(i < 39){
-			RR *= .99;
-			RR += r;
-			if(i < 38){
-				RRR *= .99;
-				RRR += r;
-			}
-		}
-		
-		v = vec2( dot(v, xa), dot(v, ya)) * Z * ZZ + shift;
-	}
-	float c = ((mod(R,2.0)>1.0)?1.0-fract(R):fract(R));
-	float cc = ((mod(RR,2.0)>1.0)?1.0-fract(RR):fract(RR));
-	float ccc = ((mod(RRR,2.0)>1.0)?1.0-fract(RRR):fract(RRR));
-  
 	gl_FragColor = vec4(ccc, cc, c, 1.0); 
 }
 `

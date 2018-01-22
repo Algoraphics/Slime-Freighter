@@ -48,7 +48,7 @@ AFRAME.registerComponent('worldbuilder', {
     if (data.buildingfunction == 'colorCity') {
       var from = "" + pos.x + " " + pos.y + " " + pos.z;
       var to = pos.x + " " + (pos.y + 350) + " " + pos.z;
-      this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 30000; startEvents: showtime");
+      this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 20000; startEvents: beat");
     }
     // Offset to help with z-fighting
     this.offset = 0.01;
@@ -163,6 +163,7 @@ AFRAME.registerComponent('worldbuilder', {
         // Function specific emit calls
         if (data.buildingfunction == 'movingCity') {
           this.el.sceneEl.emit('donedancing');
+          //document.querySelector('#grid').setAttribute('visible', true);
         }
       }
     }
@@ -289,7 +290,6 @@ function buildGrids(wb) {
   print2DArray(widths);
   console.log("heights");
   print2DArray(heights);*/
-
 }
 
 function colorCity(builder, data) {
@@ -381,7 +381,6 @@ function movingCity(builder, data) {
   else {
     var type = rng(['arcy', 'arcx', 'flower', 'sine', 'pulse', 'split', 'dance'], '2 1 1 2 2 1 3');// 4');
   }
-  // TODO: include shrinking for arcs
   if (type == 'arcy') {
     yrotation = rng([90, 180, 270], '1 6 1');
     xoffset = fullrange;
