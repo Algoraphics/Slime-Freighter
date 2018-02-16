@@ -843,7 +843,6 @@ AFRAME.registerComponent('rng-shader', {
     
     this.el.sceneEl.canvas.addEventListener('mousedown', this.onMouseDown, false);
     window.addEventListener('mousemove', this.onMouseMove, false);
-    window.addEventListener('mouseup', this.onMouseUp, false);
     window.addEventListener("keydown", function(e){
       if(e.keyCode === 81) { // q key to shift back
         document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['val']['value'] -= 0.001;

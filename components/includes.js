@@ -300,9 +300,6 @@ var radToDeg = THREE.Math.radToDeg;
 
 //var checkHasPositionalTracking = utils.device.checkHasPositionalTracking;
 
-/*
- * look-controls. Update entity pose, factoring mouse, touch, and WebVR API data.
- */
 AFRAME.registerComponent('my-look-controls', {
   dependencies: ['position', 'rotation'],
 
@@ -375,6 +372,7 @@ AFRAME.registerComponent('my-look-controls', {
     this.onMouseDown = bind(this.onMouseDown, this);
     this.onMouseMove = bind(this.onMouseMove, this);
     this.onMouseUp = bind(this.onMouseUp, this);
+    this.onKeyDown = bind(this.onKeyDown, this);
     this.onTouchStart = bind(this.onTouchStart, this);
     this.onTouchMove = bind(this.onTouchMove, this);
     this.onTouchEnd = bind(this.onTouchEnd, this);
@@ -386,7 +384,7 @@ AFRAME.registerComponent('my-look-controls', {
   * Set up states and Object3Ds needed to store rotation data.
   */
   setupMouseControls: function () {
-    this.mouseDown = false;
+    this.mouseLocked = false;
     this.pitchObject = new THREE.Object3D();
     this.yawObject = new THREE.Object3D();
     this.yawObject.position.y = 10;
@@ -410,6 +408,9 @@ AFRAME.registerComponent('my-look-controls', {
     canvasEl.addEventListener('mousedown', this.onMouseDown, false);
     window.addEventListener('mousemove', this.onMouseMove, false);
     window.addEventListener('mouseup', this.onMouseUp, false);
+    
+    // Key events.
+    window.addEventListener("keydown", this.onKeyDown, false);
 
     // Touch events.
     canvasEl.addEventListener('touchstart', this.onTouchStart);
@@ -531,7 +532,7 @@ AFRAME.registerComponent('my-look-controls', {
     var movementY;
 
     // Not dragging or not enabled.
-    if (!this.mouseDown || !this.data.enabled) { return; }
+    if (!this.mouseLocked || !this.data.enabled) { return; }
 
      // Calculate delta.
     movementX = event.movementX || event.mozMovementX;
@@ -555,12 +556,11 @@ AFRAME.registerComponent('my-look-controls', {
     if (!this.data.enabled) { return; }
     // Handle only primary button.
     if (evt.button !== 0) { return; }
-    this.mouseDown = !this.mouseDown;
-    if (this.mouseDown) {
+    // Lock mouse if unlocked and click is in lock area
+    if (!this.mouseLocked) { // Needs to be able to read screen width: && event.screenX > 350 && event.screenX < 700 && event.screenY > 520 && event.screenY < 620) {
+      this.mouseLocked = true;
       this.el.sceneEl.canvas.style.cursor = 'none'
-    }
-    else {
-      this.el.sceneEl.canvas.style.cursor = 'crosshair'
+      document.querySelector('#click-instruction').setAttribute('animation', "property: text.opacity; from: 1; to: 0; dur: 1000");
     }
     this.previousMouseEvent = evt;
     document.body.classList.add(GRABBING_CLASS);
@@ -570,8 +570,18 @@ AFRAME.registerComponent('my-look-controls', {
    * Register mouse up to detect release of mouse drag.
    */
   onMouseUp: function () {
-    //this.mouseDown = false;
     document.body.classList.remove(GRABBING_CLASS);
+  },
+  
+  /**
+   * Register key press to escape mouse lock
+   */
+  onKeyDown: function (evt) {
+    if(evt.keyCode === 27) { // Escape key code
+      this.mouseLocked = false;
+      this.el.sceneEl.canvas.style.cursor = 'crosshair'
+      document.querySelector('#click-instruction').setAttribute('animation', "property: text.opacity; from: 0; to: 1; dur: 1000");
+    }
   },
 
   /**

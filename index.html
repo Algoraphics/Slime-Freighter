@@ -7,6 +7,8 @@
     <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
     <script src="https://unpkg.com/aframe-animation-component/dist/aframe-animation-component.min.js"></script>
     <script src="https://cdn.rawgit.com/zcanter/aframe-gradient-sky/master/dist/gradientsky.min.js"></script>
+    <script src="https://npmcdn.com/aframe-event-set-component@3.0.1"></script>
+    <script src="https://npmcdn.com/aframe-template-component@3.1.1"></script>
     <script src="components/includes.js"></script>
     <!-- My files -->
     <script src="components/entity-generator.js"></script>
@@ -17,8 +19,43 @@
     
     <!-- Custom shaders -->
     <script src="shaders.js"></script>
-    <script>
     
+    <!-- Main menu buttons -->
+    
+    <!-- TODO use shader building, geometry on regular building messes with cursor fuse -->
+    <script id="start-link" type="text/html">
+      <a-entity class="link" justrotate
+        building="height: 2; optimize: false; color1: #FFFF00; colortype: none"
+        menu-manager="action: start">
+      </a-entity>
+    </script>
+    <script id="fractal-link" type="text/html">
+      <a-entity class="link" id="fractal"
+        rng-shader="shader: fractal-test; width: 10; shape: 0 1 0; resolution: 0 0 1 0;"
+        menu-manager="action: surround">
+      </a-entity>
+    </script>
+    <script id="ganzfeld-link" type="text/html">
+      <a-entity class="link"
+        geometry="primitive: sphere; radius: 5"
+        material="shader: flat; color: #FF0000; side: double"
+        menu-manager="action: surround">
+      </a-entity>
+    </script>
+    <script id="about-link" type="text/html">
+      <a-entity class="link"
+        geometry="primitive: circle; radius: 3.5"
+        material="shader: flat; src: ${thumb}; side: double"
+        menu-manager="action: about">
+      </a-entity>
+    </script>
+    <script id="back-link" type="text/html">
+      <a-entity class="link"
+        geometry="primitive: box; width: 0.6; height: auto; depth: -0.1" 
+        material="color: black; opacity: 0.5"
+        text="value: Back to menu; width: 2; color: white; align: center"
+        menu-manager="action: back">
+      </a-entity>
     </script>
   </head>
   <body>
@@ -31,6 +68,8 @@
         <img id="sunset2" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fsunset_smudge.jpg?1513829169610">
         <img id="sunsetblur" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fsunset_blur.jpg?1513871737795">
         <img id="milky" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2F16025063950_61e0c94540_o.jpg?1513823844529">
+        <img id="convertible" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2FConvertible%20Texture.png?1518654790714">
+        <img id="exbot" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2FExbot2.jpg?1518661785572">
         
         <audio id="side" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fside-of-the-road%5BMp3-Gratis.eu%20-%20Download%20Free%20Mp3%5D.mp3?1514392665329"></audio>
         
@@ -70,6 +109,7 @@
         <a-mixin id="lamp" scale="2 2 2" gpoly="polyid:awUS2qoxeSa; API_KEY:AIzaSyAJ19aF1HSKdyzV4-OKtITR2MoKkSkh7rQ;"></a-mixin>
         <a-mixin id="blur" scale="0.8 0.8" geometry="primitive:plane" 
                  material="color: #fdffa3; shader:flat; transparent:true; src:https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fwhiteblur.png?1513817944824"></a-mixin>
+        <a-mixin id="car" crossorigin="anonymous" scale="0.03 0.03 0.03" gpoly="polyid:8ACz9InIO0c; API_KEY:AIzaSyAJ19aF1HSKdyzV4-OKtITR2MoKkSkh7rQ;"></a-mixin>
       <!--
       Comment section
       entity-generator="mixin: window; num: 16; rainbow: true; speed: 10"
@@ -91,15 +131,15 @@
                 entity-colors="analyserEl: #analyser; max: 50; multiplier: 0.01; 
                                mixin: roadash; num: 25; color_type: none; slower: 4; reverse: true;
                                audio_property: position; audio_levels: true; audio_buildup: 1;"
-                layout="type: line; margin: 16" position="0 0.1 -40" rotation="-90 -90 0"></a-entity>
+                layout="type: line; margin: 10" position="0 0.1 -40" rotation="-90 -90 0"></a-entity>
       <a-entity id="roadline2" followcamera="length:400; reverse: true; stopfollow: -1200"
                 entity-colors="analyserEl: #analyser; max: 50; multiplier: 0.01; 
                                mixin: roadash; num: 25; color_type: none; slower: 4;
                                audio_property: position; audio_levels: true; audio_buildup: 1;"
-                layout="type: line; margin: 16" position="0 0.1 -40" rotation="-90 -90 0"></a-entity>
+                layout="type: line; margin: 10" position="0 0.1 -40" rotation="-90 -90 0"></a-entity>
       
       
-      <a-entity id="streetlightsright" position="4 0 25" rotation="0 90 0"
+      <a-entity id="streetlightsright" position="4 0 125" rotation="0 90 0"
                 entity-generator-merger="num: 6; mixins: blur, lamp, lcone, lit; 
                                          positions: 0 5.83 -0.4, 0 4.5 0, 0 2.2 -1.35, 0 0.1 -2; 
                                          rotations: 90 0 0, 0 0 0, 15 0 0, -90 0 0
@@ -115,36 +155,59 @@
       Check position of something
       
       Fractals!
-      <a-entity id="fractal" rng-shader="shader: fractal-test; width: 3; height: 4; shape: 0 1 0; resolution: 0 0 1 0;" position="0 3 10" rotation="0 -90 180"></a-entity>-->
+      <a-entity id="fractal2" rng-shader="shader: fractal-test; width: 3; height: 4; shape: 0 1 0; resolution: 0 0 1 0;" position="0 3 10" rotation="0 -90 180"></a-entity>
       <a-entity id="fractal" rng-shader="shader: fractal-test; width: 3; height: 4; shape: 0 1 0; resolution: 0 0 1 0; speed: 0 1 0;" position="0 1000 10" rotation="0 -90 180"
                 class="beatlistener150" animation__move="property: position; from: 0 10000 -1550; to: 0 25 -1550; easing: easeOutCubic; dur: 30000; startEvents: beat"
-                                        animation__scale="property: scale; from: 50 50 50; to: 5 5 5; easing: linear; dur: 35000; startEvents: beat"></a-entity>
+                                        animation__scale="property: scale; from: 50 50 50; to: 5 5 5; easing: linear; dur: 35000; startEvents: beat"></a-entity>-->
 
-      <a-entity visible="false" worldbuilder=" buildingfunction: colorCity; blockx: 5; blockz: 15; numblockx: 4; numblockz: 4;
-                              gapwidth: 2; widthprobs: 0.15 0.2 0.15 0.1 0.05; maxheight: 7; heightprobs: 1 1 1 1 1 1 1;
-                              loadmult: 6; stopfollow: -200;"
+      <a-entity visible="false" worldbuilder=" buildingfunction: colorCity; 
+                              blockx: 5; blockz: 15; numblockx: 4; numblockz: 4; gapwidth: 2; 
+                              widthprobs: 0.15 0.2 0.15 0.1 0.05; maxheight: 7; heightprobs: 1 1 1 1 1 1 1;
+                              loadmult: 4; stopfollow: -200;"
                 class="beatlistener116" rotation = "0 0 0" position="-62 -350 -1245" scale = "1 1 1"></a-entity>
       
-      <a-entity visible="false" worldbuilder=" buildingfunction: movingCity; blockx: 4; blockz: 10; 
-                                  grid: 30; buildgrids: false; loadmult: 2; stopfollow: -500; unload: -600"
+      <a-entity visible="false" worldbuilder=" buildingfunction: movingCity;
+                                  blockx: 4; blockz: 10; grid: 30; buildgrids: false; loadmult: 1.5; stopfollow: -500; unload: -600"
                 animation__rise="property: position; from: -48 -12 -370; to: -48 0 -370; easing: easeInCubic; dur: 594.059; startEvents: beat"
                 class="beatlistener32" position = "-48 -12 -370" rotation = "0 0 0"></a-entity>
       
-      <a-plane class="beatlistener130" id="grid" timedvisible position="0 0.025 -6450" rotation="-90 1 0" width="10000" height="10000"
+      <a-plane id="grid" timedvisible position="0 0.025 -6450" rotation="-90 1 0" width="10000" height="10000" class="beatlistener130"
                material="shader: grid-shader; resolution: 1000.0; intensity: 10.0; speed: 0.5; color: #FFFF00; backgroundColor: #606060"></a-plane>
       <!-- comment stopper -->
+      
       <a-entity id="camera" camera="userHeight: 1.6; near: 0.5" my-look-controls wasd-controls="acceleration: 500;" 
-                slide="speed: 12; rise: -900; stop: -1550" position="0 0 10" rotation="30 0 0"></a-entity>
+                camera-manager="speed: 12; rise: -900; stop: -1550" position="0 0 110" rotation="0 0 0">
+        <a-cursor id="cursor" material="color: gray"
+          animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
+          animation__fusing="property: scale; startEvents: fusing; from: 1 1 1; to: 0.1 0.1 0.1; dur: 1500"
+          animation__defusing="property: scale; startEvents: mouseleave; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
+          event-set__1="_event: mouseenter; color: springgreen"
+          event-set__2="_event: mouseleave; color: gray;"
+          fuse="true"
+          raycaster="objects: .link">
+        </a-cursor>
+        <a-entity id="click-instruction" text="value: Click to use VR cursor.\n\nHover to select. \nESC to unlock cursor.; color: orange; align: center"
+                  scale="2 2 2" position="0 -0.05 -2" rotation="0 0 0" animation__opacity="property: text.opacity; from: 0; to: 1; dur: 10000"></a-entity>
+      </a-entity>
+      <a-entity id="menu" camera-manager="speed: 12" position="0 2.75 107" rotation="0 0 0">
+        <a-entity id="menu-layout" layout="type: circle; radius: 15" scale="0.1 0.1 0.1">
+          <a-entity template="src: #fractal-link"></a-entity>
+          <a-entity template="src: #about-link" data-thumb="#exbot"></a-entity>
+          <a-entity template="src: #ganzfeld-link"></a-entity>
+          <a-entity template="src: #start-link"></a-entity>
+        </a-entity>
+        <a-entity id="back" active="false" template="src: #back-link" scale="1 1 1" position="0 -10 2" rotation="-20 0 0"></a-entity>
+      </a-entity>
+      
       
       <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
-      <a-entity music-manager="start: -50; showbeats: true"></a-entity>
-      <!--<a-entity visible="true" id="slider" rng-building-robot="skip: true; color1: #ffff00; num:4; start: 60" position="-143 0 -100" rotation="0 0 0"></a-entity>
-      
-      <a-entity id="introMusic" sound="src: #introOgg; loop: true; positional: false" sound-fade="from: 0; to: 0.3; duration: 8000; "></a-entity>
-      <a-entity id="song" sound="src: #side; positional: false;"></a-entity>
+      <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>
+      <!--
+      <a-entity camera-manager="speed: 12" menu-manager position="0 3 110"></a-entity>
+      <a-entity camera-manager="speed: 12" entity-colors="mixin: car; num: 1" position="2 1.5 105" rotation="0 180 0"></a-entity>
       <a-box material="color:red" audio-react="analyserEl: #analyser" position="0 2 8.5"></a-box>
-      <a-entity rng-building-arc="start: 20" position="0 0 -20"></a-entity>
-      <!-- beat: 594.059 half beat: 297.029 totalbeats: 464-->
+
+      <!-- beat: 594.059 half beat: 297.029 totalbeats: 464 camera-speed: 12 -->
     </a-scene>
   </body>
 </html>
