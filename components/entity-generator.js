@@ -64,14 +64,13 @@ AFRAME.registerComponent('entity-generator-merger' , {
     // TODO: don't want to flip for all elements. just lights. Maybe use "light" in the name for the ones that will flip
     for (var i = 0; i < mixins.length; i++) {
       var entity = document.createElement('a-entity');
-      console.log("mixin is " + mixins[i]);
       // TODO make parameter
       var colortype = 'animflip'
       // Disable color changing for lamp
       if (mixins[i] == 'lamp') {
         colortype = 'off';
       }
-        entity.setAttribute('entity-colors', "mixin: " + mixins[i] + "; num: " + data.num + 
+      entity.setAttribute('entity-colors', "mixin: " + mixins[i] + "; num: " + data.num + 
                             '; color_type: ' + colortype);
       entity.setAttribute('position', positions[i]);
       entity.setAttribute('rotation', rotations[i]);

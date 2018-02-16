@@ -103,7 +103,8 @@ AFRAME.registerComponent('entity-colors', {
      delaysynch: {default: 4}, // Delayed tick execution prevents time inconsistencies
      flipcycle: {default: false}, // Continuous flipping cycle
      shift: {default: 0}, // Shift starting element for flip cycle
-     id: {default: 0}
+     id: {default: 0},
+     class: {default: ''}
    },
  
    init: function () {
@@ -118,6 +119,7 @@ AFRAME.registerComponent('entity-colors', {
      for (var i = 0; i < data.num; i++) {
        var entity = document.createElement('a-entity');
        entity.setAttribute('mixin', data.mixin);
+       entity.setAttribute('class', data.class);
        entity.setAttribute('material', "color: " + data.fromcolor + "; shader: flat");
        if (data.color_type == 'rainbow') {
          var color = rgbToHex(255, 20*i % 255, 0);
@@ -127,6 +129,7 @@ AFRAME.registerComponent('entity-colors', {
        }
        // Run two-tone animation on all assets
        else if (data.color_type == 'animflip') {
+         // TODO very arbitrary constant
          entity.setAttribute('class', 'beatlistener48');
          entity.setAttribute('animation', "property: material.color; from: " + data.fromcolor + "; to: " + data.tocolor + "; dir: alternate; dur: " + 2*this.beat + "; easing: easeInOutExpo; loop: true; startEvents: beat");
        }

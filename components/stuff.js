@@ -1,13 +1,28 @@
-/* global AFRAME, THREE, beat, Uint8Array */
+/* global AFRAME, THREE, beat, bind, Uint8Array */
 
-function rotato(el) {
-  var rotationTmp = this.rotationTmp = this.rotationTmp || {x: 0, y: 0, z: 0};
+function rotato(el, xdelta, ydelta, zdelta) {
+  var rotationTmp = {x: 0, y: 0, z: 0};
   var rotation = el.getAttribute('rotation');
-  rotationTmp.x = rotation.x;
-  rotationTmp.y = rotation.y + 0.5;
-  rotationTmp.z = rotation.z;
+  rotationTmp.x = rotation.x + xdelta;
+  rotationTmp.y = rotation.y + ydelta;
+  rotationTmp.z = rotation.z + zdelta;
   el.setAttribute('rotation', rotationTmp);
 }
+
+/*
+  Sometimes, you just want a thing to rotate
+*/
+AFRAME.registerComponent('justrotate', {
+  tick: function () {
+    rotato(this.el, 0, 0.5, 0);
+  }
+});
+
+AFRAME.registerComponent('allrotate', {
+  tick: function () {
+    rotato(this.el, 0.5, 0.5, 0.5);
+  }
+});
 
 AFRAME.registerComponent('glcube', {
   init: function () {
@@ -33,12 +48,6 @@ AFRAME.registerComponent('glcube', {
     //child.setAttribute("position", {x: 4});
 
   },
-  tick: function () {
-    rotato(this.el);
-  }
-});
-
-AFRAME.registerComponent('justrotate', {
   tick: function () {
     rotato(this.el);
   }
@@ -182,10 +191,14 @@ AFRAME.registerComponent('music-manager', {
 });
 
 /*
-  Math may seem arbitrary but there's a logic to it. Divides entity into 5 slices. 
+  Will move an object regularly to keep it aligned with the camera. Designed with repeating layouts of
+  objects in mind, so the camera will appear to move through the group of objects without ever reaching
+  the end.
+  
+  Math is somewhat arbitrary but there's a logic to it. Divides entity into 5 slices. 
   Basically, the goal is to keep the camera in the center slice. Ensures there are always 2/5th of the 
-  total object both ahead and behind. Does require that following object repeats in multiples of 5,
-  or movement jumps will be obvious.
+  total object both ahead and behind. Does require that following object has distances between components
+  in multiples of 5, or movement jumps will be obvious.
 */
 AFRAME.registerComponent('followcamera', {
   schema: {
@@ -234,15 +247,176 @@ AFRAME.registerComponent('followcamera', {
   }
 });
 
-var initialPos;
+/*AFRAME.registerComponent('menu-item', {
+  init: function () {
+    var width = 1;
+    var height = 1;
+    //var rngbuilding = document.createElement('a-entity');
+    this.el.setAttribute('position', '0 0 -4');
+    this.el.setAttribute('scale', '0.1 0.1 0.1');
+    this.el.setAttribute('rng-building-shader', "width: " + width + "; height: " + height
+                                 + "; grow_slide: 1 1; static: 1 2; axis: 1 1"
+                                 + "; usecolor1: 1 1; usecolor2: 1 1; colorstyle: 1 4 4 1");
+    //this.el.appendChild(rngbuilding);
+    
+    this.onMouseEnter = bind(this.onMouseEnter, this);
+    
+    this.el.addEventListener('mouseenter', this.onMouseEnter, false);
+  },
+  onMouseEnter: function (event) {
+    this.el.children[0].setAttribute('scale', '2 2 2');
+  }
+});
+
+AFRAME.registerComponent('menu-manager', {
+  init: function () {
+    var menuItem = document.createElement('a-entity');
+    menuItem.setAttribute('menu-item', '');
+    this.el.appendChild(menuItem);
+  }
+});
+
+AFRAME.registerComponent('surround-camera', {
+  schema: {
+    on: {type: 'string'},
+    target: {type: 'selector'},
+  },
+  init: function () {
+    this.el.addEventListener(this.data.on, function () {
+      var pos = this.getAttribute('position');
+      var postr = pos.x + ' ' + pos.y + ' ' + pos.z
+      this.setAttribute('animation__position', 'property: position; from: ' + postr + '; to: -15 2 30; dur: 1000');
+      this.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 4 4 4; dur: 1000'); 
+      this.setAttribute('class', 'globe');
+    });
+  }
+});*/
+
+function surround(el) {
+  var pos = el.pos;
+  // Negate that position to place element at camera origin
+  var postr = -pos.x + ' ' + (-pos.y + 2) + ' ' + 30; // zpos is simply scaled cam distance from menu
+  el.setAttribute('animation__position', 'property: position; from: 0 0 0; to: ' + postr + '; dur: 1000');
+  el.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 5 5 5; dur: 1000'); 
+  // Disable mouse actions, since sometimes buttons become elements
+  el.active = false;
+  // Cursor should only be visible if mini menu is visible
+  document.querySelector('#cursor').setAttribute("visible", false);
+  // Streetlights need to turn off, interfere with surround bubbles
+  document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: 0 -90 0; to: 180 -90 0; dur: 2000');
+  document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 0 90 0; to: 180 90 0; dur: 2000');
+}
+
+function about(el) {
+  console.log("Exbot is a pretty cool dude.");
+}
+
+function start(el) {
+  console.log("Should load Road right about here");
+}
+
+function back(el) {
+  emitlinks(el);
+}
+
+function togglemini(minimenu) {
+  var frompos = -10;
+  var topos = 0;
+  if (!minimenu) {
+    frompos = 0;
+    topos = -10;
+  }
+  // Mini menu includes button to go back to main menu
+  var back = document.querySelector('#back');
+  back.setAttribute('animation__position', 'property: position; from: 0 ' + frompos + ' 2; to: 0 ' + topos + ' 2; dur: 1000');
+  // Cursor should only be visible if mini menu is visible
+  document.querySelector('#cursor').setAttribute("visible", minimenu);
+}
+
+function emitlinks(el) {
+  var els = el.sceneEl.querySelectorAll('.link');
+  for (var i = 0; i < els.length; i++) {
+    els[i].emit('back', '', false);
+  }
+}
+
+AFRAME.registerComponent('menu-manager', {
+  schema: {
+    action: {type: 'string'},
+  },
+  init: function () {
+    this.el.active = true;
+    
+    // Get parent entity (layout element) for actual position
+    var pos = this.el.parentEl.getAttribute('position');
+    this.el.pos = pos;
+    
+    this.minimenu = false;
+    
+    //Call action by input parameter
+    var action = window[this.data.action];
+    if (typeof action === "function") {
+      this.el.action = action;
+    }
+    // Click event is used by fuse
+    this.el.addEventListener('click', function () {
+      if (this.active) {
+        // Call action function, pass self in for access to variables
+        this.action(this);
+        // Once we've acted on this menu item, alert all the others to the change
+      }
+    });
+    this.el.addEventListener('mouseenter', function () {
+      if (this.active) {
+        this.setAttribute('scale', '1.2 1.2 1.2');
+      }
+    });
+    this.el.addEventListener('mouseleave', function () {
+      if (this.active) {
+        this.setAttribute('scale', '1 1 1');
+      }
+    });
+    this.el.addEventListener('mousedown', function () {
+      if (this.active) {
+        this.setAttribute('scale', '1.1 1.1 1.1');
+      }
+    });
+    // Mouse up event should also call menu action
+    this.el.addEventListener('mouseup', function () {
+      if (this.active) {
+        this.setAttribute('scale', '1.2 1.2 1.2');
+        // Same as click action above
+        this.action(this);
+      }
+      else {
+        // Toggle mini menu
+        this.minimenu = !this.minimenu;
+        togglemini(this.minimenu);
+      }
+    });
+    // Back button was hit, reset to main menu
+    this.el.addEventListener('back', function () {
+      if (!this.active) {
+        togglemini(false);
+        var pos = this.pos
+        var postr = -pos.x + ' ' + (-pos.y + 2) + ' ' + 30; // zpos is simply scaled cam distance from menu
+        this.setAttribute('animation__position', 'property: position; from: ' + postr + '; to: 0 0 0; dur: 1000');
+        this.setAttribute('animation__scale', 'property: scale; from: 5 5 5; to: 1 1 1; dur: 1000');
+        
+        document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: 180 -90 0; to: 0 -90 0; dur: 500');
+        document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 180 90 0; to: 0 90 0; dur: 500');
+        document.querySelector('#cursor').setAttribute("visible", true);
+        this.active = true;
+      }
+    });
+  }
+});
 
 /*
-  Move an object at a time-consistent speed. Currently optimized to move the camera
-  (or any other object) in the -z direction, with a +y movement happening at some input value.
+  Manage camera state. TBD
 */
-AFRAME.registerComponent('slide', {
+AFRAME.registerComponent('camera-manager', {
   schema: {
-    reset: {default: -1},
     axis: {default: 'z'},
     speed: {default: 5},
     loop: {default: true},
@@ -253,18 +427,20 @@ AFRAME.registerComponent('slide', {
   init: function () {
     var el = this.el;
     var position = el.getAttribute('position');
+    this.state = "menu"; // Other state options: shouldStart, active
     this.initialPos = position.z;
+    this.pause = false;
   },
   tick: function (time, timeDelta) {
     var el = this.el;
     var data = this.data;
     
-    // TODO: generalize for all axes
-    var position = el.getAttribute('position');
-    if (position.z < data.stop) {
+    // TODO set this.pause = true from emitted event
+    
+    if (this.state == "done" || this.pause) {
       return; 
     }
-    var positionTmp = this.positionTmp = this.positionTmp || {x: 0, y: 0, z: 0};
+    
     var xdelta = 0; var ydelta = 0; var zdelta = 0;
     switch (data.axis) {
       case 'x': {
@@ -277,20 +453,35 @@ AFRAME.registerComponent('slide', {
         zdelta = data.speed * (timeDelta / 1000);
       }
     }
-    
+
+    var positionTmp = this.positionTmp = this.positionTmp || {x: 0, y: 0, z: 0};
+    var position = el.getAttribute('position');
+
+    // Raise camera slowly after passing rise threshold
     if (position.z < data.rise && position.y < data.risemax) {
       ydelta += 0.5 * (timeDelta / 1000);
     }
+
     //positionTmp.y = 30;
     positionTmp.x = position.x - xdelta;
     positionTmp.y = position.y + ydelta;
     positionTmp.z = position.z - zdelta;
-    if (data.reset > 1 && positionTmp.z < this.initialPos - data.reset) {
-      if (data.loop) {
-        positionTmp.z = this.initialPos;
+    
+    //var menuItems = this.el.sceneEl.querySelectorAll('.menu');
+    
+    if (this.state == "menu" || this.state == "shouldStart") {
+      if (positionTmp.z < this.initialPos - 50) {
+          positionTmp.z = this.initialPos;
+          if (this.state == "shouldStart") {
+            this.state = "start";
+          }
       }
-      else {
-        el.parentNode.removeChild(el); 
+    }
+    else if (this.state == "start") {
+      // TODO disable wasd controls
+      if (position.z < data.stop) {
+        // TODO enable wasd controls
+        this.state = "done";
       }
     }
     el.setAttribute('position', positionTmp);
