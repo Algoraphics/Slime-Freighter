@@ -1,4 +1,4 @@
-/* global AFRAME, rng */
+/* global AFRAME, rng, emitlinks */
 
 /*
 Worldbuilders define a customizeable grid of random assets which follows the camera to maintain
@@ -57,7 +57,8 @@ AFRAME.registerComponent('worldbuilder', {
     this.zshift = 0;
     
     // Set the line at which buildings should begin to be loaded. Zpos here is the full z length of the world
-    this.loadbar = pos.z + data.loadmult * this.zpos;
+    this.el.loadbar = pos.z + data.loadmult * this.zpos;
+    
     this.unload = pos.z + data.unload;
     this.showbar = pos.z + this.zpos + data.showbar;
     // Debug
@@ -69,9 +70,14 @@ AFRAME.registerComponent('worldbuilder', {
     this.follow = true;
     this.stopfollow = pos.z + data.stopfollow + this.zpos/2;
     
+    this.el.addEventListener('start', function () {
+      console.log("Adding 200 to loadbar " + this.loadbar);
+      this.loadbar += 200;
+    });
+    
     // Useful info for planning multiple worlds in sequence
     console.log("Worldbuilder " + data.buildingfunction + " starts at " + (pos.z + this.zpos) + " and ends at " + (pos.z) + ", center is " + this.centerz +
-                ". loadbar is " + this.loadbar + ", showbar is " + this.showbar + ", will stop following at " + (pos.z + data.stopfollow) + ", will de-load at " + this.unload);
+                ". loadbar is " + this.el.loadbar + ", showbar is " + this.showbar + ", will stop following at " + (pos.z + data.stopfollow) + ", will de-load at " + this.unload);
   },
   tick: function (time, timeDelta) {
     var el = this.el;
@@ -85,12 +91,8 @@ AFRAME.registerComponent('worldbuilder', {
       this.unloading = true;
       this.loading = false;
     }
-    if (this.loading && campos.z < this.loadbar) {
-      // TODO this does not work (prints continuously) if loadbar isn't being moved, e.g. high speed load is being used
-      if (this.startbar == this.loadbar) {
-        //console.log("Started loading " + data.buildingfunction);
-      }
-      //this.loadbar -= 5;
+    // If we should be loading, load the next element and adjust indices accordingly
+    if (this.loading && campos.z < this.el.loadbar) {
 
       // Create the row and add it immediately. It will need to be retrieved every tick anyway so we can do slow loading
       if (this.x == 0) {
@@ -122,8 +124,11 @@ AFRAME.registerComponent('worldbuilder', {
         this.z--;
         this.zpos -= data.grid + this.offset;
       }
+      
+      // Let other components know when loading is done
       if (this.z < 0) {
         console.log("Worldbuilder " + data.buildingfunction + " loading done.");
+        emitlinks(this.el,'worldloaded');
         this.el.setAttribute('visible', true);
         this.loading = false;
       }

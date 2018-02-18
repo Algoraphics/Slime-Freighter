@@ -1,4 +1,4 @@
-/* global AFRAME, THREE, beat, bind, Uint8Array */
+/* global AFRAME, THREE, beat, bind, Uint8Array, isMobile */
 
 function rotato(el, xdelta, ydelta, zdelta) {
   var rotationTmp = {x: 0, y: 0, z: 0};
@@ -294,31 +294,58 @@ AFRAME.registerComponent('surround-camera', {
 
 function surround(el) {
   var pos = el.pos;
-  // Negate that position to place element at camera origin
+  // Negate existing position to place element at camera origin
   var postr = -pos.x + ' ' + (-pos.y + 2) + ' ' + 30; // zpos is simply scaled cam distance from menu
   el.setAttribute('animation__position', 'property: position; from: 0 0 0; to: ' + postr + '; dur: 1000');
+  el.setAttribute('animation__rotation', 'property: rotation; from: 0 0 0; to: 0 90 0; dur: 1000');
   el.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 5 5 5; dur: 1000'); 
-  // Disable mouse actions, since sometimes buttons become elements
+  
+  // Disable mouse actions, since this menu item is surrounding the cursor
   el.active = false;
-  // Cursor should only be visible if mini menu is visible
-  document.querySelector('#cursor').setAttribute("visible", false);
-  // Streetlights need to turn off, interfere with surround bubbles
+  
+  togglemini(true);
+  
+  // Update info text for whichever surround bubble is selected
+  var infotext = document.querySelector('#info-text');
+  infotext.setAttribute('text', "value: " + this.infotext);
+  
+  // Streetlights need to move out of the way, interfere with surround bubbles
   document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: 0 -90 0; to: 180 -90 0; dur: 2000');
   document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 0 90 0; to: 180 90 0; dur: 2000');
 }
 
+// TODO Open about page
 function about(el) {
   console.log("Exbot is a pretty cool dude.");
 }
 
+// Road animation selected
 function start(el) {
-  console.log("Should load Road right about here");
+  document.querySelector("#movingWorld").emit('start');
+  // Tell all menu links to hide
+  emitlinks(el, 'hide');
+  // Display loading text
+  var begin = document.querySelector('#begin');
+  begin.setAttribute('animation__position', 'property: position; from: 0 -1 0; to: 0 0 0; dur: 500');
+  begin.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 3 3 3; dur: 500');
+  // No cursor while showing loading
+  document.querySelector('#cursor').setAttribute("visible", false);
 }
 
+// Loading complete, actually begin animation
+function begin(el) {
+  // No cursor for road
+  document.querySelector('#cursor').setAttribute("visible", false);
+  document.querySelector('#camera').emit('start');
+  el.emit('hide');
+}
+
+// Tell all menu items that back has been pressed. The current item will handle this as necessary to get back to the menu
 function back(el) {
-  emitlinks(el);
+  emitlinks(el, 'back');
 }
 
+// Toggle whether the mini menu is visible
 function togglemini(minimenu) {
   var frompos = -10;
   var topos = 0;
@@ -333,19 +360,29 @@ function togglemini(minimenu) {
   document.querySelector('#cursor').setAttribute("visible", minimenu);
 }
 
-function emitlinks(el) {
+function emitlinks(el, message) {
   var els = el.sceneEl.querySelectorAll('.link');
   for (var i = 0; i < els.length; i++) {
-    els[i].emit('back', '', false);
+    els[i].emit(message, '', false);
   }
 }
 
-AFRAME.registerComponent('menu-manager', {
+/*
+* State management for a menu item. Provides animations for mouse hover and click, and allows an input function pointer
+  so that each menu item can perform a specific action. Supports a toggling "mini menu" for information on each sub-menu.
+*/
+AFRAME.registerComponent('menu-item', {
   schema: {
     action: {type: 'string'},
+    active: {default: true},
+    infotext: {default: ''},
+    tag: {default: ''},
   },
   init: function () {
-    this.el.active = true;
+    this.el.active = this.data.active;
+    this.el.infotext = this.data.infotext;
+    this.el.tag = this.data.tag;
+    this.el.mobile = isMobile();
     
     // Get parent entity (layout element) for actual position
     var pos = this.el.parentEl.getAttribute('position');
@@ -363,9 +400,9 @@ AFRAME.registerComponent('menu-manager', {
       if (this.active) {
         // Call action function, pass self in for access to variables
         this.action(this);
-        // Once we've acted on this menu item, alert all the others to the change
       }
     });
+    // Animations for hovering over an item
     this.el.addEventListener('mouseenter', function () {
       if (this.active) {
         this.setAttribute('scale', '1.2 1.2 1.2');
@@ -376,27 +413,51 @@ AFRAME.registerComponent('menu-manager', {
         this.setAttribute('scale', '1 1 1');
       }
     });
+    // Animations for actually clicking with the mouse
     this.el.addEventListener('mousedown', function () {
       if (this.active) {
         this.setAttribute('scale', '1.1 1.1 1.1');
       }
     });
-    // Mouse up event should also call menu action
     this.el.addEventListener('mouseup', function () {
       if (this.active) {
         this.setAttribute('scale', '1.2 1.2 1.2');
         // Same as click action above
         this.action(this);
       }
-      else {
+      else if (!this.mobile) {
         // Toggle mini menu
         this.minimenu = !this.minimenu;
         togglemini(this.minimenu);
       }
     });
+    this.el.addEventListener('touchend', function () {
+      if (!this.active && this.mobile) {
+        console.log("toggling mini from touch!");
+        // Toggle mini menu
+        this.minimenu = !this.minimenu;
+        togglemini(this.minimenu);
+      }
+    });
+    this.el.addEventListener('worldloaded', function () {
+      // Inactive item getting this message must be the begin button, which should now become active
+      if (!this.active) {
+        this.active = true;
+        this.setAttribute('text', "value: Begin; width: 2; color: yellow; align: center");
+        // Show cursor so user can select "begin"
+        document.querySelector('#cursor').setAttribute("visible", true);
+      }
+    });
+    this.el.addEventListener('hide', function () {
+      if (this.active) {
+        this.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 0.01 0.01 0.01; dur: 1000');
+        this.setAttribute('animation__visible', 'property: visible; from: true; to: false; delay: 1000; dur: 1');
+      }
+    });
     // Back button was hit, reset to main menu
     this.el.addEventListener('back', function () {
-      if (!this.active) {
+      // Inactive element is the one surrounding the user. These calls should only happen once, on that element.
+      if (!this.active && this.tag != 'begin') {
         togglemini(false);
         var pos = this.pos
         var postr = -pos.x + ' ' + (-pos.y + 2) + ' ' + 30; // zpos is simply scaled cam distance from menu
@@ -412,6 +473,8 @@ AFRAME.registerComponent('menu-manager', {
   }
 });
 
+var debug = false;
+
 /*
   Manage camera state. TBD
 */
@@ -423,13 +486,22 @@ AFRAME.registerComponent('camera-manager', {
     stop: {default: -100},
     rise: {default: -100},
     risemax: {default: 25},
+    id: {default: ''},
   },
   init: function () {
     var el = this.el;
     var position = el.getAttribute('position');
-    this.state = "menu"; // Other state options: shouldStart, active
+    this.el.state = "menu"; // Other state options: shouldStart, active
     this.initialPos = position.z;
-    this.pause = false;
+    
+    this.el.addEventListener('start', function () {
+      this.state = "shouldStart";
+    });
+    
+    // Only the main camera manager should have freedom of movement in debug mode
+    if (debug && this.data.id == 'main') {
+      this.el.setAttribute('wasd-controls', "acceleration: 500; fly: true");
+    }
   },
   tick: function (time, timeDelta) {
     var el = this.el;
@@ -437,7 +509,7 @@ AFRAME.registerComponent('camera-manager', {
     
     // TODO set this.pause = true from emitted event
     
-    if (this.state == "done" || this.pause) {
+    if (this.el.state == "done") {
       return; 
     }
     
@@ -469,19 +541,17 @@ AFRAME.registerComponent('camera-manager', {
     
     //var menuItems = this.el.sceneEl.querySelectorAll('.menu');
     
-    if (this.state == "menu" || this.state == "shouldStart") {
+    if (this.el.state == "menu" || this.el.state == "shouldStart") {
       if (positionTmp.z < this.initialPos - 50) {
           positionTmp.z = this.initialPos;
-          if (this.state == "shouldStart") {
-            this.state = "start";
+          if (this.el.state == "shouldStart") {
+            this.el.state = "start";
           }
       }
     }
-    else if (this.state == "start") {
-      // TODO disable wasd controls
+    else if (this.el.state == "start") {
       if (position.z < data.stop) {
-        // TODO enable wasd controls
-        this.state = "done";
+        this.el.state = "done";
       }
     }
     el.setAttribute('position', positionTmp);

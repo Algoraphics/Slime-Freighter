@@ -653,6 +653,7 @@ uniform float scale;
 uniform float displacement;
 uniform float timeMsec;
 uniform float speed;
+uniform float vertexnoise;
 
 varying float vNoise;
 
@@ -764,9 +765,10 @@ void main() {
     vUv = uv;
     //vMouse = mouse;
     vPosition = position;
-    float sinemult = (sin(time*0.1) + 1.0) * 0.5; // 0 to 1
-    vNoise = cnoise(normalize(position) * scale + time * speed * 0.2) * sinemult;
-    vec3 pos = position + normal * vNoise * vec3(displacement * sinemult);
+    float sinemult = (sin(time*0.1) + 1.0) * 0.5; // 0 to 1, currently replace by keyboard controls (ripmult)
+    float ripmult = vertexnoise;
+    vNoise = cnoise(normalize(position) * scale + time * speed * 0.2) * vertexnoise;
+    vec3 pos = position + normal * vNoise * vec3(displacement);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
 }
 `
@@ -788,10 +790,10 @@ AFRAME.registerShader('fractal-test-shader', {
     resolution: {type: 'float', is: 'uniform'},
     skip: {type: 'float', is: 'uniform'},
     displacement: {type: 'float', is: 'uniform'},
-    amplitude: {type: 'float', is: 'uniform'},
-    speed: {type: 'float', is: 'uniform'},
+    shatter: {type: 'float', is: 'uniform'},
+    twist: {type: 'float', is: 'uniform'},
     scale: {type: 'float', is: 'uniform'},
-    val: {type: 'float', is: 'uniform'},
+    vertexnoise: {type: 'float', is: 'uniform'},
   },
 
 // TODO: use concatenation like below to make a lot of this generic
@@ -801,20 +803,20 @@ precision highp float;
 
 varying vec2 vUv;
 
-uniform float val;
-
 uniform float timeMsec;
 uniform float resolution;
 uniform float skip;
+uniform float shatter;
+uniform float twist;
 
 varying float vNoise;
 
 //#define timeMsec (timeMsec + 100.0 * 2000.0)
 
 void main(void){
-  //float time = (timeMsec + 50.0 * skip * 2000.0) / 2000.0; // Convert from A-Frame milliseconds to typical time in seconds.
+  //float time = (timeMsec + 50.0 * val * 2000.0) / 2000.0; // Convert from A-Frame milliseconds to typical time in seconds.
   // 200 for ripples
-  float time = (3.14159265358979 / (4.0*594.059)) * (timeMsec + 200.0 * 2000.0); 
+  float time = (3.14159265358979 / (4.0*594.059)) * (timeMsec + skip * 100.0 * 2000.0); 
   vec2 resolution = vec2(resolution, resolution);
 	vec2 v = (vUv - 0.5) * resolution;
 	vec2 vv = v; vec2 vvv = v;
@@ -832,11 +834,11 @@ void main(void){
 	float RR = 0.0;
 	float RRR = 0.0;
   // TODO make this not 10 unless mouse is working
-	float a = (.6-mspt.x+val)*6.2;
+	float a = (.6-mspt.x)*6.2;
 	float C = cos(a);
 	float S = sin(a);
 	vec2 xa=vec2(C, -S);
-	vec2 ya=vec2(S, C);
+	vec2 ya=vec2(S, C) * twist;
 	float Z = 1.0 + mspt.y;//*6.0;
 	float ZZ = 1.0 + mspt.y;//*6.2;
 	float ZZZ = 1.0 + (mspt.y);//*6.9;
@@ -847,7 +849,7 @@ void main(void){
 		if ( r > 1.0 )
 		{
 			r = (1.0)/r ;
-			v.x = v.x * r;
+			v.x = v.x * r * shatter;
 			v.y = v.y * r;
 		}
 		R *= .99;

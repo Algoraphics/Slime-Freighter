@@ -334,6 +334,54 @@ AFRAME.registerComponent('entity-colors', {
    }
  });
 
+AFRAME.registerComponent('ganzfeld', {
+  schema: {
+    radius: {default: 5},
+    color: {default: "#00F900"},
+  },
+  init: function () {
+    var el = this.el;
+    var data = this.data;
+    
+    var sphere = document.createElement('a-entity');
+    sphere.setAttribute('geometry', "primitive: sphere; radius: " + data.radius);
+    sphere.setAttribute('material', "shader: flat; side: double; color: " + data.color);
+    sphere.setAttribute('state', 0);
+    this.el.appendChild(sphere);
+    
+    /*var info = document.createElement('a-entity');
+    info.setAttribute('geometry', "primitive: plane;");
+    info.setAttribute('material', "shader: flat; opacity: 0.5");
+    var infoText = "Ganzfeld info here";
+    info.setAttribute('text', "align: center; value: " + infoText);*/
+    
+    window.addEventListener("keydown", function(e){
+      if(e.keyCode === 71) { // g key to cycle colors
+        var color = document.querySelector('#ganzfeld').children[0].getObject3D('mesh').material.color;
+        var state = parseInt(document.querySelector('#ganzfeld').children[0].getAttribute('state'));
+        // Gets a little silly with the math here. Pulling directly from the object3D required a couple conversions
+        var hexcolor = rgbToHex(color.r * 255, color.g * 255, color.b * 255);
+        
+        var res = rainbowCycle(state, hexcolor, 10);
+        
+        var nextcolor = hexToRgb(res[1]);
+        nextcolor.r /= 255; nextcolor.g /= 255; nextcolor.b /= 255;
+        document.querySelector('#ganzfeld').children[0].getObject3D('mesh').material.color = nextcolor;
+        document.querySelector('#ganzfeld').children[0].setAttribute('state', res[0]);
+      }
+      if(e.keyCode === 72) { // h key to pause music
+        var noise = document.querySelector("#noise");
+        if (noise.paused) {
+          noise.play();
+        }
+        else {
+          noise.pause();
+        }
+      }
+    });
+  }
+});
+
 // Cycle through a rainbow for a single simple entity
 AFRAME.registerComponent('rainbowcycle', {
   schema: {
