@@ -71,7 +71,7 @@ AFRAME.registerComponent('entity-generator-merger' , {
         colortype = 'off';
       }
       entity.setAttribute('entity-colors', "mixin: " + mixins[i] + "; num: " + data.num + 
-                            '; color_type: ' + colortype);
+                            '; color_type: ' + colortype + "; tocolor: #f441a6");
       entity.setAttribute('position', positions[i]);
       entity.setAttribute('rotation', rotations[i]);
       entity.setAttribute('layout', "type: " + data.layout_type + "; margin: " + data.layout_margin);

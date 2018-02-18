@@ -1,4 +1,4 @@
-/* global AFRAME, Uint8Array, THREE*/
+/* global AFRAME, Uint8Array, THREE, emitlinks, debug */
 
 /* This file contains components that are mostly someone else's open source code, that I've
   decided to include for a small amount of fine-grained control. Changes *should* be listed
@@ -172,8 +172,11 @@ AFRAME.registerComponent('gpoly', {
 
 /* 
   look-controls component, based on https://github.com/aframevr/aframe/blob/master/docs/components/look-controls.md.
-  Touch screen use now works with vertical movement, and mouse movement has been changed to a "locking" mechanism to make
-  looking around easier.
+  Updates:
+    Touch screen use works with vertical movement
+    Mouse movement has been changed to a "locking" mechanism to make looking around easier.
+    Locking mechanism includes helpful instruction text on some devices
+    Messages directly to other components to alert them to touch screen actions, which are global
 */
 
 function bind (fn, ctx/* , arg1, arg2 */) {
@@ -328,7 +331,18 @@ AFRAME.registerComponent('my-look-controls', {
     this.bindMethods();
 
     // Call enter VR handler if the scene has entered VR before the event listeners attached.
-    if (this.el.sceneEl.is('vr-mode')) { this.onEnterVR(); }
+    if (this.el.sceneEl.is('vr-mode')) { 
+      this.onEnterVR();
+      document.querySelector('#click-instruction').setAttribute('visible', 'false');
+      this.clickInstruction = false;
+    }
+    else if (isMobile() || debug) {
+      document.querySelector('#click-instruction').setAttribute('visible', 'false');
+      this.clickInstruction = false;
+    }
+    else {
+      this.clickInstruction = true;
+    }
   },
 
   update: function (oldData) {
@@ -559,8 +573,11 @@ AFRAME.registerComponent('my-look-controls', {
     // Lock mouse if unlocked and click is in lock area
     if (!this.mouseLocked) { // Needs to be able to read screen width: && event.screenX > 350 && event.screenX < 700 && event.screenY > 520 && event.screenY < 620) {
       this.mouseLocked = true;
-      this.el.sceneEl.canvas.style.cursor = 'none'
-      document.querySelector('#click-instruction').setAttribute('animation', "property: text.opacity; from: 1; to: 0; dur: 1000");
+      this.el.sceneEl.canvas.style.cursor = 'none';
+      if (this.clickInstruction) {
+        document.querySelector('#click-instruction').setAttribute('animation__scale', "property: text.opacity; from: 1; to: 0; dur: 1000");
+        document.querySelector('#click-instruction').setAttribute('animation__opacity', "property: scale; from: 2 2 2; to: 0.01 0.01 0.01; delay: 1000; dur: 1");
+      }
     }
     this.previousMouseEvent = evt;
     document.body.classList.add(GRABBING_CLASS);
@@ -579,8 +596,11 @@ AFRAME.registerComponent('my-look-controls', {
   onKeyDown: function (evt) {
     if(evt.keyCode === 27) { // Escape key code
       this.mouseLocked = false;
-      this.el.sceneEl.canvas.style.cursor = 'crosshair'
-      document.querySelector('#click-instruction').setAttribute('animation', "property: text.opacity; from: 0; to: 1; dur: 1000");
+      this.el.sceneEl.canvas.style.cursor = 'crosshair';
+      if (this.clickInstruction) {
+        document.querySelector('#click-instruction').setAttribute('animation__scale', "property: scale; from: 0.01 0.01 0.01; to: 2 2 2; dur: 1");
+        document.querySelector('#click-instruction').setAttribute('animation__opacity', "property: text.opacity; from: 0; to: 1; dur: 1000");
+      }
     }
   },
 
@@ -625,6 +645,8 @@ AFRAME.registerComponent('my-look-controls', {
    */
   onTouchEnd: function () {
     this.touchStarted = false;
+    // Tell all the links we got a touch
+    emitlinks(this.el, 'touchend');
   },
 
   /**

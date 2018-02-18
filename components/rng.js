@@ -73,7 +73,7 @@ function addBeatListener(comp, startclass) {
       }
       this.emit('started');
     }
-  })
+  });
 }
 
 // TODO: explanation, can generalize and remove the word building from a lot of these
@@ -693,6 +693,7 @@ AFRAME.registerComponent('rng-building-shader', {
     static: {default: '1 1'},
     grows: {default: '1 1 1 1'},
     grow_slide: {default: '1 1'},
+    color1: {default: ''},
     usecolor1: {default: '1 1'},
     usecolor2: {default: '1 1'},
     colorstyle: {default: '1 1 1 1'}, // single color, two color, one color to gradient, gradient
@@ -738,6 +739,9 @@ AFRAME.registerComponent('rng-building-shader', {
     var setheight = (buildingheight - buildingheight / 2);
     
     var color1 = getRandomColor();
+    if (data.color1 != '') {
+      color1 = data.color1;
+    }
     var color2 = getRandomColor();
     var usecolor1 = 1.0;
     var usecolor2 = 1.0;
@@ -770,13 +774,19 @@ AFRAME.registerComponent('rng-building-shader', {
       setheight += buildingheight;
       this.el.appendChild(building);
     }
+    // Cover top of building so we don't see windows
+    var top = document.createElement('a-entity');
+    top.setAttribute('geometry', "primitive: plane; width: " + buildingwidth + "; height: " + buildingwidth);
+    top.setAttribute('material', "shader: flat; color: #000000");
+    top.setAttribute('position', "0 " + (setheight - (buildingheight / 2) + 0.01) + " 0");
+    top.setAttribute('rotation', "-90 0 0");
+    this.el.appendChild(top);
   }
 });
 
 /*
 Rng component for customizeable objects with complex shaders.
 */
-//TODO fractal shader needs separate function at this point
 AFRAME.registerComponent('rng-shader', {
   schema: {
     
@@ -837,6 +847,45 @@ AFRAME.registerComponent('rng-shader', {
                     + "; zoom: " + zoom + "; intensity: " + intensity + "; skip: " + skip
                     + "; frequency: " + 15 + "; amplitude: " + 0.2 + "; displacement: " + 0.5 + "; scale: " + 4.0);
     this.el.appendChild(entity);
+  },
+});
+
+AFRAME.registerComponent('rng-fractal-shader', {
+  schema: {
+    speed: {default: '1 1 1'},
+    brightness: {default: '1 1 1'},
+    resolution: {default: '1 1 1 1'},
+    fadeaway: {default: 1.0},
+    uniformity: {default: 1.0},
+    zoom: {default: 1.0},
+    intensity: {default: 1.0},
+    skip: {default: 2.0},
+    
+    color: {default: ''},
+    bgcolor: {default: ''}, 
+    
+    height: {default: 1},
+    width: {default: 1},
+  },
+  init: function () {
+    var data = this.data;
+    
+    this.mouse = 0;
+    this.shift = 0.0;
+    
+    this.speed = rng([0.5, 1.0, 2.0], data.speed);
+    this.resolution = rng([0.5, 1.0, 2.0, 3.0], data.resolution);
+    
+    // Skip further in time and see new patterns
+    var skip = data.skip;
+    
+    var entity = document.createElement('a-entity');
+    entity.setAttribute('geometry', "primitive: sphere; radius: " + (data.width / 2) + "segmentsWidth: 80; segmentsHeight: 80;");
+    entity.setAttribute('material', "side: double; shader: fractal-test-shader; speed: " + this.speed
+                    + "; resolution: " + this.resolution + "; skip: " + skip + "; amplitude: " + 0.2
+                    + "; displacement: " + 0.5 + "; scale: " + 4.0 + "; vertexnoise: " + 0.0
+                    + "; shatter: " + 1.0 + "; twist: " + 1.0);
+    this.el.appendChild(entity);
     
     this.onMouseDown = bind(this.onMouseDown, this);
     this.onMouseMove = bind(this.onMouseMove, this);
@@ -845,16 +894,39 @@ AFRAME.registerComponent('rng-shader', {
     window.addEventListener('mousemove', this.onMouseMove, false);
     window.addEventListener("keydown", function(e){
       if(e.keyCode === 81) { // q key to shift back
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['val']['value'] -= 0.001;
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['skip']['value'] -= 0.005;
       }
       if(e.keyCode === 69) { // e key to shift forward
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['val']['value'] += 0.001;
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['skip']['value'] += 0.005;
       }
       if(e.keyCode === 90) { // z key to zoom in
         document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['resolution']['value'] -= 0.1;
       }
       if(e.keyCode === 88) { // x key to zoom out
         document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['resolution']['value'] += 0.1;
+      }
+      if(e.keyCode === 67) { // c key to shatter
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['shatter']['value'] -= 0.005;
+      }
+      if(e.keyCode === 86) { // v key to reverse shatter
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['shatter']['value'] += 0.005;
+      }
+      if(e.keyCode === 66) { // b key to reset shatter and twist
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['shatter']['value'] = 1.0;
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['twist']['value'] = 1.0;
+      }
+      if(e.keyCode === 78) { // n key to twist
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['twist']['value'] += 0.01;
+      }
+      if(e.keyCode === 77) { // m key to untwist
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['twist']['value'] -= 0.01;
+      }
+      if(e.keyCode === 82) { // r key to ripple
+        var ripple = document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['vertexnoise']['value'];
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['vertexnoise']['value'] += 0.1;
+      }
+      if(e.keyCode === 84) { // t key to reset ripple
+        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['vertexnoise']['value'] = 0.0;
       }
     })
   },
