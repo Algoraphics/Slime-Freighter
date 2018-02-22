@@ -11,11 +11,12 @@
     <script src="https://npmcdn.com/aframe-template-component@3.1.1"></script>
     <script src="components/includes.js"></script>
     <!-- My files -->
-    <script src="components/entity-generator.js"></script>
-    <script src="components/worldbuilders.js"></script>
-    <script src="components/stuff.js"></script>
     <script src="components/colors.js"></script>
+    <script src="components/entity-generator.js"></script>
+    <script src="components/managers.js"></script>
     <script src="components/rng.js"></script>
+    <script src="components/stuff.js"></script>
+    <script src="components/worldbuilders.js"></script>
     
     <!-- Custom shaders -->
     <script src="shaders.js"></script>
@@ -24,7 +25,7 @@
     <script id="about-link" type="text/html">
       <a-entity class="link"
         geometry="primitive: circle; radius: 4"
-        material="shader: flat; src: ${thumb}; side: double"
+        material="shader: flat; src: ${thumb}; side: double; opacity: 0.6"
         menu-item="action: about">
       </a-entity>
     </script>
@@ -34,6 +35,8 @@
         menu-item="action: surround; infotext: Enjoy this crazy fractal thing.
           It will do plenty on its own,
           but the controls add even more variety.\n
+          Click/Touch anywhere to toggle this window.
+          Hit the button below to go to the main menu.\n
           Keyboard controls:\n
             Q : Move time forward
             E : Move time backward \n
@@ -46,8 +49,6 @@
             B : Reset Shatter and Twist\n
             R : Ripples (3D, try in VR!)
             T : Turn off ripples\n
-          Click/Touch to toggle this menu.
-          Select the back button to go to the main menu.
         ">
       </a-entity>
     </script>
@@ -61,12 +62,11 @@
           It works best when combined with white noise. 
           Simply pick a color (red and green work well), 
           turn on the noise, and wait.\n
+          Click/Touch to toggle this menu.
+          Hit the button below to go to the main menu.\n
           Keyboard controls:\n
            G : Cycle color
-           H : Play/Pause sounds
-          
-          Click/Touch to toggle this menu.
-          Select the back button to go to the main menu.
+           H : Play/Pause noise
         ">
       </a-entity>
     </script>
@@ -86,7 +86,8 @@
     </script>
     <script id="start-link" type="text/html">
       <a-entity class="link" justrotate
-        rng-building-shader="height: 1; width: 1; color1: #FFFF00; colorstyle: 1 0 0 0; static: 1 0"
+        rng-building-shader="height: 2; width: 1; color1: #FFFF00; 
+        colorstyle: 1 0 0 0; static: 1 0; winwidth: 0 1 0; winheight: 0 0 1 0"
         menu-item="action: start">
       </a-entity>
     </script>
@@ -205,8 +206,8 @@
       <a-entity id="colorWorld" visible="false" worldbuilder=" buildingfunction: colorCity; 
                               blockx: 5; blockz: 15; numblockx: 4; numblockz: 4; gapwidth: 2; 
                               widthprobs: 0.15 0.2 0.15 0.1 0.05; maxheight: 7; heightprobs: 1 1 1 1 1 1 1;
-                              loadmult: 3.5; stopfollow: -200;"
-                class="beatlistener116" rotation = "0 0 0" position="-62 -350 -1245" scale = "1 1 1"></a-entity>
+                              loadmult: 3.8; stopfollow: -200;"
+                class="beatlistener116" rotation = "0 0 0" position="-62 -750 -1245" scale = "1 1 1"></a-entity>
       
       <a-entity id="movingWorld" visible="false" worldbuilder=" buildingfunction: movingCity;
                                   blockx: 4; blockz: 10; grid: 30; buildgrids: false; loadmult: 1; stopfollow: -500; unload: -600"
@@ -215,15 +216,34 @@
       
       <a-plane id="grid" timedvisible position="0 0.025 -6450" rotation="-90 1 0" width="10000" height="10000" class="beatlistener130"
                material="shader: grid-shader; resolution: 1000.0; intensity: 10.0; speed: 0.5; color: #FFFF00; backgroundColor: #606060"></a-plane>
-      <!-- comment stopper -->
-      
-      
-      <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
-      <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>
-      
+
+      <a-entity id="menu" camera-manager="speed: 12" position="0 2.75 57" rotation="0 0 0">
+        <a-entity id="menu-layout" layout="type: circle; radius: 12" scale="0.1 0.1 0.1">
+          <a-entity template="src: #fractal-link"></a-entity>
+          <a-entity template="src: #about-link" data-thumb="#exbot"></a-entity>
+          <a-entity template="src: #ganzfeld-link"></a-entity>
+          <a-entity template="src: #start-link"></a-entity>
+        </a-entity>
+        <a-entity id="back" template="src: #back-link" scale="1 1 1" position="0 -10 2" rotation="-20 0 0"></a-entity>
+        <a-entity id="begin" template="src: #begin-link" scale="1 1 1" position="0 -1 0" rotation="0 0 0"></a-entity>
+      </a-entity>
+
       <a-entity id="camera" camera="userHeight: 1.6; near: 0.5" my-look-controls
                 camera-manager="speed: 12; rise: -900; stop: -1550; id: main" position="0 0 60" rotation="0 0 0">
+
+      <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
+      <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>
+      <!-- comment stopper 
+      <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
+      <a-entity music-manager="startpos: 0; showbeats: true"></a-entity>
         
+      <a-entity id="colorWorld" visible="false" worldbuilder=" buildingfunction: colorCity; 
+                              blockx: 5; blockz: 15; numblockx: 4; numblockz: 4; gapwidth: 2; 
+                              widthprobs: 0.1 0.15 0.1 0.07 0.04; maxheight: 7; heightprobs: 1 1 1 1 1 1 1;
+                              loadmult: 3.5; stopfollow: -200;"
+                class="beatlistener1" rotation = "0 0 0" position="-62 -350 -200" scale = "1 1 1"></a-entity>
+      
+      <a-entity id="camera" camera="userHeight: 1.6; near: 0.5" my-look-controls wasd-controls="acceleration: 500; fly: true" position="0 5 0" rotation="0 0 0">-->
         <a-cursor id="cursor" material="color: gray"
           animation__click="property: scale; startEvents: click; from: 0.1 0.1 0.1; to: 1 1 1; dur: 150"
           animation__fusing="property: scale; startEvents: fusing; from: 1 1 1; to: 0.1 0.1 0.1; dur: 1500"
@@ -238,19 +258,12 @@
                   scale="2 2 2" position="0 -0.05 -1.75" rotation="0 0 0" animation__opacity="property: text.opacity; from: 0; to: 1; dur: 10000"></a-entity>
       </a-entity>
       
-      <a-entity id="menu" camera-manager="speed: 12" position="0 2.75 57" rotation="0 0 0">
-        <a-entity id="menu-layout" layout="type: circle; radius: 12" scale="0.1 0.1 0.1">
-          <a-entity template="src: #fractal-link"></a-entity>
-          <a-entity template="src: #about-link" data-thumb="#exbot"></a-entity>
-          <a-entity template="src: #ganzfeld-link"></a-entity>
-          <a-entity template="src: #start-link"></a-entity>
-        </a-entity>
-        <a-entity id="back" template="src: #back-link" scale="1 1 1" position="0 -10 2" rotation="-20 0 0"></a-entity>
-        <a-entity id="begin" template="src: #begin-link" scale="1 1 1" position="0 -1 0" rotation="0 0 0"></a-entity>
-      </a-entity>
+      
       <!--
-      <a-entity camera-manager="speed: 12" menu-manager position="0 3 110"></a-entity>
-      <a-entity camera-manager="speed: 12" entity-colors="mixin: car; num: 1" position="2 1.5 105" rotation="0 180 0"></a-entity>
+      <a-entity rng-building-shader position="0 0 -10"></a-entity>
+      <a-entity id="camera" camera="userHeight: 1.6; near: 0.5" my-look-controls
+                camera-manager="speed: 0; rise: -900; stop: -1550; id: main" position="0 0 0" rotation="0 0 0">
+
       <a-box material="color:red" audio-react="analyserEl: #analyser" position="0 2 8.5"></a-box>
 
       <!-- beat: 594.059 half beat: 297.029 totalbeats: 464 camera-speed: 12 -->

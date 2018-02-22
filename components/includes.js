@@ -5,6 +5,31 @@
   as a comment at the beginning of each component.
 */
 
+/**
+  * Entity Generator component for A-Frame. No changes.
+  * Create number of entities given a mixin. Not even sure this is in use anymore.
+ */
+AFRAME.registerComponent('entity-generator', {
+   schema: {
+     mixin: {default: ''},
+     num: {default: 10}
+   },
+ 
+   init: function () {
+     var data = this.data;
+     var mixingroups = data.mixin.split(',');
+     
+     // Create entities with supplied mixin.
+     for (var i = 0; i < data.num; i++) {
+       for (var j = 0; j < mixingroups.length; j++) {   
+         var entity = document.createElement('a-entity');
+         entity.setAttribute('mixin', mixingroups[j]);
+         this.el.appendChild(entity);
+       }
+     }
+   }
+ });
+
 // Single audio context.
 var context;
 

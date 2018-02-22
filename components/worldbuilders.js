@@ -1,10 +1,12 @@
 /* global AFRAME, rng, emitlinks */
 
 /*
-Worldbuilders define a customizeable grid of random assets which follows the camera to maintain
-an illusion of movement through an environment. Assets are customized using an input buildingfunction,
-which defines which assets to use, their individual settings, etc. These are generally rng-type assets,
-which independently handle random selection of characteristics.
+  Worldbuilders define a customizeable grid of random assets which follows the camera to maintain
+  an illusion of movement through an environment. 
+  
+  Assets are customized using an input buildingfunction, which defines which assets to use, their
+  individual settings, etc. These are generally rng-type assets, which independently handle random
+  selection of characteristics.
 */
 AFRAME.registerComponent('worldbuilder', {
   schema: {
@@ -47,7 +49,7 @@ AFRAME.registerComponent('worldbuilder', {
     // Rise buildings from ground
     if (data.buildingfunction == 'colorCity') {
       var from = "" + pos.x + " " + pos.y + " " + pos.z;
-      var to = pos.x + " " + (pos.y + 350) + " " + pos.z;
+      var to = pos.x + " " + (pos.y + 750) + " " + pos.z;
       this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 20000; startEvents: beat");
     }
     // Offset to help with z-fighting
@@ -84,7 +86,6 @@ AFRAME.registerComponent('worldbuilder', {
     var data = this.data;
     var campos = document.querySelector('#camera').getAttribute('position');
     
-      //console.log("Beginning to load worldbuilder " + data.buildingfunction);
     if (campos.z < this.unload) {
       console.log("Removing worldbuilder " + data.buildingfunction);
       el.setAttribute('visible', false);
@@ -174,7 +175,6 @@ AFRAME.registerComponent('worldbuilder', {
     }
   }
 });
-
 
 /*
 Build a map of all widths and heights of assets which will be placed. Goal is to avoid z-fighting intersections
@@ -297,6 +297,7 @@ function buildGrids(wb) {
   print2DArray(heights);*/
 }
 
+// Buildingfunction for a colorful cityscape with shader buildings
 function colorCity(builder, data) {
   
   var height = builder.heights[builder.z][builder.x];
@@ -316,20 +317,11 @@ function colorCity(builder, data) {
     //builder.loadbar -= 200 / (builder.zmax * builder.xmax);
 
     var xcenter = (builder.xmax - data.numblockx * data.gapwidth) / 2;
+    height *= width * Math.floor(1 + Math.random() * 3);
 
     var rngbuilding = document.createElement('a-entity');
-    // TODO: either allow non-shaders in front row or make sure fog is still around when entering city
-    if ((width < 3 && height < 4) && (builder.x < xcenter + 5 && builder.x > xcenter - 5)) {
-      rngbuilding.setAttribute('rng-building', "width: " + width + "; height: " + (height + 2) + "; windowtype: 1 0 1 1 1; colortype: 0 0 0 0 1 0");
-      // Shift non-shaders so they're always in front. Looks better
-      builder.xshift = 0.5;
-      builder.zshift = 0.5;
-    }
-    else {  
-      rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height
-                               + "; grow_slide: 1 1; static: 1 2; axis: 1 1"
-                               + "; usecolor1: 1 1; usecolor2: 1 1; colorstyle: 1 4 4 1");
-    }
+    rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height
+                               + "; color1: #FFFF00; usecolor1: 1 0; grow_slide: 1 1; static: 1 0; axis: 1 1; colorstyle: 1 4 1 0");
 
     // Flip buildings on right
     var yrotation = 0;
@@ -347,7 +339,8 @@ function colorCity(builder, data) {
   }
 }
 
-
+// buildingfunction for a city with moving/dancing rng-building elements
+// Currently uses some arbitrary timing for cool effects with walking robots, etc.
 function movingCity(builder, data) {
   var row = builder.el.children[builder.zmax - builder.z - 1];
   
@@ -414,7 +407,7 @@ function movingCity(builder, data) {
     width = rng([1,2], '1 1');
     xoffset = fullrange / 2;
     zoffset = fullrange / 2;
-    rngbuilding.setAttribute('rng-building-dance', "color1: #ffff00; width: " + width + "; height: " + height + typestr + "; start: " + (start + 2));
+    rngbuilding.setAttribute('rng-building-dance', "color1: #ffff00; width: " + width + "; height: " + height + typestr + "; start: " + (start + 12));
   }
   else if (type == 'flower') {
     height = rng([1,2],'1 1');
@@ -429,10 +422,10 @@ function movingCity(builder, data) {
       xoffset = -xoffset;
     }
     zoffset = fullrange;
-    rngbuilding.setAttribute('rng-building-pulse', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
+    rngbuilding.setAttribute('rng-building-pulse', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + (start + 6));
   }
   else if (type == 'split') {
-    rngbuilding.setAttribute('rng-building-split', "color1: #ffff00" + typestr + "; start: " + start);
+    rngbuilding.setAttribute('rng-building-split', "color1: #ffff00" + typestr + "; start: " + (start + 24));
     xoffset = -10;
     if (builder.x >= xcenter) {
         xoffset = -xoffset;
@@ -442,7 +435,7 @@ function movingCity(builder, data) {
     height = rng([1,2,3],'3 2 1');
     var skip = rng([true, false], '1 1');
     rngbuilding.setAttribute('rng-building-sine', "color1: #ffff00; width: 1; dist: 10; skip: " + skip
-                             + "; height: " + height + typestr + "; start: " + start);
+                             + "; height: " + height + typestr + "; start: " + (start + 12));
     yrotation = rng([0, 90, 270], '1 1 1');
     if (yrotation == 0) {
       xoffset -= gridset;
@@ -486,6 +479,7 @@ function movingCity(builder, data) {
   row.appendChild(rngbuilding);
 }
 
+// Used for printing placement grids while debugging
 function print2DArray(array) {
   console.log("SPACE");
   for (var i = 0; i < array.length; i++) {

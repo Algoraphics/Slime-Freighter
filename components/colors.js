@@ -1,19 +1,17 @@
 /* global AFRAME */
 
-
-// SAVE THIS FOR CRAZY VISUALS
-/*material="shader: grid-glitch; color1: #0000FF; color2: #FF0000; numrows: 400.0; speed: 1.0; 
-                          usecolor1: 0.0; usecolor2: 0.0; height: 0.95; width: 0.95; colorgrid: 1.0; reverse: 1.0"*/
-
+// Convert rgb value map to hex rgb string
 function componentToHex(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
 }
 
+// Convert rgb input values to hex rgb string
 function rgbToHex(r, g, b) {
   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
+// Convert hex rgb string to rgb value map
 function hexToRgb(hex) {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -23,6 +21,7 @@ function hexToRgb(hex) {
     } : null;
 }
 
+// Cycle through rainbow based on previous state and rgb color
 function rainbowCycle(state, color, speed) {
   var rgb = hexToRgb(color);
   var r = rgb.r;
@@ -73,15 +72,26 @@ function rainbowCycle(state, color, speed) {
   return [state, rgbToHex(r, g, b)];
 }
 
+/*
+  A hilariously mutated version of entity-generator which, at this point, is entirely my own code.
+  
+  Defines a number of ways to animate color across groups of elements. Uses both standard animations
+  and a few custom color animations. Most involved is the "flip" animation, which changes element
+  color sequentially and can be configured to move to a visualizer beat, input time interval, or
+  continuous loop at a given speed. This was a 'performance optimized' way to get animated color
+  across a large group of elements.
+  
+  Also includes visualizer integration for element movement, specifically to follow visualizer 
+  "levels," which only make sense when applied to element groups.
+*/
 AFRAME.registerComponent('entity-colors', {
    schema: {
-     mixin: {default: ''},
-     num: {default: 10},
-     reverse: {default: false}, // Generic reverse flag, used for multiple purposes
-     //Set up for visualization elements
-     analyserEl: {type: 'selector'},
-     max: {default: 20},
-     multiplier: {default: 100},
+     mixin: {default: ''}, // Element configuration
+     num: {default: 10}, // How many elements
+     reverse: {default: false}, // Generic reverse flag, used for multiple purposes (this won't come back to bite me)
+     analyserEl: {type: 'selector'}, //Set up for audio-visualization elements
+     max: {default: 20}, // Max for audio-visualizer levels
+     multiplier: {default: 100}, // Multiplier for audio-visualization elements
      audio_property: {default: 'off', oneOf: ['scale', 
                                               'position', 
                                               'material']},
@@ -131,15 +141,18 @@ AFRAME.registerComponent('entity-colors', {
        else if (data.color_type == 'animflip') {
          // TODO very arbitrary constant
          entity.setAttribute('class', 'beatlistener48');
-         entity.setAttribute('animation', "property: material.color; from: " + data.fromcolor + "; to: " + data.tocolor + "; dir: alternate; dur: " + 2*this.beat + "; easing: easeInOutExpo; loop: true; startEvents: beat");
+         entity.setAttribute('animation', "property: material.color; from: " + data.fromcolor + "; to: " + data.tocolor
+                             + "; dir: alternate; dur: " + 2*this.beat + "; easing: easeInOutExpo; loop: true; startEvents: beat");
        }
        // Two-tone animation with offset TODO: not currently in use. Tested to work, though
        else if (data.color_type == 'shimmer') {
-         entity.setAttribute('animation', "property: material.color; from: " + data.fromcolor + "; to: " + data.tocolor + "; delay: " + 2*i + "00; dir: alternate; dur: " + 2*this.beat + "; easing: easeInOutSine; loop: true; startEvents: beat");
+         entity.setAttribute('animation', "property: material.color; from: " + data.fromcolor + "; to: " + data.tocolor
+                             + "; delay: " + 2*i + "00; dir: alternate; dur: " + 2*this.beat + "; easing: easeInOutSine; loop: true; startEvents: beat");
        }
        // Same as shimmer but tones are also shifted per window
        else if (data.color_type == 'rainbow_shimmer') {
-         entity.setAttribute('animation', "property: material.color; from: " + rgbToHex(15*i, 255, 0) + "; to: " + rgbToHex(255, 15*i, 0) + "; delay: " + 2*i + "00; dir: alternate; dur: 2000; easing: easeInOutSine; loop: true;");
+         entity.setAttribute('animation', "property: material.color; from: " + rgbToHex(15*i, 255, 0) + "; to: " + rgbToHex(255, 15*i, 0)
+                             + "; delay: " + 2*i + "00; dir: alternate; dur: 2000; easing: easeInOutSine; loop: true;");
        }
        // Save the first color of every element and flip between them
        else if (data.color_type == 'flip' || data.color_type == 'flip_audio') {
@@ -150,7 +163,6 @@ AFRAME.registerComponent('entity-colors', {
          this.bar = this.beat * data.every;
          this.flipbar = this.bar;
        }
-       //entity.setAttribute('animation__scale', "property: scale; dir: alternate; dur: 200; easing: easeInSine; loop: true; to: 1.2 1 1.2");
        this.el.appendChild(entity);
      }
    },
@@ -274,12 +286,6 @@ AFRAME.registerComponent('entity-colors', {
          else return;
        }
        
-       
-       
-       /*if (this.counter < 100) {
-         console.log("bar is " + this.bar + " and time is " + time + " my time is " + this.time + " for building " + this.data.id); 
-         this.counter++;
-       }*/
        if (startflipping) {
          this.flipping = true;
          // Bar moves up if we pass it. This means we're ready for the next one, even if flipping takes too long
@@ -334,6 +340,12 @@ AFRAME.registerComponent('entity-colors', {
    }
  });
 
+/*
+  Ganzfeld simulator component.
+  
+  Creates a simple sphere with uniform color, intended to surround the user.
+  Manages keyboard controls to play/pause white noise and cycle colors.
+*/
 AFRAME.registerComponent('ganzfeld', {
   schema: {
     radius: {default: 5},
@@ -349,21 +361,15 @@ AFRAME.registerComponent('ganzfeld', {
     sphere.setAttribute('state', 0);
     this.el.appendChild(sphere);
     
-    /*var info = document.createElement('a-entity');
-    info.setAttribute('geometry', "primitive: plane;");
-    info.setAttribute('material', "shader: flat; opacity: 0.5");
-    var infoText = "Ganzfeld info here";
-    info.setAttribute('text', "align: center; value: " + infoText);*/
-    
     window.addEventListener("keydown", function(e){
       if(e.keyCode === 71) { // g key to cycle colors
         var color = document.querySelector('#ganzfeld').children[0].getObject3D('mesh').material.color;
         var state = parseInt(document.querySelector('#ganzfeld').children[0].getAttribute('state'));
-        // Gets a little silly with the math here. Pulling directly from the object3D required a couple conversions
+        // Gets a little silly with the math here. Pulling directly from the object3D (darn you, global scope) required a couple conversions
         var hexcolor = rgbToHex(color.r * 255, color.g * 255, color.b * 255);
-        
+        // Cycle the rainbow
         var res = rainbowCycle(state, hexcolor, 10);
-        
+        // Convert back to fractional values
         var nextcolor = hexToRgb(res[1]);
         nextcolor.r /= 255; nextcolor.g /= 255; nextcolor.b /= 255;
         document.querySelector('#ganzfeld').children[0].getObject3D('mesh').material.color = nextcolor;

@@ -9,30 +9,6 @@ function getRandomColor() {
   }
   return color;
 }
-/**
-  * Entity Generator component for A-Frame.
-  * Create number of entities given a mixin.
- */
-AFRAME.registerComponent('entity-generator', {
-   schema: {
-     mixin: {default: ''},
-     num: {default: 10}
-   },
- 
-   init: function () {
-     var data = this.data;
-     var mixingroups = data.mixin.split(',');
-     
-     // Create entities with supplied mixin.
-     for (var i = 0; i < data.num; i++) {
-       for (var j = 0; j < mixingroups.length; j++) {   
-         var entity = document.createElement('a-entity');
-         entity.setAttribute('mixin', mixingroups[j]);
-         this.el.appendChild(entity);
-       }
-     }
-   }
- });
 
 /* Merge a group of mixins into a single layout. Useful if a single collection of
   mixins with relative positions, rotations, etc. need to use one consistent layout.
@@ -81,7 +57,7 @@ AFRAME.registerComponent('entity-generator-merger' , {
 });
 
 // Layout component that will rotate objects in a circle to all face outwards.
-// TODO this is kinda redundant now that the building component does it
+// TODO this is mildly redundant now that the building component does it
 AFRAME.registerComponent('entity-circle', {
    schema: {
      mixin: {default: ''},
