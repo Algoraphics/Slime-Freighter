@@ -1,5 +1,11 @@
 /* global AFRAME */
 
+/* 
+  This file contains shaders used (or not) in this project. Most of them
+  are not my work, but a couple of them very much are. I've tried to make
+  the distinction clear with comment descriptions.
+*/
+
 // Basic static vertex shader
 var basic = `
 varying vec2 vUv;
@@ -11,7 +17,7 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `
-// Shader for perlin noise
+// Shader for perlin noise (see https://shaderfrog.com/app/view/126)
 var randomripple = `
 varying vec2 vUv;
 varying vec3 vPosition;
@@ -134,7 +140,8 @@ float cnoise(vec3 P) {
 #define PI 3.141592653589793238462643383279
 `
 
-// Very customizeable shader for creating buildings.
+// Very customizeable shader for creating buildings. This one is entirely made by me (Exbot)
+// with inspiration from https://thebookofshaders.com/09/.
 AFRAME.registerShader('building-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
@@ -289,6 +296,7 @@ void main() {
 `
 });
 
+// See https://shaderfrog.com/app/view/329
 AFRAME.registerShader('caustic-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
@@ -368,7 +376,7 @@ void main( void ) {
     gl_FragColor = vec4( s, 1.0 );
 }
 `
-
+// see https://shaderfrog.com/app/view/43
 AFRAME.registerShader('electric-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
@@ -384,17 +392,14 @@ AFRAME.registerShader('electric-shader', {
   fragmentShader: randomripple + electricfrag
 });
 
-/* Notes: resolution 1.0 centers the animation, 
-uniformity can cause the stars to come in waves, 
-fadeaway determines how many stars are visible in distance
-*/
+// see https://shaderfrog.com/app/view/269
 AFRAME.registerShader('lightspeed-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
     speed: {type: 'float', is: 'uniform'},
-    fadeaway: {type: 'float', is: 'uniform'},
-    resolution: {type: 'float', is: 'uniform'},
-    uniformity: {type: 'float', is: 'uniform'},
+    fadeaway: {type: 'float', is: 'uniform'}, // determines how many stars are visible in distance
+    resolution: {type: 'float', is: 'uniform'}, // 1.0 centers the animation,
+    uniformity: {type: 'float', is: 'uniform'}, // can cause the stars to come in waves, 
     
     color: {type: 'color', is: 'uniform'},
   },
@@ -448,6 +453,7 @@ void main(void) {
 `
 });
 
+// see https://shaderfrog.com/app/view/10
 AFRAME.registerShader('kal-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
@@ -501,6 +507,7 @@ void main( void ) {
 `
 });
 
+// see https://shaderfrog.com/app/view/54
 AFRAME.registerShader('grid-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
@@ -582,6 +589,7 @@ void main()
 `
 });
 
+// see https://shaderfrog.com/app/view/57
 AFRAME.registerShader('disco-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
@@ -664,8 +672,14 @@ void main() {
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
 }
 `
-
-
+/*
+  Built from http://glslsandbox.com/e#44551.1, which was originally inspired by
+  http://www.fractalforums.com/new-theories-and-research/very-simple-formula-for-fractal-patterns/
+  Changes include:
+    - entirely new harmonic function for more consistently interesting patterning
+    - added uniforms and keyboard controls for user control
+    - integration with perlin noise ripples for some measure of VR interactivity
+*/
 AFRAME.registerShader('fractal-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
@@ -711,7 +725,7 @@ void main(void){
 	vec2 mspt = (vec2(
 			sin(tm)+cos(tm*0.5)+sin(tm*-0.5)+cos(tm*0.1)+sin(tm*0.2) + (vNoise / (20.0*mshift)),
 			cos(tm)+sin(tm*0.1)+cos(tm*0.8)+sin(tm*-1.1)+cos(tm*1.5) + (vNoise / (50.0*mshift))
-			)+4.4)*0.06; //5x harmonics, scale back to [0,1]
+			)+4.4)*0.06;
 	float R = 0.0;
 	float RR = 0.0;
 	float RRR = 0.0;
