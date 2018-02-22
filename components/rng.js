@@ -18,7 +18,8 @@ var animAttrs = ' dir: alternate; loop: true; ';
   Main rng function.
   options come in the form [a, b, c, d]
   probstr in the form '1 2 3 0'
-  This function will return a single chosen option using the specified probabilities
+  The idea here is that it is now trivial to say "I want this option to appear
+  twice as often as this other option."
 */
 function rng(options, probstr) {
   var choose_array = chooseArr(options, probstr);
@@ -43,7 +44,7 @@ function chooseArr(options, probstr) {
   return choose_array;
 }
 
-// Parse probability array from string
+// Parse probability array from string "1 2 3" -> [1, 2, 3]
 function probArr(options, probstr) {
   //console.log("Checking probs for options "  + options + " and probstr " + probstr);
   var probs = probstr.split(' ');
@@ -76,7 +77,11 @@ function addBeatListener(comp, startclass) {
   });
 }
 
-// TODO: explanation, can generalize and remove the word building from a lot of these
+// TODO long-term, these rng elements to not need to be specific to "buildings"
+
+/*
+  Helper function for rng-building-arc, recursively add buildings to a base with some arc
+*/
 function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) {
   if (depth > 1) {
     var xoffset = 0; var yoffset = -10; var zoffset = 0;
@@ -116,6 +121,7 @@ function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) 
   }
 }
 
+// Configurable arc of buildings with optional scaling
 AFRAME.registerComponent('rng-building-arc', {
   schema: {
     // Input probabilities
@@ -179,6 +185,7 @@ AFRAME.registerComponent('rng-building-arc', {
   }
 });
 
+// Single building spreads out into a "flower" shape. Also supports forming a cross.
 AFRAME.registerComponent('rng-building-flower', {
   schema: {
     // Input probabilities
@@ -240,6 +247,7 @@ AFRAME.registerComponent('rng-building-flower', {
   }
 });
 
+// Building scales to the beat of an audio-visualizer.
 AFRAME.registerComponent('rng-building-dance', {
   schema: {
     // Input probabilities
@@ -336,6 +344,10 @@ function sinmove(comp) {
   } 
 }
 
+/*
+  This component allows alternating movement with pauses, a surprisingly difficult thing to do
+  using aframe animations. Uses sine waves to calculate position and when to pause.
+*/
 AFRAME.registerComponent('rng-building-sine', {
   // TODO: can schema be a variable?
   schema: {
@@ -406,6 +418,7 @@ AFRAME.registerComponent('rng-building-sine', {
   }
 });
 
+// Group of buildings which slide in and out of each other in a cool formation.
 AFRAME.registerComponent('rng-building-pulse', {
   schema: {
     // Input probabilities
@@ -450,6 +463,7 @@ AFRAME.registerComponent('rng-building-pulse', {
   }
 });
 
+// Group of buildings which form together into a larger building and then grow taller.
 AFRAME.registerComponent('rng-building-split', {
   // TODO: can schema be a variable?
   schema: {
@@ -682,8 +696,10 @@ AFRAME.registerComponent('rng-building', {
 });
 
 /*
-  Generate city buildings using building-shader. Takes advantage of a large
-  number of customizeable options in the shader, but not all.
+  Generate buildings using building-shader. Uses almost all of the ridiculous number
+  of features provided by the shader.
+  Also supports a "grow" animation where the building grows out of a 2D plane. The
+  animation can be triggered by a beat from the music manager.
 */
 AFRAME.registerComponent('rng-building-shader', {
   schema: {
@@ -697,20 +713,31 @@ AFRAME.registerComponent('rng-building-shader', {
     usecolor1: {default: '1 1'},
     usecolor2: {default: '1 1'},
     colorstyle: {default: '1 1 1 1'}, // single color, two color, one color to gradient, gradient
+    winheight: {default: '1 2 8 1'},
+    winwidth: {default: '2 8 4'},
+    triggerbeat: {default: -1},
+    speed: {default: 1.0},
   },
   init: function () {
     var data = this.data;
+    var triggerbeat = 2;// TODO this.data.triggerbeat;
     
     var height = data.height;
     var width = data.width;
-    var winheight = 0.5;
-    var winwidth = 0.5;
-    var slidereverse = 0.0;
-    var numrows = 2 * width;
-    var colorgrid = 1.0;
+    var winheight = rng([0.2, 0.5, 0.65, 0.95], data.winheight)
+    var winwidth = rng([0.4, 0.5, 1.1], data.winwidth);
+    var buildingwidth = 5 * width;
+    var buildingheight = 6.5 * height;
+    var midheight = buildingheight / 2;
+    
+    var numrows = 2 * height;
+    var numcols = 2 * width;
+    var colorgrid = 0.0;
     var invertcolors = 0.0;
     
+    var speed = data.speed;
     var slide = 0.0;
+    var slidereverse = 0.0;
     var grow = 0.0;
     var move = rng([0.0, 1.0], data.static);
     var axis = rng([0.0, 1.0], data.axis);
@@ -720,23 +747,9 @@ AFRAME.registerComponent('rng-building-shader', {
       slide = ngs;
       grow = 1 - ngs;
     }
-    var growsine = grow;
-    if (grow) {
-      numrows = rng([numrows, 50.0, 150.0, 200.0], data.grows);
-      if (numrows > 100) {
-        invertcolors += 1;
-        winheight = 0.95;
-        winwidth = 0.95;
-      }
-      else {
-        grow *= 16;
-      }
-      colorgrid = 0.0;
-    }
-
-    var buildingwidth = 5 * width;
-    var buildingheight = 2 * buildingwidth;
-    var setheight = (buildingheight - buildingheight / 2);
+    var growsine = 0.0;
+    var growclamp = 0.0;
+    var growvert = 0.0;
     
     var color1 = getRandomColor();
     if (data.color1 != '') {
@@ -750,42 +763,82 @@ AFRAME.registerComponent('rng-building-shader', {
       color2 = color1;
     }
     else if (colorstyle == 'singlegrad') {
-      usecolor1 = rng([0.0, 1.0], data.usecolor1);
+      usecolor1 = rng([1.0, 0.0], data.usecolor1);
       usecolor2 = 1.0 - usecolor1;
     }
     else if (colorstyle == 'doublegrad') {
       usecolor1 = 0.0;
       usecolor2 = 0.0;
     }
-    var offset = Math.floor(Math.random() * 2);
-    //console.log("usecolor1 is " + usecolor1 + " and usecolor2 is " + usecolor2);
     
-    for (var i = 0; i < height; i++) {
-      var building = document.createElement('a-entity');
-      building.setAttribute('material', "shader: building-shader;"
-                            + "; color1: " + color1 + "; color2: " + color2 + "; numrows: " + numrows 
-                            + "; grow: " + grow + "; growsine: " + growsine + "; invertcolors: " + invertcolors
-                            + "; slide: " + slide + "; slidereverse: " + slidereverse + "; slideaxis: " + axis 
-                            + "; colorslide: " + slide + "; coloraxis: " + axis + "; colorgrid: " + colorgrid
-                            + "; speed: 1.0; height: " + winheight + "; width: " + winwidth
-                            + "; coloroffset: " + 0 + "; usecolor1: " + usecolor1 + "; usecolor2: " + usecolor2);
-      building.setAttribute('geometry', "primitive: box; width: " + buildingwidth + "; height: " + buildingheight + "; depth: " + buildingwidth);
-      building.setAttribute('position', "0 " + setheight + " 0");
-      setheight += buildingheight;
-      this.el.appendChild(building);
+    var building = document.createElement('a-entity');
+    
+    // Special case changes for physical grow animation
+    if (data.triggerbeat >= 0) {
+        this.el.setAttribute("visible", false);
+        building.setAttribute('scale', "1 0.001 1");
+        
+        grow = numrows;
+        growvert = 1.0;
+        growclamp = 1.0;
+        speed = 1.27*speed;
+        numrows = 0.1;
+        midheight = 0;
     }
+    else if (grow) {
+      growsine = 1.0;
+      var mult = rng([1.0, 50.0, 150.0, 200.0], data.grows);
+      numrows = mult * numrows;
+      numcols = mult * numcols;
+      if (mult > 100) {
+        invertcolors += 1;
+        winheight = 0.95;
+        winwidth = 0.95;
+      }
+      else {
+        grow *= 16;
+      }
+    }
+    
+    building.setAttribute('material', "shader: building-shader;"
+                          + "; color1: " + color1 + "; color2: " + color2 + "; numrows: " + numrows + "; numcols: " + numcols
+                          + "; grow: " + grow + "; growsine: " + growsine + "; growvert: " + growvert + "; growclamp: " + growclamp + "; growstart: " + 0.0 + "; invertcolors: " + invertcolors
+                          + "; slide: " + slide + "; slidereverse: " + slidereverse + "; slideaxis: " + axis
+                          + "; colorslide: " + slide + "; coloraxis: " + axis + "; colorgrid: " + colorgrid
+                          + "; speed: " + speed + "; height: " + winheight + "; width: " + winwidth
+                          + "; coloroffset: " + 0 + "; usecolor1: " + usecolor1 + "; usecolor2: " + usecolor2);
+    building.setAttribute('geometry', "primitive: box; width: " + buildingwidth + "; height: " + buildingheight + "; depth: " + buildingwidth);
+    building.setAttribute('position', "0 " + midheight + " 0");
+    this.el.appendChild(building);
+    
+    this.el.midheight = buildingheight/2;
+    
     // Cover top of building so we don't see windows
     var top = document.createElement('a-entity');
     top.setAttribute('geometry', "primitive: plane; width: " + buildingwidth + "; height: " + buildingwidth);
     top.setAttribute('material', "shader: flat; color: #000000");
-    top.setAttribute('position', "0 " + (setheight - (buildingheight / 2) + 0.01) + " 0");
+    top.setAttribute('position', "0 " + (buildingheight + 0.01) + " 0");
     top.setAttribute('rotation', "-90 0 0");
     this.el.appendChild(top);
+    
+    if (data.triggerbeat >= 0) {
+      this.el.setAttribute('class', 'beatlistener' + triggerbeat);
+      this.el.addEventListener('beat', function () {
+        // Animate building geometry to grow from a 2D plane at the base
+        this.children[0].setAttribute("animation__grow", "property: scale; from: 1 0.001 1; to: 1 1 1; dur: " + (beat*height/data.speed) + "; easing: linear");
+        this.children[0].setAttribute("animation__move", "property: position; from: 0 0 0; to: 0 " + this.midheight + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
+        this.children[1].setAttribute("animation__move", "property: position; from: 0 0.1 0; to: 0 " + (this.midheight*2 + 0.01) + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
+        // Move shader time back to origin to reset window animation
+        var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
+        this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
+        this.setAttribute("visible", true);
+      });
+    }
   }
 });
 
 /*
-Rng component for customizeable objects with complex shaders.
+  Rng component for customizeable objects with complex shaders.
 */
 AFRAME.registerComponent('rng-shader', {
   schema: {
@@ -850,6 +903,9 @@ AFRAME.registerComponent('rng-shader', {
   },
 });
 
+/*
+  Fractal specific shader component with keyboard control support.
+*/
 AFRAME.registerComponent('rng-fractal-shader', {
   schema: {
     speed: {default: '1 1 1'},
@@ -881,14 +937,11 @@ AFRAME.registerComponent('rng-fractal-shader', {
     
     var entity = document.createElement('a-entity');
     entity.setAttribute('geometry', "primitive: sphere; radius: " + (data.width / 2) + "segmentsWidth: 80; segmentsHeight: 80;");
-    entity.setAttribute('material', "side: double; shader: fractal-test-shader; speed: " + this.speed
+    entity.setAttribute('material', "side: double; shader: fractal-shader; speed: " + this.speed
                     + "; resolution: " + this.resolution + "; skip: " + skip + "; amplitude: " + 0.2
                     + "; displacement: " + 0.5 + "; scale: " + 4.0 + "; vertexnoise: " + 0.0
                     + "; shatter: " + 1.0 + "; twist: " + 1.0);
     this.el.appendChild(entity);
-    
-    this.onMouseDown = bind(this.onMouseDown, this);
-    this.onMouseMove = bind(this.onMouseMove, this);
     
     this.el.sceneEl.canvas.addEventListener('mousedown', this.onMouseDown, false);
     window.addEventListener('mousemove', this.onMouseMove, false);
@@ -936,26 +989,4 @@ AFRAME.registerComponent('rng-fractal-shader', {
       this.el.children[0].getObject3D('mesh').material.uniforms['val']['value'] += this.shift;
     }
   },
-  onMouseMove: function (event) {
-    // TODO use mouse for something?
-    if (false && !this.mouseDown) {
-      var previousMouseEvent = this.previousMouseEvent;
-      var movementX;
-      var movementY;
-
-       // Calculate delta.
-      movementX = event.movementX || event.mozMovementX;
-      movementY = event.movementY || event.mozMovementY;
-      if (movementX === undefined || movementY === undefined) {
-        movementX = event.screenX - previousMouseEvent.screenX;
-        movementY = event.screenY - previousMouseEvent.screenY;
-      }
-      this.previousMouseEvent = event;
-
-      this.el.children[0].getObject3D('mesh').material.uniforms['val']['value'] -= movementX * 0.0002;
-    }
-  },
-  onMouseDown: function(event) {
-    this.mouseDown = !this.mouseDown
-  }
 });
