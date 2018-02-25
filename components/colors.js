@@ -72,6 +72,17 @@ function rainbowCycle(state, color, speed) {
   return [state, rgbToHex(r, g, b)];
 }
 
+
+// Pick a random color
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+
 /*
   A hilariously mutated version of entity-generator which, at this point, is entirely my own code.
   

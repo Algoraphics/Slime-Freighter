@@ -1,4 +1,4 @@
-/* global AFRAME, getRandomColor, bind */
+/* global AFRAME, getRandomColor, hexToRgb, bind */
 
 /* RNG (Random Number Generator)
 This file contains RNG components used mostly by worldbuilders.
@@ -716,11 +716,11 @@ AFRAME.registerComponent('rng-building-shader', {
     winheight: {default: '1 2 8 1'},
     winwidth: {default: '2 8 4'},
     triggerbeat: {default: -1},
+    triggeraction: {default: ''},
     speed: {default: 1.0},
   },
   init: function () {
     var data = this.data;
-    var triggerbeat = 2;// TODO this.data.triggerbeat;
     
     var height = data.height;
     var width = data.width;
@@ -774,7 +774,7 @@ AFRAME.registerComponent('rng-building-shader', {
     var building = document.createElement('a-entity');
     
     // Special case changes for physical grow animation
-    if (data.triggerbeat >= 0) {
+    if (data.triggeraction == 'grow') {
         this.el.setAttribute("visible", false);
         building.setAttribute('scale', "1 0.001 1");
         
@@ -822,17 +822,31 @@ AFRAME.registerComponent('rng-building-shader', {
     this.el.appendChild(top);
     
     if (data.triggerbeat >= 0) {
-      this.el.setAttribute('class', 'beatlistener' + triggerbeat);
-      this.el.addEventListener('beat', function () {
-        // Animate building geometry to grow from a 2D plane at the base
-        this.children[0].setAttribute("animation__grow", "property: scale; from: 1 0.001 1; to: 1 1 1; dur: " + (beat*height/data.speed) + "; easing: linear");
-        this.children[0].setAttribute("animation__move", "property: position; from: 0 0 0; to: 0 " + this.midheight + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
-        this.children[1].setAttribute("animation__move", "property: position; from: 0 0.1 0; to: 0 " + (this.midheight*2 + 0.01) + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
-        // Move shader time back to origin to reset window animation
-        var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
-        this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
-        this.setAttribute("visible", true);
-      });
+      this.el.setAttribute('class', 'beatlistener' + data.triggerbeat);
+      if (data.triggeraction == 'grow') {
+        this.el.addEventListener('beat', function () {
+          // Animate building geometry to grow from a 2D plane at the base
+          this.children[0].setAttribute("animation__grow", "property: scale; from: 1 0.001 1; to: 1 1 1; dur: " + (beat*height/data.speed) + "; easing: linear");
+          this.children[0].setAttribute("animation__move", "property: position; from: 0 0 0; to: 0 " + this.midheight + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
+          this.children[1].setAttribute("animation__move", "property: position; from: 0 0.1 0; to: 0 " + (this.midheight*2 + 0.01) + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
+          // Move shader time back to origin to reset window animation
+          var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
+          this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
+          this.setAttribute("visible", true);
+        });
+      }
+      else if (data.triggeraction == 'lights') {
+        this.el.addEventListener('beat', function () {
+          var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
+          this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time - (2.2*594.094);
+          var color = this.children[0].getObject3D('mesh').material.uniforms['color2']['value'];
+          var nextcolor = hexToRgb(getRandomColor());
+          color.x = nextcolor.r / 255;
+          color.y = nextcolor.g / 255;
+          color.z = nextcolor.b / 255;
+          this.children[0].getObject3D('mesh').material.uniforms['color2']['value'] = color;
+        });
+      }
     }
   }
 });
