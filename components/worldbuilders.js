@@ -1,4 +1,4 @@
-/* global AFRAME, rng, emitlinks */
+/* global AFRAME, rng, emitToClass, beat */
 
 /*
   Worldbuilders define a customizeable grid of random assets which follows the camera to maintain
@@ -24,7 +24,7 @@ AFRAME.registerComponent('worldbuilder', {
     stopfollow: {default: 0}, // When the city should stop following the camera
     loadmult: {default: 1}, // Multiplier for how early we should load. 1 is earliest
     buildgrids: {default: true},
-    unload: {default: -500},
+    unload: {default: -1000},
     showbar: {default: 50},
   },
   init: function () {
@@ -50,7 +50,7 @@ AFRAME.registerComponent('worldbuilder', {
     if (data.buildingfunction == 'colorCity') {
       var from = "" + pos.x + " " + pos.y + " " + pos.z;
       var to = pos.x + " " + (pos.y + 750) + " " + pos.z;
-      this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: 20000; startEvents: beat");
+      this.el.setAttribute('animation__up',"property: position; from: " + from + "; to: " + to + "; easing: easeOutCubic; dur: " + (beat*24) + "; startEvents: beat");
     }
     // Offset to help with z-fighting
     this.offset = 0.01;
@@ -129,7 +129,9 @@ AFRAME.registerComponent('worldbuilder', {
       // Let other components know when loading is done
       if (this.z < 0) {
         console.log("Worldbuilder " + data.buildingfunction + " loading done.");
-        emitlinks(this.el,'worldloaded');
+        if (data.buildingfunction == 'movingCity') {
+          emitToClass(this.el, 'link', 'worldloaded');
+        }
         this.el.setAttribute('visible', true);
         this.loading = false;
       }
@@ -320,8 +322,9 @@ function colorCity(builder, data) {
     height *= width * Math.floor(1 + Math.random() * 3);
 
     var rngbuilding = document.createElement('a-entity');
-    rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height
-                               + "; color1: #FFFF00; usecolor1: 1 0; grow_slide: 1 1; static: 1 0; axis: 1 1; colorstyle: 1 4 1 0");
+    var randtrigger = Math.floor(Math.random() * 20);
+    rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height + "; triggerbeat: " + (140 + randtrigger) + "; triggeraction: lights"
+                               + "; color1: #FFFF00; usecolor1: 1 0; grow_slide: 1 1; static: 1 0; axis: 1 1; colorstyle: 1 0 0 0");
 
     // Flip buildings on right
     var yrotation = 0;
@@ -373,7 +376,7 @@ function movingCity(builder, data) {
     type = 'robot';//rng([type, 'robot'], '0 1');
   }
   // Some number of spaces will not have buildings, but robots are an exception
-  else if (rng([true, false], '3 5')) {
+  else if (rng([true, false], '5 3')) {
     return;    
   }
   else {
@@ -407,7 +410,7 @@ function movingCity(builder, data) {
     width = rng([1,2], '1 1');
     xoffset = fullrange / 2;
     zoffset = fullrange / 2;
-    rngbuilding.setAttribute('rng-building-dance', "color1: #ffff00; width: " + width + "; height: " + height + typestr + "; start: " + (start + 12));
+    rngbuilding.setAttribute('rng-building-dance', "color1: #ffff00; width: " + width + "; height: " + height + typestr + "; start: " + (start + 15));
   }
   else if (type == 'flower') {
     height = rng([1,2],'1 1');
@@ -422,10 +425,10 @@ function movingCity(builder, data) {
       xoffset = -xoffset;
     }
     zoffset = fullrange;
-    rngbuilding.setAttribute('rng-building-pulse', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + (start + 6));
+    rngbuilding.setAttribute('rng-building-pulse', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + (start + 8));
   }
   else if (type == 'split') {
-    rngbuilding.setAttribute('rng-building-split', "color1: #ffff00" + typestr + "; start: " + (start + 24));
+    rngbuilding.setAttribute('rng-building-split', "color1: #ffff00" + typestr + "; start: " + (start + 22));
     xoffset = -10;
     if (builder.x >= xcenter) {
         xoffset = -xoffset;

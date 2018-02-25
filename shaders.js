@@ -283,7 +283,7 @@ void main() {
   float oscillate = cos(time) * coloroffset + sin(time) * (1.0 - coloroffset);
   float combo = (1.0 - usecolors) * (rainbowscillate * 0.5 
                                   + israinbow * 0.7 
-                                  + usecolor1 * 0.8 
+                                  + usecolor1 * 1.0 
                                   + usecolor2 * 0.5)
                  + (oscillate * 0.25 + 0.55) * usecolors;
 

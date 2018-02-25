@@ -1,4 +1,4 @@
-/* global AFRAME, Uint8Array, THREE, emitlinks, debug */
+/* global AFRAME, Uint8Array, THREE, emitToClass, debug */
 
 /* This file contains components that are mostly someone else's open source code, that I've
   decided to include for a small amount of fine-grained control. Changes *should* be listed
@@ -30,7 +30,7 @@ AFRAME.registerComponent('entity-generator', {
    }
  });
 
-// Single audio context.
+// Single audio context. Used by audiovisualizer
 var context;
 
 /**
@@ -225,7 +225,9 @@ if (navigator.getVRDisplays) {
   });
 }
 
-function getVRDisplay () { return vrDisplay; }
+function getVRDisplay () {
+  return vrDisplay; 
+}
 
 /**
  * Determine if a headset is connected by checking if a vrDisplay is available.
@@ -238,7 +240,9 @@ function checkHeadsetConnected () { return !!getVRDisplay(); }
 function checkHasPositionalTracking () {
   var vrDisplay = getVRDisplay();
   if (isMobile() || isGearVR()) { return false; }
-  return vrDisplay && vrDisplay.capabilities.hasPosition;
+  var pos = vrDisplay.capabilities.hasPosition;
+  console.log("Found a VR with headset with positional: " + pos);
+  return vrDisplay && pos;
 }
 
 /**
@@ -671,7 +675,7 @@ AFRAME.registerComponent('my-look-controls', {
   onTouchEnd: function () {
     this.touchStarted = false;
     // Tell all the links we got a touch
-    emitlinks(this.el, 'touchend');
+    emitToClass(this.el, 'link', 'touchend');
   },
 
   /**
