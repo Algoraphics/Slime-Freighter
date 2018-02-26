@@ -322,8 +322,8 @@ function colorCity(builder, data) {
     height *= width * Math.floor(1 + Math.random() * 3);
 
     var rngbuilding = document.createElement('a-entity');
-    var randtrigger = Math.floor(Math.random() * 20);
-    rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height + "; triggerbeat: " + (140 + randtrigger) + "; triggeraction: lights"
+    var randtrigger = 169 + Math.floor(Math.random() * 20); // 151 If we want colors earlier
+    rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height + "; triggerbeat: " + randtrigger + "; triggeraction: lights"
                                + "; color1: #FFFF00; usecolor1: 1 0; grow_slide: 1 1; static: 1 0; axis: 1 1; colorstyle: 1 0 0 0");
 
     // Flip buildings on right
@@ -376,7 +376,7 @@ function movingCity(builder, data) {
     type = 'robot';//rng([type, 'robot'], '0 1');
   }
   // Some number of spaces will not have buildings, but robots are an exception
-  else if (rng([true, false], '5 3')) {
+  else if (rng([true, false], '1 1')) {
     return;    
   }
   else {

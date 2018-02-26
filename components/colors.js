@@ -360,7 +360,7 @@ AFRAME.registerComponent('entity-colors', {
 AFRAME.registerComponent('ganzfeld', {
   schema: {
     radius: {default: 5},
-    color: {default: "#00F900"},
+    color: {default: "#F90000"},
   },
   init: function () {
     var el = this.el;

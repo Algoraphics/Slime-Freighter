@@ -13,7 +13,7 @@ function surround(el) {
   var postr = -pos.x + ' ' + (-pos.y + 5) + ' ' + 30; // zpos is simply scaled cam distance from menu
   el.setAttribute('animation__position', 'property: position; from: 0 0 0; to: ' + postr + '; dur: 1000');
   el.setAttribute('animation__rotation', 'property: rotation; from: 0 0 0; to: 0 90 0; dur: 1000');
-  el.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 8 8 8; dur: 1000'); 
+  el.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 7.75 7.75 7.75; dur: 1000'); 
   
   // Disable mouse actions, since this menu item is surrounding the cursor
   el.active = false;
@@ -33,7 +33,7 @@ function surround(el) {
 
 // TODO Open about page
 function about(el) {
-  window.open("https://github.com/Explorerbot/Road","_new")
+  window.open("https://github.com/Algoraphics/Road","_new")
 }
 
 // Road animation selected
@@ -41,12 +41,15 @@ function start(el) {
   document.querySelector("#movingWorld").emit('start');
   // Tell all menu links to hide
   emitToClass(el, 'link', 'togglehide');
-  // Display loading text
+  // Display Load/Begin text
   var begin = document.querySelector('#begin');
   begin.emit('show');
-  begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 0; to: -0.3 0.3 0; dur: 500');
-  begin.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 3 3 3; dur: 500');
-  begin.children[0].active = false;
+  begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 0; to: -0.5 0.3 -1; dur: 500');
+  begin.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 5 5 5; dur: 500');
+  // Only disable this button if it's going to be showing a "loading" text
+  if (!el.loaded) {
+    begin.children[0].active = false;
+  }
 }
 
 // Loading complete, actually begin animation
@@ -77,13 +80,13 @@ function toggle(el) {
 function togglemini(minimenu) {
   var backy = -10; var prevbacky = -0.7;
   var toggly = -1.25; var prevtoggly = -0.6;
-  var prevz = 0.3; var z = 1.5;
+  var prevz = 0.35; var z = 1.5;
   var prevrotx = -10; var rotx = -90
   
   if (minimenu) {
     backy = -0.7; prevbacky = -10;
     toggly = -0.6; var prevtoggly = -1.25;
-    z = 0.3; prevz = 1.4;
+    z = 0.35; prevz = 1.4;
     prevrotx = -90; rotx = -10;
     
     var infotext = document.querySelector('#info-text');
@@ -91,7 +94,7 @@ function togglemini(minimenu) {
   }
   // Mini menu includes button to go back to main menu
   var back = document.querySelector('#back');
-  back.setAttribute('animation__position', 'property: position; from: 0 ' + prevbacky + ' 0.35; to: 0 ' + backy + ' 0.35; dur: 1000');
+  back.setAttribute('animation__position', 'property: position; from: 0 ' + prevbacky + ' 0.4; to: 0 ' + backy + ' 0.4; dur: 1000');
   // Also button to toggle the menu on and off
   var toggle = document.querySelector('#toggle');
   toggle.setAttribute('animation__position', 'property: position; from: 0 ' + prevtoggly + ' ' + prevz + '; to: 0 ' + toggly  + ' ' + z + '; dur: 1000');
@@ -130,6 +133,7 @@ AFRAME.registerComponent('menu-item', {
     this.el.infotext = this.data.infotext;
     this.el.tag = this.data.tag;
     this.el.mobile = isMobile();
+    this.el.loaded = false;
     
     // Get parent entity (layout element) for actual position
     var pos = this.el.parentEl.getAttribute('position');
@@ -145,6 +149,8 @@ AFRAME.registerComponent('menu-item', {
     // Click event is used by fuse
     this.el.addEventListener('click', function () {
       if (this.active) {
+        
+        document.querySelector('#click').play();
         // Call action function, pass self in for access to variables
         this.action(this);
       }
@@ -170,13 +176,16 @@ AFRAME.registerComponent('menu-item', {
       if (this.active) {
         this.setAttribute('scale', '1.2 1.2 1.2');
         // Same as click action above
+        document.querySelector('#click').play();
+        //document.querySelector('#cursor').setAttribute('fuse', false);
         this.action(this);
       }
     });
     this.el.addEventListener('touchend', function () {
-      // Special touchscreen only function
+      document.querySelector('#click').play();
     });
     this.el.addEventListener('worldloaded', function () {
+      this.loaded = true;
       // Inactive item getting this message must be the begin button, which should now become active
       if (this.tag == 'begin') {
         this.active = true;
@@ -212,7 +221,7 @@ AFRAME.registerComponent('menu-item', {
         var pos = this.pos
         var postr = -pos.x + ' ' + (-pos.y + 2) + ' ' + 30; // zpos is simply scaled cam distance from menu
         this.setAttribute('animation__position', 'property: position; from: ' + postr + '; to: 0 0 0; dur: 1000');
-        this.setAttribute('animation__scale', 'property: scale; from: 5 5 5; to: 1 1 1; dur: 1000');
+        this.setAttribute('animation__scale', 'property: scale; from: 7.75 7.75 7.75; to: 1 1 1; dur: 1000');
         
         document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: -180 90 0; to: 0 90 0; dur: 500');
         document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 180 90 0; to: 0 90 0; dur: 500');

@@ -953,47 +953,49 @@ AFRAME.registerComponent('rng-fractal-shader', {
     entity.setAttribute('geometry', "primitive: sphere; radius: " + (data.width / 2) + "segmentsWidth: 80; segmentsHeight: 80;");
     entity.setAttribute('material', "side: double; shader: fractal-shader; speed: " + this.speed
                     + "; resolution: " + this.resolution + "; skip: " + skip + "; amplitude: " + 0.2
-                    + "; displacement: " + 0.5 + "; scale: " + 4.0 + "; vertexnoise: " + 0.0
-                    + "; shatter: " + 1.0 + "; twist: " + 1.0);
+                    + "; displacement: " + 0.5 + "; scale: " + 4.0 + "; vertexnoise: " + 0.1
+                    + "; shatter: " + 1.0 + "; twist: " + 1.0 + "; speed: " + 1.0);
     this.el.appendChild(entity);
     
     this.el.sceneEl.canvas.addEventListener('mousedown', this.onMouseDown, false);
     window.addEventListener('mousemove', this.onMouseMove, false);
     window.addEventListener("keydown", function(e){
       if(e.keyCode === 81) { // q key to shift back
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['skip']['value'] -= 0.005;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['skip']['value'] -= 0.005;
       }
       if(e.keyCode === 69) { // e key to shift forward
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['skip']['value'] += 0.005;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['skip']['value'] += 0.005;
       }
       if(e.keyCode === 90) { // z key to zoom in
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['resolution']['value'] -= 0.1;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['resolution']['value'] -= 0.1;
       }
       if(e.keyCode === 88) { // x key to zoom out
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['resolution']['value'] += 0.1;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['resolution']['value'] += 0.1;
       }
       if(e.keyCode === 67) { // c key to shatter
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['shatter']['value'] -= 0.005;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['shatter']['value'] -= 0.005;
       }
       if(e.keyCode === 86) { // v key to reverse shatter
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['shatter']['value'] += 0.005;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['shatter']['value'] += 0.005;
       }
       if(e.keyCode === 66) { // b key to reset shatter and twist
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['shatter']['value'] = 1.0;
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['twist']['value'] = 1.0;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['shatter']['value'] = 1.0;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['twist']['value'] = 1.0;
       }
       if(e.keyCode === 78) { // n key to twist
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['twist']['value'] += 0.01;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['twist']['value'] += 0.01;
       }
       if(e.keyCode === 77) { // m key to untwist
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['twist']['value'] -= 0.01;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['twist']['value'] -= 0.01;
       }
       if(e.keyCode === 82) { // r key to ripple
-        var ripple = document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['vertexnoise']['value'];
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['vertexnoise']['value'] += 0.1;
+        var ripple = document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['vertexnoise']['value'];
+        if (ripple < 2) { // Ripple can literally eat the menu if left unchecked
+          document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['vertexnoise']['value'] += 0.1;
+        }
       }
       if(e.keyCode === 84) { // t key to reset ripple
-        document.querySelector('#fractal').children[0].getObject3D('mesh').material.uniforms['vertexnoise']['value'] = 0.0;
+        document.querySelector('#fractal').children[1].getObject3D('mesh').material.uniforms['vertexnoise']['value'] = 0.0;
       }
     })
   },
