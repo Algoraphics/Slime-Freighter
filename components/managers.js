@@ -54,6 +54,7 @@ function start(el) {
 
 // Loading complete, actually begin animation
 function begin(el) {
+  document.querySelector('#swoop').play();
   // Hide begin button
   el.setAttribute('animation__position', 'property: position; from: 0 0 0; to: 0 0 -8; dur: 1000; easing: linear');
   el.emit('togglehide');
@@ -79,14 +80,14 @@ function toggle(el) {
 // Toggle whether the mini menu is visible
 function togglemini(minimenu) {
   var backy = -10; var prevbacky = -0.7;
-  var toggly = -1.25; var prevtoggly = -0.6;
-  var prevz = 0.35; var z = 1.5;
+  var toggly = -1.2; var prevtoggly = -0.6;
+  var prevz = 0.35; var z = 1.2;
   var prevrotx = -10; var rotx = -90
   
   if (minimenu) {
     backy = -0.7; prevbacky = -10;
-    toggly = -0.6; var prevtoggly = -1.25;
-    z = 0.35; prevz = 1.4;
+    toggly = -0.6; var prevtoggly = -1.2;
+    z = 0.35; prevz = 1.2;
     prevrotx = -90; rotx = -10;
     
     var infotext = document.querySelector('#info-text');
@@ -159,6 +160,7 @@ AFRAME.registerComponent('menu-item', {
     this.el.addEventListener('mouseenter', function () {
       if (this.active) {
         this.setAttribute('scale', '1.2 1.2 1.2');
+        document.querySelector('#tick').play();
       }
     });
     this.el.addEventListener('mouseleave', function () {
