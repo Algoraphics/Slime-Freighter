@@ -159,14 +159,14 @@ AFRAME.registerComponent('audioanalyser', {
 });
 
 /* 
-  Gpoly include component. No changes. This is here because it was
-  actually the easiest installation method
+  Gpoly include component. Added a flag to switch off imported materials.
 */
 // see https://github.com/Utopiah/googlepoly-load-component for improvements
 AFRAME.registerComponent('gpoly', {
   schema: {
     polyid: {default: '5vbJ5vildOq'},
-    API_KEY: {default: ''}
+    API_KEY: {default: ''},
+    useMaterials: {default: true}
   },
   init: function () {
     var id = this.data.polyid;
@@ -189,7 +189,9 @@ AFRAME.registerComponent('gpoly', {
       var materials = out.formats[0].resources[0].url;
       // using ob+mtl since glTF format is not 2.0 
       el.setAttribute("obj-model", "obj", model );
-      el.setAttribute("obj-model", "mtl", materials );
+      if (this.data.useMaterials) {
+        el.setAttribute("obj-model", "mtl", materials );
+      }
     })
     .catch(err => { throw err });
   }

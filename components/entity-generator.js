@@ -4,6 +4,10 @@
   mixins with relative positions, rotations, etc. need to use one consistent layout.
   
   Input includes a list of positions and rotations ordered by input mixin
+  
+  As is, is not functionally generic. I only have one use case in this project.
+  Should be trivial to make generic, though. Just remove the beginning lines inside
+  the for loop.
 */
 AFRAME.registerComponent('entity-generator-merger' , {
   schema: {
@@ -32,12 +36,15 @@ AFRAME.registerComponent('entity-generator-merger' , {
       var entity = document.createElement('a-entity');
       // TODO make parameter
       var colortype = 'animflip'
+      var fromcolor = '#FFFF00'
       // Disable color changing for lamp
-      if (mixins[i] == 'lamp') {
+      var mix = mixins[i].trim()
+      if (mix == 'lamp' || mix == 'fliplamp') {
         colortype = 'off';
+        fromcolor = '#424242';
       }
-      entity.setAttribute('entity-colors', "mixin: " + mixins[i] + "; num: " + data.num + 
-                            '; color_type: ' + colortype + "; tocolor: #f441a6");
+      entity.setAttribute('entity-colors', "mixin: " + mix + "; num: " + data.num + 
+                            '; color_type: ' + colortype + "; fromcolor: " + fromcolor + "; tocolor: #f441a6");
       entity.setAttribute('position', positions[i]);
       entity.setAttribute('rotation', rotations[i]);
       entity.setAttribute('layout', "type: " + data.layout_type + "; margin: " + data.layout_margin);

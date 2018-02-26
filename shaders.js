@@ -667,7 +667,7 @@ void main() {
     vPosition = position;
     float sinemult = (sin(time*0.1) + 1.0) * 0.5; // 0 to 1, currently replace by keyboard controls (ripmult)
     float ripmult = vertexnoise;
-    vNoise = cnoise(normalize(position) * scale + time * speed * 0.2) * vertexnoise;
+    vNoise = cnoise(normalize(position) * scale + time * speed * 0.25) * vertexnoise;
     vec3 pos = position + normal * vNoise * vec3(displacement);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
 }
@@ -676,9 +676,9 @@ void main() {
   Built from http://glslsandbox.com/e#44551.1, which was originally inspired by
   http://www.fractalforums.com/new-theories-and-research/very-simple-formula-for-fractal-patterns/
   Changes include:
-    - entirely new harmonic function for more consistently interesting patterning
-    - added uniforms and keyboard controls for user control
-    - integration with perlin noise ripples for some measure of VR interactivity
+    - Updated harmonic function for more consistently interesting patterning
+    - Added uniforms and keyboard controls for user control
+    - Integration with Perlin noise ripples for some involvement of 3D for VR
 */
 AFRAME.registerShader('fractal-shader', {
   schema: {
@@ -690,6 +690,7 @@ AFRAME.registerShader('fractal-shader', {
     twist: {type: 'float', is: 'uniform'},
     scale: {type: 'float', is: 'uniform'},
     vertexnoise: {type: 'float', is: 'uniform'},
+    speed: {type: 'float', is: 'uniform'},
   },
 
 // TODO: use concatenation like below to make a lot of this generic

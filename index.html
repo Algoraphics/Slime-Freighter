@@ -51,11 +51,15 @@
             R : Ripples (3D, try in VR!)
             T : Turn off ripples\n
         ">
+        <a-entity
+        geometry="primitive: sphere; radius: 4.25;"
+        material="shader:flat; color: blue"
+        </a-entity>
       </a-entity>
     </script>
     <script id="ganzfeld-link" type="text/html">
       <a-entity class="link" id="ganzfeld"
-        ganzfeld="radius: 4"
+        ganzfeld="radius: 4.25"
         menu-item="action: surround; infotext: Ganzfeld simulator:\n 
           The Ganzfeld effect is a perception 'illusion'
           where a uniform field of color causes the brain to
@@ -105,8 +109,8 @@
         material="shader: caustic-shader; resolution: 2; color: yellow; backgroundColor: black; speed: 0.3; brightness: 2" 
         text-geometry="value: Loading . . .; size: 0.025;"
         menu-item="action: begin; active: false; tag: begin">
-        <a-entity geometry="primitive: box; width: 0.2; height: 0.08; depth: 0.01"
-                  position="0.08 0.02 0" material="shader: flat; opacity: 0;"></a-entity>
+          <a-entity geometry="primitive: box; width: 0.22; height: 0.08; depth: 0.01"
+              position="0.1 0.02 0.05" material="shader: flat; opacity: 0;"></a-entity>
       </a-entity>
     </script>
   </head>
@@ -127,6 +131,11 @@
         
         <audio id="side" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fside-of-the-road%5BMp3-Gratis.eu%20-%20Download%20Free%20Mp3%5D.mp3?1514392665329"></audio>
         <audio id="noise" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2F02-White-Noise-10min.mp3?1518906350264"></audio>
+        <audio id="click" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fbutton-click.mp3?1519576783848"></audio>
+        <audio id="swoop" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fbutton-start.mp3?1519577574614"></audio>
+        
+        <a-mixin id="clicksound" sound="on: click; src: #click"></a-mixin>
+        <a-mixin id="startsound" sound="on: click; src: #swoop"></a-mixin>
         
         <a-mixin id="rainbow" rainbowcycle="speed: 3"></a-mixin>
         <a-mixin id="alterColors" animation="property: material.color; dir: alternate; dur: 594.06; easing: easeInOutSine; loop: true; to: #FF00FF"></a-mixin>
@@ -165,7 +174,7 @@
         <a-mixin id="fliplamp" rotation="0 180 0" scale="2 2 2" gpoly="polyid:awUS2qoxeSa; API_KEY:AIzaSyAJ19aF1HSKdyzV4-OKtITR2MoKkSkh7rQ;"></a-mixin>
         <a-mixin id="blur" scale="0.8 0.8" geometry="primitive:plane" 
                  material="color: #fdffa3; shader:flat; transparent:true; src:https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fwhiteblur.png?1513817944824"></a-mixin>
-        <a-mixin id="car" crossorigin="anonymous" scale="0.03 0.03 0.03" gpoly="polyid:8ACz9InIO0c; API_KEY:AIzaSyAJ19aF1HSKdyzV4-OKtITR2MoKkSkh7rQ;"></a-mixin>
+        <a-mixin id="car" crossorigin="anonymous" scale="0.025 0.025 0.025" gpoly="useMaterials: false; polyid: 8ACz9InIO0c; API_KEY: AIzaSyAJ19aF1HSKdyzV4-OKtITR2MoKkSkh7rQ;"></a-mixin>
       <!--
       Comment section
       entity-generator="mixin: window; num: 16; rainbow: true; speed: 10"
@@ -207,15 +216,7 @@
                                          rotations: 90 0 0, 0 0 0, -15 0 0, -90 0 0
                                          layout_type:line; layout_margin: 50; flip_delay: 0.25; flip_shift: 0"
                                          followcamera="length: 250; stopfollow: -800"></a-entity>
-      <!-- comment starter
-      Check position of something
-      
-      Fractals!
-      <a-entity id="fractal2" rng-shader="shader: fractal-test; width: 3; height: 4; shape: 0 1 0; resolution: 0 0 1 0;" position="0 3 10" rotation="0 -90 180"></a-entity>
-      <a-entity id="fractal" rng-shader="shader: fractal-test; width: 3; height: 4; shape: 0 1 0; resolution: 0 0 1 0; speed: 0 1 0;" position="0 1000 10" rotation="0 -90 180"
-                class="beatlistener150" animation__move="property: position; from: 0 10000 -1550; to: 0 25 -1550; easing: easeOutCubic; dur: 30000; startEvents: beat"
-                                        animation__scale="property: scale; from: 50 50 50; to: 5 5 5; easing: linear; dur: 35000; startEvents: beat"></a-entity>-->
-     
+      <!-- comment starter -->
       <a-entity id="TBC" text-geometry="value: To Be Continued...;" material="shader: disco-shader; resolution: 0.5; color: black; backgroundColor: #4b00a8; speed: 1" position="0 1000 10" scale="2 2 2"
                 class="beatlistener180" animation__move="property: position; from: 0 10000 -1960; to: 0 25 -1960; easing: easeOutCubic; dur: 30000; startEvents: beat"></a-entity>
       
@@ -245,9 +246,8 @@
         <a-entity id="begin" template="src: #begin-link" scale="1 1 1" position="-0.1 -0.5 -1" rotation="0 0 0"></a-entity>
       </a-entity>
 
-      <a-entity id="camera" camera="userHeight: 0.075; near: 0.5" look-controls
-                camera-manager="speed: 12; rise: -1150; stop: -1950; id: main" position="0 0.1 30" rotation="0 0 0">
-
+      <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0.1 30" look-controls
+                camera-manager="speed: 12; rise: -1150; stop: -1950; id: main" rotation="0 0 0">
       <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
       <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>
         
@@ -268,10 +268,9 @@
                   scale="2 2 2" position="0 -0.05 -1.75" rotation="0 0 0" animation__opacity="property: text.opacity; from: 0; to: 1; dur: 10000"></a-entity>
       </a-entity>
       
-      
-      
-      
       <!--
+      <a-entity mixin="car" position="1 1.2 28" rotation="0 180 0"
+                material="shader: caustic-shader; resolution: 2; color: yellow; backgroundColor: black; speed: 0.3; brightness: 1"></a-entity>
       <a-entity rng-building-shader="triggerbeat: 2; triggeraction: lights; color1: #FFFF00; usecolor1: 1 0; grow_slide: 1 1; static: 1 0; axis: 1 1; colorstyle: 1 0 0 0"
                 position="0 0 -10"></a-entity>
       <a-entity id="camera" camera="userHeight: 1.6; near: 0.5" my-look-controls
