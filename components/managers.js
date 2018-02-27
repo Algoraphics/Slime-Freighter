@@ -44,7 +44,7 @@ function start(el) {
   // Display Load/Begin text
   var begin = document.querySelector('#begin');
   begin.emit('show');
-  begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 0; to: -0.5 0.3 -1; dur: 500');
+  begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 0; to: -0.375 0.3 0; dur: 500');
   begin.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 5 5 5; dur: 500');
   // Only disable this button if it's going to be showing a "loading" text
   if (!el.loaded) {
@@ -199,7 +199,7 @@ AFRAME.registerComponent('menu-item', {
       // Inactive item getting this message must be the begin button, which should now become active
       if (this.tag == 'begin') {
         this.active = true;
-        this.setAttribute('text-geometry', "value: |Begin|; size: 0.04;");
+        this.setAttribute('text-geometry', "value: |Begin|; size: 0.03;");
         //this.setAttribute('geometry', 'primitive: box; width: 0.1; height: 0.1; depth: 0.1');
         // Move main button into position
         var main = document.querySelector('#main');
@@ -524,7 +524,6 @@ AFRAME.registerComponent('timedvisible', {
 AFRAME.registerComponent('timedisabler', {
   init: function () {
     this.el.addEventListener('beat', function (event) {
-      console.log("Got a beat!");
       this.parentNode.removeChild(this);
     });
   }
