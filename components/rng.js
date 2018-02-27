@@ -104,7 +104,7 @@ function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) 
     //var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
     var mover = document.createElement('a-entity');
     mover.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + -xoffset + ' ' + yoffset + ' ' + zoffset + ';'
-                       + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + dur);
+                       + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + (dur / 2));
     mover.setAttribute('class', 'arc');
 
     var nextbuilding = document.createElement('a-entity');
@@ -112,7 +112,7 @@ function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) 
     //nextbuilding.setAttribute('position', "0 0 0");
     nextbuilding.setAttribute('scale', scale + " " + scale + " " + scale);
     nextbuilding.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 ' + xangle + ' ' + yangle + ';'
-                              + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + dur);
+                              + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + (dur / 2));
     nextbuilding.setAttribute('class', 'arc');
 
     arcBuildings(nextbuilding, buildingAttrs, angle, dist, scale, axis, depth - 1);
@@ -153,7 +153,7 @@ AFRAME.registerComponent('rng-building-arc', {
     if (angle < 0) {
       angle = rng([0, 5, 10, 15, 20, 25, 30, 45], '2 2 1 1 1 1 2 1');
     }
-    var num = rng([3, 4, 5], '1 2 1');
+    var num = rng([2, 3, 4], '0 3 1');
     
     var building = document.createElement('a-entity');
     var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
@@ -268,7 +268,7 @@ AFRAME.registerComponent('rng-building-dance', {
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
     
     var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                            + "; width: " + width + "; height: " + height + "; optimize: false";
+                            + "; width: " + width + "; height: " + height;
     this.el.setAttribute('building', buildingAttrs);
     // TODO: These float a little. Run a quick test to figure out why
     this.el.setAttribute('audio-react',"analyserEl: #analyser; multiplier: 0.75; build: 1; startbeat: " + data.start);
@@ -358,7 +358,7 @@ AFRAME.registerComponent('rng-building-sine', {
     color2: {default: ''},
     width: {default: 1},
     height: {default: 2},
-    num: {default: 4}, // Number of elements
+    num: {default: 3}, // Number of elements
     numbeats: {default: 2}, // Number of beats per movement
     reverse: {default: false},
     start: {default: -250},
@@ -442,7 +442,7 @@ AFRAME.registerComponent('rng-building-pulse', {
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
     
     var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                          + "; width: " + width + "; height: " + height + "; optimize: false";
+                          + "; width: " + width + "; height: " + height;
     
     var center = document.createElement('a-entity');
     center.setAttribute('building', buildingAttrs);

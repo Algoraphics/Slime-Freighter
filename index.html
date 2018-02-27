@@ -74,16 +74,16 @@
         ">
       </a-entity>
     </script>
-    <script id="back-link" type="text/html">
-      <a-entity class="link" id=back-button
+    <script id="main-link" type="text/html">
+      <a-entity class="link" id=main-button
         geometry="primitive: box; width: 0.5; height: auto; depth: -0.1" 
         material="color: black; opacity: 0.75"
         text="value: Main menu; width: 1.5; color: white; align: center"
-        menu-item="action: back; tag: main; active: false">
+        menu-item="action: main; tag: main; active: false">
       </a-entity>
       <a-entity id="info-text"
         geometry="primitive: plane; width: 1; height: 1.3"
-        position="0 0.8 0.2" rotation="20 0 0"
+        position="0 0.9 0.2" rotation="20 0 0"
         material="opacity: 0.75"
         text="value: This shouldn't be here"
       </a-entity>
@@ -104,10 +104,10 @@
       </a-entity>
     </script>
     <script id="begin-link" type="text/html">
-      <a-entity class="link" id="begin"
+      <a-entity class="link" id="begin" visible="false"
         material="shader: caustic-shader; resolution: 2; color: yellow; backgroundColor: black; speed: 0.3; brightness: 2" 
         text-geometry="value: Loading . . .; size: 0.025;"
-        menu-item="action: begin; active: false; tag: begin">
+        menu-item="action: begin; active: false; tag: begin;">
           <a-entity geometry="primitive: box; width: 0.22; height: 0.08; depth: 0.01"
               position="0.1 0.02 0.05" material="shader: flat; opacity: 0;"></a-entity>
       </a-entity>
@@ -115,7 +115,7 @@
   </head>
   <body>
     <a-scene id="fog" fog="type: exponential; density: 0.035; color: #101010"
-             animation__fog="property: fog.density; easing: easeOutCirc; to: 0.0; dur: 40000; startEvents: donedancing">
+             animation__fog="property: fog.density; easing: easeOutCirc; to: 0.0; dur: 40000; startEvents: beat">
       <a-assets>
         <img id="stars" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fstarfield.png?1513307410255">
         <img id="green" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fgreenfield.jpg?1513824807936">
@@ -190,50 +190,49 @@
       <a-entity light="type: ambient; intensity: 0.3; distance: 50; decay: 2" position="0 10 10"></a-entity>
       
       <a-plane id="floor" position="0 0 0" rotation="-90 0 0" width="10000" height="10000" color="#303030"></a-plane>
-      <a-plane id="road" position="0 0.05 0" rotation="-90 0 0" width="8" height="3690" color="#606060"></a-plane>
+      <a-plane id="road" position="0 0.025 0" rotation="-90 0 0" width="8" height="3690" color="#606060"></a-plane>
       
-      <a-entity id="roadline1" followcamera="length:250; stopfollow: -1600" slide
+      <a-entity id="roadline1" followcamera="length:500; stopfollow: -1800; delete: -2200" slide
                 entity-colors="analyserEl: #analyser; max: 50; multiplier: 0.01; 
-                               mixin: roadash; num: 25; color_type: none; slower: 4; reverse: true;
+                               mixin: roadash; num: 50; color_type: none; slower: 4; reverse: true;
                                audio_property: position; audio_levels: true; audio_buildup: 1;"
-                layout="type: line; margin: 10" position="0 0.1 -90" rotation="-90 90 0"></a-entity>
-      <a-entity id="roadline2" followcamera="length:250; stopfollow: -1600" slide
+                layout="type: line; margin: 10" position="0 0.05 -90" rotation="-90 90 0"></a-entity>
+      <a-entity id="roadline2" followcamera="length:500; stopfollow: -1800; delete: -2200" slide
                 entity-colors="analyserEl: #analyser; max: 50; multiplier: 0.01; 
-                               mixin: roadash; num: 25; color_type: none; slower: 4;
+                               mixin: roadash; num: 50; color_type: none; slower: 4;
                                audio_property: position; audio_levels: true; audio_buildup: 1;"
-                layout="type: line; margin: 10" position="0 0.1 -90" rotation="-90 90 0"></a-entity>
+                layout="type: line; margin: 10" position="0 0.05 -90" rotation="-90 90 0"></a-entity>
       
-      
+      <!-- comment starter -->
       <a-entity id="streetlightsright" position="4 0 75" rotation="0 90 0" slide
                 entity-generator-merger="num: 6; mixins: blur, lamp, lcone, lit; 
                                          positions: 0 5.83 -0.4, 0 4.5 0, 0 2.2 -1.35, 0 0.1 -2; 
                                          rotations: 90 0 0, 0 0 0, 15 0 0, -90 0 0
                                          layout_type:line; layout_margin: 50; flip_reverse: true"
-                                         followcamera="length: 250; stopfollow: -800"></a-entity>
+                                         followcamera="length: 250; stopfollow: -800; delete: -1000"></a-entity>
       <a-entity id="streetlightsleft" position="-4 0 100" rotation="0 90 0" slide
                 entity-generator-merger="num: 6; mixins: blur, fliplamp, lcone, lit; 
                                          positions: 0 5.83 0.4, 0 4.5 0, 0 2.2 1.35, 0 0.1 2; 
                                          rotations: 90 0 0, 0 0 0, -15 0 0, -90 0 0
                                          layout_type:line; layout_margin: 50; flip_delay: 0.25; flip_shift: 0"
-                                         followcamera="length: 250; stopfollow: -800"></a-entity>
+                                         followcamera="length: 250; stopfollow: -800; delete: -1000"></a-entity>
       <!-- comment starter -->
       <a-entity id="TBC" text-geometry="value: To Be Continued...;" material="shader: disco-shader; resolution: 0.5; color: black; backgroundColor: #4b00a8; speed: 1" position="0 1000 10" scale="2 2 2"
                 class="beatlistener180" animation__move="property: position; from: 0 10000 -1960; to: 0 25 -1960; easing: easeOutCubic; dur: 30000; startEvents: beat"></a-entity>
-      
+      <!-- comment starter -->
       <a-entity id="colorWorld" visible="false" worldbuilder=" buildingfunction: colorCity; 
                               blockx: 5; blockz: 15; numblockx: 4; numblockz: 4; gapwidth: 2; 
                               widthprobs: 0.1 0.15 0.1 0.07 0.04; maxheight: 7; heightprobs: 1 1 1 1 1 1 1;
-                              loadmult: 5; stopfollow: -600; unload: -900"
+                              loadmult: 3.83; stopfollow: -600; unload: -900"
                 class="beatlistener116" rotation = "0 0 0" position="-62 -750 -1245" scale = "1 1 1"></a-entity>
       
       <a-entity id="movingWorld" visible="false" worldbuilder=" buildingfunction: movingCity;
-                                  blockx: 4; blockz: 10; grid: 30; buildgrids: false; loadmult: 1; stopfollow: -500; unload: -600"
+                                  blockx: 4; blockz: 10; grid: 30; buildgrids: false; loadmult: 1; loadslow: 5; stopfollow: -500; unload: -600"
                 animation__rise="property: position; from: -48 -12 -370; to: -48 0 -370; easing: easeInCubic; dur: 594.059; startEvents: beat"
                 class="beatlistener32" position = "-48 -12 -370" rotation = "0 0 0"></a-entity>
-      
-      <a-plane id="grid" timedvisible position="0 0.025 -6850" rotation="-90 1 0" width="10000" height="10000" class="beatlistener130"
+      <a-plane id="grid" timedvisible position="0 0.1 -4350" rotation="-90 1 0" width="5000" height="5000" class="beatlistener130"
                material="shader: grid-shader; resolution: 1000.0; intensity: 10.0; speed: 0.5; color: #FFFF00; backgroundColor: #606060"></a-plane>
-
+      
       <a-entity id="menu" camera-manager="speed: 12" position="0 1.5 28.75" rotation="0 0 0">
         <a-entity id="menu-layout" layout="type: circle; radius: 12" scale="0.05 0.05 0.05">
           <a-entity template="src: #fractal-link"></a-entity>
@@ -241,17 +240,17 @@
           <a-entity template="src: #ganzfeld-link"></a-entity>
           <a-entity template="src: #start-link"></a-entity>
         </a-entity>
-        <a-entity id="back" template="src: #back-link" scale="1 1 1" position="0 -10 2" rotation="-20 0 0"></a-entity>
+        <a-entity id="main" template="src: #main-link" scale="1 1 1" position="0 -10 2" rotation="-20 0 0"></a-entity>
         <a-entity id="toggle" template="src: #toggle-link" scale="1 1 1" position="0 -9.8 2" rotation="-10 0 0"></a-entity>
         <a-entity id="begin" template="src: #begin-link" scale="1 1 1" position="-0.1 -0.5 -1" rotation="0 0 0"></a-entity>
       </a-entity>
-
+      
       <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0.1 30" look-controls
                 camera-manager="speed: 12; rise: -1150; stop: -1950; id: main" rotation="0 0 0">
       <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
       <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>
         
-      <a-entity id="cover" class="beatlistener90" timedisabler geometry="primitive: cylinder; height: 150; radius: 75"
+      <a-entity id="cover" visible="false" class="beatlistener90" timedisabler geometry="primitive: cylinder; height: 150; radius: 75"
                 material="shader: flat; side: double; color: black; opacity: 1"></a-entity>
         
         <a-cursor id="cursor" material="color: gray" position="0 0 0.5"
