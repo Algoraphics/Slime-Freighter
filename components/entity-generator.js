@@ -128,6 +128,8 @@ function numSides(type) {
   return numSides;
 }
 
+var numbuildings = 0;
+
 /*
   Create a non-shader building asset. Accepts various window shapes (will adjust height/width to accommodate),
   building shapes (using a circular layout to add sides), and color patterns.
@@ -147,6 +149,7 @@ AFRAME.registerComponent('building', {
     id: {default: 0}
   },
   init: function () {
+    
     var data = this.data;
     var windowidth = 1;
     var windowheight = 2;
@@ -154,6 +157,8 @@ AFRAME.registerComponent('building', {
     var columnmargin = 1 + windowidth;
     var numrows = 2 * data.height;
     var numcolumns = 2 * data.width;
+    
+    numbuildings += data.height;
     
     // Windowtype-specific settings
     if (data.windowtype == 'circle') {

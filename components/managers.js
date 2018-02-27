@@ -1,6 +1,6 @@
 /* global AFRAME, THREE, beat, bind, Uint8Array, isMobile, checkHeadsetConnected */
 
-var debug = false;
+var debug = true;
 
 /*
   Animate a menu item to grow around the camera. Assumes a mini menu is used
@@ -27,8 +27,8 @@ function surround(el) {
   infotext.setAttribute('text', "value: " + this.infotext);
   
   // Streetlights need to move out of the way, interfere with surround bubbles
-  document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: 0 90 0; to: -180 90 0; dur: 2000');
-  document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 0 90 0; to: 180 90 0; dur: 2000');
+  document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: 0 90 0; to: -180 90 0; dur: 1; delay: 500');
+  document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 0 90 0; to: 180 90 0; dur: 1; delay: 500');
 }
 
 // TODO Open about page
@@ -50,6 +50,10 @@ function start(el) {
   if (!el.loaded) {
     begin.children[0].active = false;
   }
+  else { // If we've already loaded, move main button into position
+    var main = document.querySelector('#main');
+    main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 0; dur: 1000');
+  }
 }
 
 // Loading complete, actually begin animation
@@ -66,10 +70,10 @@ function begin(el) {
   document.querySelector('#camera').emit('start');
 }
 
-// Tell all menu items that back has been pressed. The current item will handle this as necessary to get back to the menu
-function back(el) {
+// Tell all menu items that main has been pressed. The current item will handle this as necessary to get to the main menu
+function main(el) {
   emitToClass(el, 'link', 'togglehide');
-  emitToClass(el, 'link', 'back');
+  emitToClass(el, 'link', 'main');
 }
 
 function toggle(el) {
@@ -79,29 +83,33 @@ function toggle(el) {
 
 // Toggle whether the mini menu is visible
 function togglemini(minimenu) {
-  var backy = -10; var prevbacky = -0.7;
-  var toggly = -1.2; var prevtoggly = -0.6;
+  var mainy = -10; var prevmainy = -0.7;
+  var toggly = -1.2; var prevtoggly = -0.5;
   var prevz = 0.35; var z = 1.2;
   var prevrotx = -10; var rotx = -90
+  //var delay = 500;
   
   if (minimenu) {
-    backy = -0.7; prevbacky = -10;
-    toggly = -0.6; var prevtoggly = -1.2;
+    mainy = -0.7; prevmainy = -10;
+    toggly = -0.5; var prevtoggly = -1.2;
     z = 0.35; prevz = 1.2;
     prevrotx = -90; rotx = -10;
-    
-    var infotext = document.querySelector('#info-text');
-    infotext.setAttribute('visible', true);
+    //delay = 1000;
   }
-  // Mini menu includes button to go back to main menu
-  var back = document.querySelector('#back');
-  back.setAttribute('animation__position', 'property: position; from: 0 ' + prevbacky + ' 0.4; to: 0 ' + backy + ' 0.4; dur: 1000');
+  // Mini menu includes button to go to main menu
+  var main = document.querySelector('#main');
+  main.setAttribute('animation__position', 'property: position; from: 0 ' + prevmainy + ' 0.4; to: 0 ' + mainy + ' 0.4; dur: 1000; easing: easeInCirc');
+  
+  var infotext = document.querySelector('#info-text');
+  infotext.setAttribute('animation__visible', 'property: visible; from: ' + !minimenu + '; to: ' + minimenu + '; dur: 1; delay: 1000;');
   // Also button to toggle the menu on and off
   var toggle = document.querySelector('#toggle');
   toggle.setAttribute('animation__position', 'property: position; from: 0 ' + prevtoggly + ' ' + prevz + '; to: 0 ' + toggly  + ' ' + z + '; dur: 1000');
   toggle.setAttribute('animation__rotation', 'property: rotation; from: ' + prevrotx + ' 0 0; to: ' + rotx + ' 0 0; dur: 1000');
   // Cursor should only be visible if mini menu is visible
   document.querySelector('#cursor').setAttribute("visible", minimenu);
+  
+  //infotext.setAttribute('visible', minimenu);
 }
 
 // Sent an input message to all menu items
@@ -192,9 +200,10 @@ AFRAME.registerComponent('menu-item', {
       if (this.tag == 'begin') {
         this.active = true;
         this.setAttribute('text-geometry', "value: |Begin|; size: 0.04;");
+        //this.setAttribute('geometry', 'primitive: box; width: 0.1; height: 0.1; depth: 0.1');
         // Move main button into position
-        var back = document.querySelector('#back');
-        back.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 0; dur: 1000');
+        var main = document.querySelector('#main');
+        main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 0; dur: 1000');
         // Hide info text
         var infotext = document.querySelector('#info-text');
         infotext.setAttribute('visible', false);
@@ -215,8 +224,8 @@ AFRAME.registerComponent('menu-item', {
         this.active = true;
       }
     });
-    // Back button was hit, reset to main menu
-    this.el.addEventListener('back', function () {
+    // Main button was hit, reset to main menu
+    this.el.addEventListener('main', function () {
       // Inactive element is the one surrounding the user. These calls should only happen once, on that element.
       if (this.surround) {
         togglemini(false);
@@ -227,10 +236,9 @@ AFRAME.registerComponent('menu-item', {
         
         document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: -180 90 0; to: 0 90 0; dur: 500');
         document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 180 90 0; to: 0 90 0; dur: 500');
+        
         document.querySelector('#cursor').setAttribute("visible", true);
         
-        var toggle = document.querySelector('#toggle');
-        toggle.setAttribute('animation__position', 'property: position; from: 0 0.2 2; to: 0 -10 2; dur: 1000');
         this.active = true;
         this.surround = false;
       }
@@ -281,6 +289,11 @@ AFRAME.registerComponent('music-manager', {
         // Debug log used for timing beats to song
         if (data.showbeats) {
           console.log('beat' + this.beatcount);
+        }
+        // Special case beat for scene (fog, etc)
+        // TODO this could be an argument? It's still pretty arbitrary though
+        if (this.beatcount == 135) {
+          this.el.sceneEl.emit('beat');
         }
         this.beatcount++;
       }
@@ -511,6 +524,7 @@ AFRAME.registerComponent('timedvisible', {
 AFRAME.registerComponent('timedisabler', {
   init: function () {
     this.el.addEventListener('beat', function (event) {
+      console.log("Got a beat!");
       this.parentNode.removeChild(this);
     });
   }

@@ -241,7 +241,7 @@ function checkHeadsetConnected () { return !!getVRDisplay(); }
  */
 function checkHasPositionalTracking () {
   var vrDisplay = getVRDisplay();
-  if (isMobile() || isGearVR()) { return false; }
+  if (isMobile() || isGearVR() || !vrDisplay) { return false; }
   var pos = vrDisplay.capabilities.hasPosition;
   console.log("Found a VR with headset with positional: " + pos);
   return vrDisplay && pos;

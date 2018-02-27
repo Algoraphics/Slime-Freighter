@@ -40,6 +40,7 @@ Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?
   - Cannot start SteamVR (app running):
     - Find your browser and call end process on it. Restart SteamVR.
     - If unsuccessful, close browsers and restart Steam.
+    - Open browsers only after SteamVR has started up again.
   - Loading forever (from within VR, even if display shows up on desktop):
     - Refresh page and try again.
     - If this does not work, close browser window, reboot SteamVR, and re-open window.
