@@ -835,13 +835,15 @@ AFRAME.registerComponent('rng-building-shader', {
     building.setAttribute('position', "0 " + midheight + " 0");
     this.el.appendChild(building);
     
+    // Vars that need to be passed to a listener
     this.el.midheight = buildingheight/2;
+    this.el.width = width;
     
     // Cover top of building so we don't see windows
     var top = document.createElement('a-entity');
     top.setAttribute('geometry', "primitive: plane; width: " + buildingwidth + "; height: " + buildingwidth);
     top.setAttribute('material', "shader: flat; color: #000000");
-    top.setAttribute('position', "0 " + (buildingheight + 0.01) + " 0");
+    top.setAttribute('position', "0 " + (buildingheight + 0.02) + " 0");
     top.setAttribute('rotation', "-90 0 0");
     this.el.appendChild(top);
     
@@ -852,7 +854,8 @@ AFRAME.registerComponent('rng-building-shader', {
           // Animate building geometry to grow from a 2D plane at the base
           this.children[0].setAttribute("animation__grow", "property: scale; from: 1 0.001 1; to: 1 1 1; dur: " + (beat*height/data.speed) + "; easing: linear");
           this.children[0].setAttribute("animation__move", "property: position; from: 0 0 0; to: 0 " + this.midheight + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
-          this.children[1].setAttribute("animation__move", "property: position; from: 0 0.1 0; to: 0 " + (this.midheight*2 + 0.01) + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
+          // Animate topper too
+          this.children[1].setAttribute("animation__move", "property: position; from: 0 0.5 0; to: 0 " + (this.midheight*2 + this.width*0.02) + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
           // Move shader time back to origin to reset window animation
           var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
           this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
