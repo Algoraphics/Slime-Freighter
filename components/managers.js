@@ -17,9 +17,9 @@ function surround(el) {
   
   // Disable mouse actions, since this menu item is surrounding the cursor
   el.active = false;
-  
+  // Hide all other buttons
   emitToClass(el, 'link', 'togglehide');
-  
+  // Bring up the minimenu
   togglemini(true);
   
   // Update info text for whichever surround bubble is selected
@@ -31,12 +31,14 @@ function surround(el) {
   document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 0 90 0; to: 180 90 0; dur: 1; delay: 500');
 }
 
-// TODO Open about page
+/* 
+  Currently, simply opens a tab to github. Fuse cursor is often blocked by adblockers. TODO Need workaround for this.
+*/
 function about(el) {
   window.open("https://github.com/Algoraphics/Road","_new")
 }
 
-// Road animation selected
+// Road animation selected, begin loading
 function start(el) {
   document.querySelector("#movingWorld").emit('start');
   // Tell all menu links to hide
@@ -54,11 +56,12 @@ function start(el) {
     var main = document.querySelector('#main');
     main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
   }
+  // Hide the toggle button (it may be trying to hang out below the user)
   var toggle = document.querySelector('#toggle');
   toggle.setAttribute('visible', false);
 }
 
-// Loading complete, actually begin animation
+// Begin button hit, actually begin animation
 function begin(el) {
   document.querySelector('#swoop').play();
   // Hide begin button
@@ -83,6 +86,7 @@ function main(el) {
   toggle.setAttribute('visible', true);
 }
 
+// Simple function to toggle minimenu
 function toggle(el) {
   this.minimenu = !this.minimenu;
   togglemini(this.minimenu);
@@ -90,11 +94,13 @@ function toggle(el) {
 
 // Toggle whether the mini menu is visible
 function togglemini(minimenu) {
+  // Constants for when menu is disabled
   var mainy = -10; var prevmainy = -0.7;
   var toggly = -1.2; var prevtoggly = -0.5;
   var prevz = 0.35; var z = 1.2;
   var prevrotx = -10; var rotx = -90;
   
+  // Constants for when menu is enabled
   if (minimenu) {
     mainy = -0.7; prevmainy = -10;
     toggly = -0.5; var prevtoggly = -1.2;
@@ -104,7 +110,7 @@ function togglemini(minimenu) {
   // Mini menu includes button to go to main menu
   var main = document.querySelector('#main');
   main.setAttribute('animation__position', 'property: position; from: 0 ' + prevmainy + ' 0.4; to: 0 ' + mainy + ' 0.4; dur: 1000; easing: easeInCirc');
-  
+  // Info text is hidden, make it visible
   var infotext = document.querySelector('#info-text');
   infotext.setAttribute('animation__visible', 'property: visible; from: ' + !minimenu + '; to: ' + minimenu + '; dur: 1; delay: 1000;');
   // Also button to toggle the menu on and off
@@ -197,13 +203,13 @@ AFRAME.registerComponent('menu-item', {
     this.el.addEventListener('touchend', function () {
       document.querySelector('#click').play();
     });
+    // Sent from a worldbuilder that has finished loading. Now we can allow users to begin the Road.
     this.el.addEventListener('worldloaded', function () {
       this.loaded = true;
       // Inactive item getting this message must be the begin button, which should now become active
       if (this.tag == 'begin') {
         this.active = true;
         this.setAttribute('text-geometry', "value: |Begin|; size: 0.03;");
-        //this.setAttribute('geometry', 'primitive: box; width: 0.1; height: 0.1; depth: 0.1');
         // Move main button into position
         var main = document.querySelector('#main');
         main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
@@ -215,6 +221,7 @@ AFRAME.registerComponent('menu-item', {
         this.emit('show');
       }
     });
+    // Each time this is called, it will switch whether the button is "hidden"
     this.el.addEventListener('togglehide', function () {
       if (this.active) {
         this.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 0.01 0.01 0.01; dur: 500');
@@ -237,8 +244,8 @@ AFRAME.registerComponent('menu-item', {
         this.setAttribute('animation__position', 'property: position; from: ' + postr + '; to: 0 0 0; dur: 1000');
         this.setAttribute('animation__scale', 'property: scale; from: 7.75 7.75 7.75; to: 1 1 1; dur: 1000');
         
-        document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: -180 90 0; to: 0 90 0; dur: 500');
-        document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 180 90 0; to: 0 90 0; dur: 500');
+        document.querySelector('#streetlightsleft').setAttribute('animation__rotation', 'property: rotation; from: -180 90 0; to: 0 90 0; dur: 250');
+        document.querySelector('#streetlightsright').setAttribute('animation__rotation', 'property: rotation; from: 180 90 0; to: 0 90 0; dur: 250');
         
         document.querySelector('#cursor').setAttribute("visible", true);
         
@@ -268,7 +275,6 @@ AFRAME.registerComponent('music-manager', {
     this.beatcount = 0;
     this.time = 0;
     this.song = document.querySelector('#side');
-    
     this.cam = document.querySelector('#camera');
     if (!this.cam) { 
       console.error("Music manager can't find the camera!");
@@ -295,7 +301,7 @@ AFRAME.registerComponent('music-manager', {
           console.log('beat' + this.beatcount + '; campos is ' + campos.z);
         }
         // Special case beat for scene (fog, etc)
-        // TODO this could be an argument? It's still pretty arbitrary though
+        // TODO this could be an argument? Maybe a list of "scene beats"
         if (this.beatcount == 135) {
           this.el.sceneEl.emit('beat');
         }
@@ -320,6 +326,9 @@ AFRAME.registerComponent('music-manager', {
   objects in mind, so the camera will appear to move through the group of objects without ever reaching
   the end.
   
+  Works bi-directionally but currently will only stop following or delete itself if the camera passes
+  a threshold in the -z direction.
+  
   Math is somewhat arbitrary but there's a logic to it. Divides entity into 5 slices. 
   Basically, the goal is to keep the camera in the center slice. Ensures there are always 2/5th of the 
   total object both ahead and behind. Does require that following object has distances between components
@@ -328,15 +337,12 @@ AFRAME.registerComponent('music-manager', {
 AFRAME.registerComponent('followcamera', {
   schema: {
     length: {default: 2},
-    reverse: {default: false}, // Means origin point is away from camera (negative z)
     stopfollow: {default: NaN}, // Location at which to stop following
     delete: {default: NaN}, // Location at which to remove the asset
   },
   init: function () {
     this.startpos = this.el.getAttribute('position');
     this.stopfollow = false;
-    // Use for slow delete
-    this.deleting = false;
     
     var position = this.el.getAttribute('position');
     var centerfront = position.z - 3 * this.data.length / 5;
@@ -352,7 +358,6 @@ AFRAME.registerComponent('followcamera', {
     var position = this.el.getAttribute('position');
     var centerlow = position.z - 3 * data.length / 5;
     var centerhigh = position.z - 2 * data.length / 5;
-    //console.log("campos is " + campos.z + ", posz is " + position.z + ", centerz is " + centerz + ", reverse is " + this.data.reverse);
     if (!this.stopfollow) {
       if (campos.z < centerlow) {
         position.z -= data.length / 5;
@@ -414,7 +419,6 @@ AFRAME.registerComponent('slide', {
     var positionTmp = this.positionTmp = this.positionTmp || {x: 0, y: 0, z: 0};
     var position = el.getAttribute('position');
 
-    //positionTmp.y = 30;
     positionTmp.x = position.x - xdelta;
     positionTmp.y = position.y + ydelta;
     positionTmp.z = position.z - zdelta;
@@ -439,7 +443,7 @@ AFRAME.registerComponent('camera-manager', {
   init: function () {
     var el = this.el;
     
-    // Use regular look controls for VR. Custom look controls don't work
+    // Use regular look controls for VR. Custom look controls don't work. Codebase is inconsistent.
     if (el.getAttribute('id') == 'camera') {
       if (checkHeadsetConnected()) {
         el.setAttribute('look-controls','');

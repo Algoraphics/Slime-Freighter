@@ -686,7 +686,6 @@ AFRAME.registerShader('fractal-shader', {
     speed: {type: 'float', is: 'uniform'},
   },
 
-// TODO: use concatenation like below to make a lot of this generic
   vertexShader: fractalvert,
   fragmentShader: `
 precision highp float;

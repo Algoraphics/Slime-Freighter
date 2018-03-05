@@ -2,7 +2,7 @@
 
 **What is this?**
 
-This website is basically a showcase of things I've made while playing with [A-Frame](https://aframe.io). It's a work in progress.
+This project is basically a showcase of things I've made while playing with [A-Frame](https://aframe.io). It's a work in progress.
 
 Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?
 - Email:  *algoraphics@gmail.com*
@@ -12,19 +12,17 @@ Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?
 
 *VR:*
 1. Have Firefox 10, or another browser which [supports A-Frame VR.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html)
-2. *Make sure your VR browser is closed.* Not always necessary, but helps to prevent issues.
+2. *Make sure your VR supported browser is closed.* Not always necessary, but helps to prevent issues.
 3. Start your VR headset (Boot up SteamVR, open Oculus Home, etc)
 4. Open WebVR supported browser and load up [Slime-Freighter](https://horse-machine.glitch.me/).
-5. Hit the "VR" button in the bottom-right corner to enter VR.
-6. Put on your headset.
-7. Hold the center cursor over a menu item to select it.
+5. Hit the button in the bottom-right corner to enter VR. Put on your headset.
+6. Hold the center cursor over a menu item to select it.
 
 *2D:*
 1. Open a browser which [supports A-Frame.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html#which-browsers-does-a-frame-support)
 2. Load up [Slime-Freighter](https://horse-machine.glitch.me/).
-3. Follow on-screen instructions:
-4. If you have a mouse, click the screen to lock your mouse to the "VR cursor"(gray circle). This is the same cursor VR users will control.
-5. Hold the cursor over a menu item or click/touch to select.
+3. Follow on-screen instructions. If you have a mouse, click the screen to lock your mouse to the "VR cursor"(gray circle). This is the same cursor VR users will control.
+4. Hold the cursor over a menu item or click/touch to select.
 
 **Troubleshooting/FAQ:**
 

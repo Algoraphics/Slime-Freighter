@@ -15,11 +15,11 @@ var dur = beat * 4;
 var animAttrs = ' dir: alternate; loop: true; ';
 
 /*
-  Main rng function.
+  Main rng function. This thing is a workhorse for procedural generation.
   options come in the form [a, b, c, d]
   probstr in the form '1 2 3 0'
-  The idea here is that it is now trivial to say "I want this option to appear
-  twice as often as this other option."
+  The idea here is that it is now trivial to say "I want option A to appear
+  twice as often as option B. Ex: rng([A, B],"2 1");
 */
 function rng(options, probstr) {
   var choose_array = chooseArr(options, probstr);
@@ -70,6 +70,7 @@ function probArr(options, probstr) {
 function addBeatListener(comp, startclass) {
   comp.el.addEventListener('beat', function (event) {
     if (!this.started) {
+      // Tell parent asset it should start moving
       this.started = true;
 
       // If we have the class name of children, tell them all to start
@@ -79,6 +80,7 @@ function addBeatListener(comp, startclass) {
           els[i].emit('started');
         }
       }
+      
       this.emit('started');
     }
   });
@@ -561,6 +563,7 @@ AFRAME.registerComponent('rng-building-robot', {
     var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
                           + "; width: 1; height: 3; optimize: false";
     
+    // Make legs, add to body
     var left = document.createElement('a-entity');
     var right = document.createElement('a-entity');
     
@@ -573,10 +576,11 @@ AFRAME.registerComponent('rng-building-robot', {
                        + "; start: " + data.start + '; dist: ' + data.dist);
     
     var core = document.createElement('a-entity');
-    //core.setAttribute('position', corepos);
+    
     core.appendChild(left);
     core.appendChild(right);
     
+    // Create actual body geometry (3 adjacent buildings)
     for (var i = 0; i < 3; i++) {
       var center = document.createElement('a-entity');
       center.setAttribute('position', (2.5 + 4.5*i) + " 10 0");
@@ -936,6 +940,7 @@ AFRAME.registerComponent('rng-building-snakes', {
 /*
   Randomly generate a "snake" of buildings, which can move in all 6 coordinate directions and
   takes advantage of the "grow" animation from rng-building-shader.
+  
   Allows both random and user-defined paths. Random paths can be limited in range by "bounds."
   Since these are complex entities with many parts, they manage loading and unloading directly
   instead of the worldbuilder that placed them.
@@ -1169,6 +1174,9 @@ AFRAME.registerComponent('rng-shader', {
 
 /*
   Fractal specific shader component with keyboard control support.
+  
+  This is not a generic component. Mostly because the keyboard controls need a direct path
+  to the object3D, which is non-trivial to make generic.
 */
 AFRAME.registerComponent('rng-fractal-shader', {
   schema: {
