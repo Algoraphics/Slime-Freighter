@@ -22,6 +22,9 @@ AFRAME.registerComponent('justrotate', {
   }
 });
 
+/*
+  Sometimes, you just want a thing to rotate on all axes
+*/
 AFRAME.registerComponent('allrotate', {
   tick: function () {
     rotato(this.el, 0.5, 0.5, 0.5);
