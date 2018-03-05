@@ -23,6 +23,13 @@ var animAttrs = ' dir: alternate; loop: true; ';
 */
 function rng(options, probstr) {
   var choose_array = chooseArr(options, probstr);
+  return pick_one(choose_array);
+}
+
+/*
+  Function simply picks a value from an input array of choices.
+*/
+function pick_one(choose_array) {
   return choose_array[Math.floor(Math.random() * choose_array.length)];
 }
 
@@ -710,22 +717,30 @@ AFRAME.registerComponent('rng-building-shader', {
     grows: {default: '1 1 1 1'},
     grow_slide: {default: '1 1'},
     color1: {default: ''},
-    usecolor1: {default: '1 1'},
-    usecolor2: {default: '1 1'},
+    color2: {default: ''},
+    usecolor: {default: '1 1'},
     colorstyle: {default: '1 1 1 1'}, // single color, two color, one color to gradient, gradient
     winheight: {default: '1 2 8 1'},
     winwidth: {default: '2 8 4'},
     triggerbeat: {default: -1},
     triggeraction: {default: ''},
     speed: {default: 1.0},
+    side: {default: 'single'},
   },
   init: function () {
     var data = this.data;
     
     var height = data.height;
     var width = data.width;
-    var winheight = rng([0.2, 0.5, 0.65, 0.95], data.winheight)
-    var winwidth = rng([0.4, 0.5, 1.1], data.winwidth);
+    // Window height and width can be specified externally or randomly chosen
+    var winheight = parseFloat(data.winheight);
+    if (data.winheight.split(' ').length == 4) {
+      winheight = rng([0.2, 0.5, 0.65, 0.95], data.winheight);
+    }
+    var winwidth = parseFloat(data.winwidth);
+    if (data.winwidth.split(' ').length == 3) {
+      winwidth = rng([0.4, 0.5, 1.1], data.winwidth);
+    }
     var buildingwidth = 5 * width;
     var buildingheight = 6.5 * height;
     var midheight = buildingheight / 2;
@@ -750,25 +765,34 @@ AFRAME.registerComponent('rng-building-shader', {
     var growsine = 0.0;
     var growclamp = 0.0;
     var growvert = 0.0;
-    
-    var color1 = getRandomColor();
-    if (data.color1 != '') {
-      color1 = data.color1;
+    // Color can be specified externally or randomly chosen
+    var color1 = data.color1;
+    if (data.color1 == '') {
+      color1 = getRandomColor();
     }
-    var color2 = getRandomColor();
+    var color2 = data.color2
+    if (data.color2 != '') {
+      color2 = getRandomColor();
+    }
+    
     var usecolor1 = 1.0;
     var usecolor2 = 1.0;
-    var colorstyle = rng(['single', 'double', 'singlegrad', 'doublegrad'], data.colorstyle);
+    var colorstyle = data.colorstyle;
+    if (data.colorstyle.split(' ').length == 4) {
+      colorstyle = rng(['single', 'double', 'singlegrad', 'doublegrad'], data.colorstyle);
+    }
     if (colorstyle == 'single') {
       color2 = color1;
     }
     else if (colorstyle == 'singlegrad') {
-      usecolor1 = rng([1.0, 0.0], data.usecolor1);
+      usecolor1 = rng([1.0, 0.0], data.usecolor);
       usecolor2 = 1.0 - usecolor1;
+      colorgrid = rng([1.0, 0.0], data.usecolor);
     }
     else if (colorstyle == 'doublegrad') {
       usecolor1 = 0.0;
       usecolor2 = 0.0;
+      colorgrid = rng([1.0, 0.0], data.usecolor);
     }
     
     var building = document.createElement('a-entity');
@@ -786,7 +810,7 @@ AFRAME.registerComponent('rng-building-shader', {
         midheight = 0;
     }
     else if (grow) {
-      growsine = 1.0;
+      colorgrid = 1.0;
       var mult = rng([1.0, 50.0, 150.0, 200.0], data.grows);
       numrows = mult * numrows;
       numcols = mult * numcols;
@@ -800,7 +824,7 @@ AFRAME.registerComponent('rng-building-shader', {
       }
     }
     
-    building.setAttribute('material', "shader: building-shader;"
+    building.setAttribute('material', "side: " + data.side + "; shader: building-shader;"
                           + "; color1: " + color1 + "; color2: " + color2 + "; numrows: " + numrows + "; numcols: " + numcols
                           + "; grow: " + grow + "; growsine: " + growsine + "; growvert: " + growvert + "; growclamp: " + growclamp + "; growstart: " + 0.0 + "; invertcolors: " + invertcolors
                           + "; slide: " + slide + "; slidereverse: " + slidereverse + "; slideaxis: " + axis
@@ -847,9 +871,232 @@ AFRAME.registerComponent('rng-building-shader', {
           this.children[0].getObject3D('mesh').material.uniforms['color2']['value'] = color;
         });
       }
+      else if (data.triggeraction == 'reset') {
+        this.el.addEventListener('beat', function () {
+          var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
+          this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
+          this.children[0].getObject3D('mesh').material.uniforms['speed']['value'] = 4.0;
+        });
+      }
     }
   }
 });
+
+/* 
+  Create a group of rng snakes. The snakes are actually carefully positioned and sized so they
+  will not intersect with each other directly. This requires that exactly 8 snakes are used.
+*/
+AFRAME.registerComponent('rng-building-snakes', {
+  schema: {
+    load: {default: 550},
+    unload: {default: -800},
+    start: {default: 35}, // Starting beat to be passed to each snake
+  },
+  init: function () {
+    var data = this.data;
+    
+    var x = 3;
+    var z = 3;
+    var yoffset = 40;
+    var offset = -30;
+    var grid = 10;
+    
+    var pos = this.el.object3D.position;
+    var load = pos.z + data.load;
+    var unload = pos.z + data.unload;
+    
+    console.log("Snake cluster is at " + pos.z + " with loadbar around " + load + " and unload starting at " + unload);
+    
+    for (var i = 0; i < x; i++) {
+      for (var j = 0; j < z; j++) {
+        // Don't place center snake (we can only have 8 and the middle looked nicest when missing)
+        if (!(i == 1 && j == 1)) {
+          var building = document.createElement('a-entity');
+          building.setAttribute('position', (grid*i + offset) + " " + -yoffset + " " + (grid*j + offset));
+          
+          var postr = pos.x + " " + pos.y + " " + pos.z;
+          building.setAttribute('rng-building-snake', 'triggerstart: ' + data.start + '; loadslow: ' + 10 + '; load: ' + load + '; unload: ' + unload + '; boundmax: 75');
+          
+          this.el.appendChild(building);
+        }
+        // Offsets put the buildings on separate paths from each other, preventing collisions
+        yoffset += 10;
+        if (yoffset > 70) {
+          yoffset = 0;
+        }
+        offset += 10;
+      }
+    }
+  }
+});
+
+/*
+  Randomly generate a "snake" of buildings, which can move in all 6 coordinate directions and
+  takes advantage of the "grow" animation from rng-building-shader.
+  Allows both random and user-defined paths. Random paths can be limited in range by "bounds."
+  Since these are complex entities with many parts, they manage loading and unloading directly
+  instead of the worldbuilder that placed them.
+*/
+AFRAME.registerComponent('rng-building-snake', {
+  schema: {
+    height: {default: 15},
+    width: {default: 2},
+    depth: {default: 30}, // Number of buildings in this snake
+    path: {default: []}, // User defined path to follow (random if empty)
+    speed: {default: 1}, // Growth speed per building
+    boundmax: {default: 0}, // Value to be used to calculate "bounds"
+    loadslow: {default: 20}, // Factor by which loading will slow down
+    load: {default: 500}, // Distance from entity at which we should begin loading
+    unload: {default: -10000}, // Distance from entity at which we should unload
+    triggerspeed: {default: 2}, // Number of beats between each building growth
+    triggerstart: {default: 2}, // Beat at which to start growing
+  },
+  init: function () {
+    var data = this.data;
+    
+    this.height = data.height;
+    this.width = data.width;
+    
+    this.winheight = 0.65;
+    this.winwidth = 0.5;
+    
+    this.pos = {x: 0, y: 0, z: 0};
+    this.rotate = {x: 0, y: 0, z: 0};
+    
+    this.scale = 1;
+    this.depth = data.path.length + 1;
+    if (this.depth == 1) {
+      this.depth = data.depth;
+    }
+    
+    this.pathdex = 0;
+    
+    this.triggerbeat = data.triggerstart;
+    
+    this.color1 = getRandomColor();
+    this.color2 = getRandomColor();
+    
+    this.colorstyle = rng(['single', 'double', 'singlegrad', 'doublegrad'], "0 5 1 1");
+    
+    this.speed = 0.5 * this.height * data.speed;
+    
+    this.direction = '+y';
+    
+    // Set bounds from max input
+    var max = data.boundmax;
+    this.bounds = {highx: max, lowx: -max, highy: (max*4), lowy: (max*2), highz: max, lowz: -max*2};
+    
+    // Load bar considers original position, a random offset, and an input multiplier for user control
+    this.loadbar = data.load + Math.floor(Math.random() * 20);
+    
+    // Unload considers input location, with a randomized offset so the whole group doesn't vanish at once
+    this.unloadbar = data.unload - Math.floor(Math.random() * 100);
+  },
+  tick: function () {
+    var data = this.data;
+    
+    var campos = document.querySelector('#camera').getAttribute('position');
+    if (this.depth > 0 && campos.z < this.loadbar) {
+      this.loadbar -= data.loadslow;
+      
+      var building = document.createElement('a-entity');
+      var postr = this.pos.x + " " + this.pos.y + " " + this.pos.z;
+      var rostr = this.rotate.x + " " + this.rotate.y + " " + this.rotate.z;
+      // Do not scale in the y direction so buildings still connect
+      var scalestr = this.scale + " " + 1 + " " + this.scale;
+      
+      building.setAttribute('position', postr);
+      building.setAttribute('rotation', rostr);
+      building.setAttribute('scale', scalestr);
+      building.setAttribute('rng-building-shader', "; width: " + this.width + "; height: " + this.height + "; color1: " + this.color1 + "; color2: " + this.color2
+                            + "; static: 1 0; grow_slide: 1 0; speed: " + this.speed + "; colorstyle: " + this.colorstyle
+                            + "; winheight: " + this.winheight + "; winwidth: " + this.winwidth
+                            + "; triggeraction: grow; triggerbeat: " + this.triggerbeat);
+      this.el.appendChild(building);
+      
+      var mult = 6;
+      // Move placing position and rotate building according to chosen direction
+      switch (this.direction) {
+        case '+x': this.pos.x += this.height*mult; break;
+        case '-x': this.pos.x -= this.height*mult; break;
+        case '+y': this.pos.y += this.height*mult; break;
+        case '-y': this.pos.y -= this.height*mult; break;
+        case '+z': this.pos.z += this.height*mult; break;
+        case '-z': this.pos.z -= this.height*mult; break;
+      }
+    
+      // Reset rotation to be chosen by 'direction'
+      this.rotate = {x: 0, y: 0, z: 0};
+      // Delay beat trigger so the snake grows continuously
+      this.triggerbeat += data.triggerspeed;
+      
+      // Check for preset path. Otherwise, rng within bounds
+      if (data.path.length === 0) {
+        
+        // Get reverse of previous direction (to disallow doubling back)
+        var flipdirection = this.direction[1];
+        if (this.direction[0] === '-') {
+          flipdirection = '+' + flipdirection;
+        }
+        else if (this.direction[0] === '+') {
+          flipdirection = '-' + flipdirection;
+        }
+        
+        var options = []
+        // Add in directions which will not go out of bounds, and will not double back
+        if (this.pos.x < this.bounds.highx && flipdirection !== '+x') {
+          options.push('+x');
+        }
+        if (this.pos.x > this.bounds.lowx && flipdirection !== '-x') {
+          options.push('-x');
+        }
+        if (this.pos.y < this.bounds.highy && flipdirection !== '+y') {
+          options.push('+y');
+        }
+        if (this.pos.y > this.bounds.lowy && flipdirection !== '-y') {
+          options.push('-y');
+        }
+        if (this.pos.z < this.bounds.highz && flipdirection !== '+z') {
+          options.push('+z');
+        }
+        if (this.pos.z > this.bounds.lowz && flipdirection !== '-z') {
+          options.push('-z'), options.push('-z');
+        }
+        
+        // Randomly choose a direction from the available options
+        this.direction = pick_one(options);
+      }
+      
+      // Follow path list for next direction (user specified has no restrictions)
+      else {
+        this.direction = data.path[this.pathdex];
+        this.pathdex++;
+        if (this.pathdex >= data.path.length) {
+          this.pathdex = 0;
+        }
+      }
+      
+      // Adjust position and rotate building according to chosen direction
+      switch (this.direction) {
+        case '+x': this.rotate.z = -90; break;
+        case '-x': this.rotate.z = 90; break;
+        case '+y': break;
+        case '-y': this.rotate.x = 180; break;
+        case '+z': this.rotate.x = 90; break;
+        case '-z': this.rotate.x = -90; break;
+      }
+      
+      // Reduce scale to avoid z-fighting
+      this.scale -= 0.01;
+      this.depth--;
+    }
+    // Unload after threshold
+    if (campos.z < this.unloadbar) {
+      this.el.parentNode.removeChild(this.el);
+    }
+  }
+});
+
 
 /*
   Rng component for customizeable objects with complex shaders.
@@ -1006,3 +1253,4 @@ AFRAME.registerComponent('rng-fractal-shader', {
     }
   },
 });
+

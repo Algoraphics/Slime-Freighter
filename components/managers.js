@@ -44,7 +44,7 @@ function start(el) {
   // Display Load/Begin text
   var begin = document.querySelector('#begin');
   begin.emit('show');
-  begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 0; to: -0.375 0.3 0; dur: 500');
+  begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 -0.25; to: -0.375 0.3 -0.5; dur: 500');
   begin.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 5 5 5; dur: 500');
   // Only disable this button if it's going to be showing a "loading" text
   if (!el.loaded) {
@@ -52,8 +52,10 @@ function start(el) {
   }
   else { // If we've already loaded, move main button into position
     var main = document.querySelector('#main');
-    main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 0; dur: 1000');
+    main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
   }
+  var toggle = document.querySelector('#toggle');
+  toggle.setAttribute('visible', false);
 }
 
 // Loading complete, actually begin animation
@@ -72,8 +74,13 @@ function begin(el) {
 
 // Tell all menu items that main has been pressed. The current item will handle this as necessary to get to the main menu
 function main(el) {
+  // Tell menu items to toggle whether they're in "hide" mode
   emitToClass(el, 'link', 'togglehide');
+  // Tell menu items that main has been pressed
   emitToClass(el, 'link', 'main');
+  // Make sure the toggle button is visible since the start button makes it invisible
+  var toggle = document.querySelector('#toggle');
+  toggle.setAttribute('visible', true);
 }
 
 function toggle(el) {
@@ -86,15 +93,13 @@ function togglemini(minimenu) {
   var mainy = -10; var prevmainy = -0.7;
   var toggly = -1.2; var prevtoggly = -0.5;
   var prevz = 0.35; var z = 1.2;
-  var prevrotx = -10; var rotx = -90
-  //var delay = 500;
+  var prevrotx = -10; var rotx = -90;
   
   if (minimenu) {
     mainy = -0.7; prevmainy = -10;
     toggly = -0.5; var prevtoggly = -1.2;
     z = 0.35; prevz = 1.2;
     prevrotx = -90; rotx = -10;
-    //delay = 1000;
   }
   // Mini menu includes button to go to main menu
   var main = document.querySelector('#main');
@@ -108,8 +113,6 @@ function togglemini(minimenu) {
   toggle.setAttribute('animation__rotation', 'property: rotation; from: ' + prevrotx + ' 0 0; to: ' + rotx + ' 0 0; dur: 1000');
   // Cursor should only be visible if mini menu is visible
   document.querySelector('#cursor').setAttribute("visible", minimenu);
-  
-  //infotext.setAttribute('visible', minimenu);
 }
 
 // Sent an input message to all menu items
@@ -203,7 +206,7 @@ AFRAME.registerComponent('menu-item', {
         //this.setAttribute('geometry', 'primitive: box; width: 0.1; height: 0.1; depth: 0.1');
         // Move main button into position
         var main = document.querySelector('#main');
-        main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 0; dur: 1000');
+        main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
         // Hide info text
         var infotext = document.querySelector('#info-text');
         infotext.setAttribute('visible', false);
@@ -214,7 +217,7 @@ AFRAME.registerComponent('menu-item', {
     });
     this.el.addEventListener('togglehide', function () {
       if (this.active) {
-        this.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 0.01 0.01 0.01; dur: 1000');
+        this.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 0.01 0.01 0.01; dur: 500');
         this.setAttribute('animation__visible', 'property: visible; from: true; to: false; delay: 1000; dur: 1');
         this.active = false;
       }
@@ -288,7 +291,8 @@ AFRAME.registerComponent('music-manager', {
         }
         // Debug log used for timing beats to song
         if (data.showbeats) {
-          console.log('beat' + this.beatcount);
+          var campos = this.cam.getAttribute('position');
+          console.log('beat' + this.beatcount + '; campos is ' + campos.z);
         }
         // Special case beat for scene (fog, etc)
         // TODO this could be an argument? It's still pretty arbitrary though
@@ -428,7 +432,7 @@ AFRAME.registerComponent('camera-manager', {
     axis: {default: 'z'},
     speed: {default: 5},
     stop: {default: -100},
-    rise: {default: -100},
+    rise: {default: NaN},
     risemax: {default: 25},
     id: {default: ''},
   },
@@ -508,12 +512,12 @@ AFRAME.registerComponent('camera-manager', {
 /*
   Simply listens for a beat and makes itself visible at that beat.
 */
-AFRAME.registerComponent('timedvisible', {
+AFRAME.registerComponent('timedinvisible', {
   init: function () {
     var el = this.el;
-    el.setAttribute('visible', false);
+    el.setAttribute('visible', true);
     el.addEventListener('beat', function (event) {
-      this.setAttribute('visible', true);
+      this.setAttribute('visible', false);
     })
   }
 });

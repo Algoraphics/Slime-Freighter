@@ -33,3 +33,37 @@ var randz = Math.floor(Math.random() * 100) - 100; // -200 to -150
         mirrorSphere.position.set(75,50,0);
         mirrorSphereCamera.position = mirrorSphere.position;
         scene.add(mirrorSphere);*/
+        
+// Coordinates
+
+switch (this.direction) {
+        case '+x':
+          this.rotate.z = -90;
+          nextlimit.x = this.limit.y;
+          nextlimit.y = -this.limit.x;
+          nextlimit.z = this.limit.z;
+          break;
+        case '-x':
+          this.rotate.z = 90;
+          nextlimit.x = -this.limit.y;
+          nextlimit.y = this.limit.x;
+          nextlimit.z = this.limit.z;
+          break;
+        case '+y':
+          nextlimit.x = this.limit.y;
+          nextlimit.y = this.limit.x;
+          nextlimit.z = this.limit.z;
+          break;
+        case '+z':
+          this.rotate.x = 90;
+          nextlimit.x = this.limit.x;
+          nextlimit.y = -this.limit.z;
+          nextlimit.z = this.limit.y;
+          break;
+        case '-z':
+          this.rotate.x = -90;
+          nextlimit.x = this.limit.x;
+          nextlimit.y = this.limit.z
+          nextlimit.z = -this.limit.y;
+          break;
+      }
