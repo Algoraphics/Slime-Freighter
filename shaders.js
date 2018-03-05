@@ -140,12 +140,12 @@ float cnoise(vec3 P) {
 #define PI 3.141592653589793238462643383279
 `
 
-// Very customizeable shader for creating buildings. This one is entirely made by me (Exbot)
+// Very customizeable shader for creating buildings. This one is entirely made by me (https://github.com/Algoraphics)
 // with inspiration from https://thebookofshaders.com/09/.
 AFRAME.registerShader('building-shader', {
   schema: {
     timeMsec: {type: 'time', is: 'uniform'},
-    timeskip: {type: 'float', is: 'uniform'},
+    timeskip: {type: 'float', is: 'uniform'}, // Skip value for time, allows outside reset of time value
     numrows: {type: 'float', is: 'uniform'}, // Initial number of window rows
     numcols: {type: 'float', is: 'uniform'}, // Initial number of window columns
     speed: {type: 'float', is: 'uniform'}, // Speed of slide, colorslide, and grow
@@ -224,13 +224,6 @@ float box(vec2 st, vec2 size, float smoothEdges){
 void main() {
   //TODO: beat should be a parameter
   float time = (3.14159265358979 / (2.0*594.059)) * (timeMsec - timeskip); // Convert from A-Frame milliseconds to typical time in seconds.
-  // Use sin(time), which curves between -1 and 1 over time,
-  // to determine the mix of two colors:
-  //    (a) Dynamic color where 'R' and 'B' channels come
-  //        from a modulus of the UV coordinates.
-  //    (b) Base color.
-  // 
-  // The color itself is a vec4 containing RGBA values 0-1.
 
   vec2 st = vUv;
   vec3 boxcolor1 = vec3(0.0);
@@ -578,7 +571,7 @@ void main()
 
 	vec2 dg = circuit(uv);
 	float d = dg.x;
-	vec3 col1 = (0.2-vec3(max(min(d, 2.0) - 1.0, 0.0))) * backgroundColor;
+	vec3 col1 = (1.0-vec3(max(min(d, 2.0) - 1.0, 0.0))) * backgroundColor;
 	vec3 col2 = vec3(max(d - 1.0, 0.0)) * color;
 
 	float f = max(0.4 - mod(uv.y - uv.x + (time * speed) + (dg.y * 0.2), 2.5), 0.0) * intensity;
