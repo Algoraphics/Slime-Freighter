@@ -62,12 +62,12 @@ Mobile Devices on which it has run (no audio):
 Theoretically, it should work on Rift, Gear VR, etc as long as you follow [A-Frame conventions for getting WebVR to run.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html)
 
 **Project Completion:**
-- Road (65%): 2 more "worlds" to add before the experience is complete. One is pretty simple.
+- Road (80%): 1 final "world" to add before the experience is complete.
 - About (80%): The link goes somewhere kinda useful and opens a new tab!
 - Menu (100%): It does menu things.
 - Fractal (100%): Colors are pretty.
 - Ganzfeld (100%) It's a colorful bubble.
-- Testing (60%): Need VR and 2D testing on other devices, user testing
+- Testing (70%): Need VR and 2D testing on other devices, more user testing
 
 **Future Work:**
 - Would like to add controller support, keyboard only controls are less fun

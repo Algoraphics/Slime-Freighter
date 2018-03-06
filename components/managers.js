@@ -1,6 +1,6 @@
 /* global AFRAME, THREE, beat, bind, Uint8Array, isMobile, checkHeadsetConnected */
 
-var debug = true;
+var debug = false;
 
 /*
   Animate a menu item to grow around the camera. Assumes a mini menu is used
