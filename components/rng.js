@@ -878,11 +878,18 @@ AFRAME.registerComponent('rng-building-shader', {
           this.children[0].getObject3D('mesh').material.uniforms['color2']['value'] = color;
         });
       }
-      else if (data.triggeraction == 'reset') {
+      else if (data.triggeraction == 'portal') {
         this.el.addEventListener('beat', function () {
-          var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
-          this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
-          this.children[0].getObject3D('mesh').material.uniforms['speed']['value'] = 4.0;
+          if (this.activated) {
+            var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
+            this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
+            this.children[0].getObject3D('mesh').material.uniforms['speed']['value'] = 10.0;
+          }
+          else {
+            this.setAttribute('class', 'beatlistener' + (data.triggerbeat + 8));
+            this.setAttribute('animation__scale', "property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInOutQuart; dur: 2376.236;");
+            this.activated = true;
+          }
         });
       }
     }
@@ -992,7 +999,7 @@ AFRAME.registerComponent('rng-building-snake', {
     
     // Set bounds from max input
     var max = data.boundmax;
-    this.bounds = {highx: max, lowx: -max, highy: (max*4), lowy: (max*2), highz: max, lowz: -max*2};
+    this.bounds = {highx: max, lowx: -max, highy: (max*4), lowy: (max*2), highz: max, lowz: -max};
     
     // Load bar considers original position, a random offset, and an input multiplier for user control
     this.loadbar = data.load + Math.floor(Math.random() * 20);
@@ -1169,6 +1176,56 @@ AFRAME.registerComponent('rng-shader', {
                     + "; zoom: " + zoom + "; intensity: " + intensity + "; skip: " + skip
                     + "; frequency: " + 15 + "; amplitude: " + 0.2 + "; displacement: " + 0.5 + "; scale: " + 4.0);
     this.el.appendChild(entity);
+  },
+});
+
+AFRAME.registerComponent('rng-disco-tunnel', {
+  schema: {
+    radius: {default: 10},
+    length: {default: 87},
+    floaters: {default: true},
+  },
+  init: function () {
+    var data = this.data;
+    
+    var numFloaters = 0;
+    if (data.floaters) {
+      numFloaters = Math.floor(Math.random() * 4) + 5;
+    }
+    console.log("Numfloaters is " + numFloaters);
+    
+    for (var i = 0; i < numFloaters + 1; i++) {
+      var radius = data.radius*2;
+      var postr = "0 0 0";
+      var rotation = "";
+      var resolution = 2.0;
+      var speed = 1.0;
+      var shape = 'cylinder';
+      // Floaters have different values
+      if (i > 1) {
+        shape = 'sphere';
+        radius = (data.radius / 20) * ((Math.random() * 2) + 2);
+        var posx = ((Math.random() * (data.radius - 1)) + 1) * pick_one([-1, 1])
+        var posy = ((Math.random() * (data.radius - 1)) + 1) * pick_one([-1, 1])
+        var posz = Math.random() * data.length * 0.4 * pick_one([-1, 1])
+        postr = posx + " " + posy + " " + posz;
+        rotation = "property: rotation; from: 0 0 0; to: 0 360 0; loop: true; easing: linear; dur: 20000";
+        resolution = rng([0.25, 0.5, 1.0], "2 2 2");
+        speed = pick_one([1.0, 2.0]);
+      }
+      var color = pick_one(['red','orange', 'yellow', 'pink', 'cyan']);
+      var bgcolor = pick_one(['green','blue', 'purple', 'black']);
+      
+      
+      var ball = document.createElement('a-entity');
+      ball.setAttribute('geometry', "primitive: " + shape + "; radius: " + radius + "; height: " + data.length);
+      ball.setAttribute('material', "side: double; shader: disco-shader; speed: " + speed + "; resolution: " + resolution
+                       + "; color: " + color + "; backgroundColor: " + bgcolor);
+      ball.setAttribute('position', postr);
+      ball.setAttribute('animation__rotate', rotation);
+      ball.setAttribute('rotation', "90 0 0");
+      this.el.appendChild(ball);
+    }
   },
 });
 
