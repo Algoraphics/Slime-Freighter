@@ -34,6 +34,8 @@ Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?
 - The screen is just...white.
   - If you're on a tablet/mobile phone, this is probably a good thing. This takes a bit longer to load on mobile devices, so give it a minute.
   - If it still hasn't loaded, make sure your browser [supports A-Frame.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html#which-browsers-does-a-frame-support)
+- Are those cones on the side of the road supposed to be streetlights?
+  - If the streetlights aren't loading, [clearing your browser cache](http://www.refreshyourcache.com/en/home/) might help.
 - Vive issues:
   - Cannot start SteamVR (app running):
     - Find your browser and call end process on it. Restart SteamVR.

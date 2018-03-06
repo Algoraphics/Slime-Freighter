@@ -1,6 +1,6 @@
 /* global AFRAME, THREE, beat, bind, Uint8Array, isMobile, checkHeadsetConnected */
 
-var debug = false;
+var debug = true;
 
 /*
   Animate a menu item to grow around the camera. Assumes a mini menu is used
@@ -256,7 +256,6 @@ AFRAME.registerComponent('menu-item', {
   }
 });
 
-
 /*
   Controls music playback and emits timed beats to alert other entities about the current
   location in the song. 
@@ -293,7 +292,7 @@ AFRAME.registerComponent('music-manager', {
         // Grab all assets who should hear this beat, and emit to them
         var els = this.el.sceneEl.querySelectorAll('.beatlistener' + this.beatcount);
         for (var i = 0; i < els.length; i++) {
-          els[i].emit('beat', '', false);
+          els[i].emit('beat', this.beatcount, false);
         }
         // Debug log used for timing beats to song
         if (data.showbeats) {
@@ -535,6 +534,89 @@ AFRAME.registerComponent('timedisabler', {
       this.parentNode.removeChild(this);
     });
   }
+});
+
+AFRAME.registerComponent('gotospace', {
+  init: function () {
+    this.el.blastoff = false;
+    
+    this.el.addEventListener('beat', function (event) {
+      this.blastoff = true;
+    });
+    
+    this.index = 0;
+  },
+  tick: function () {
+    if (this.el.blastoff) {
+      switch(this.index) {
+        case 2:
+          var boxleft = document.querySelector('#boxleft');
+          boxleft.parentNode.removeChild(boxleft);
+          var boxright = document.querySelector('#boxright');
+          boxright.parentNode.removeChild(boxright);
+          break;
+        case 3:
+          var boxfront = document.querySelector('#boxfront');
+          boxfront.parentNode.removeChild(boxfront);
+          var boxback = document.querySelector('#boxback');
+          boxback.parentNode.removeChild(boxback);
+          break;
+        case 4:
+          var gridleft = document.querySelector('#gridleft');
+          gridleft.parentNode.removeChild(gridleft);
+          var gridright = document.querySelector('#gridright');
+          gridright.parentNode.removeChild(gridright);
+          break;
+        case 6:
+          var floor = document.querySelector('#floor');
+          floor.parentNode.removeChild(floor);
+          var floorleft = document.querySelector('#floorleft');
+          floorleft.parentNode.removeChild(floorleft);
+          var flooright = document.querySelector('#flooright');
+          flooright.parentNode.removeChild(flooright);
+          var road = document.querySelector('#road');
+          road.parentNode.removeChild(road);
+          break;
+        case 8:
+          var sky = document.querySelector('#sunsky');
+          sky.setAttribute('visible', false);
+          var starcolor = document.querySelector('#starcolor');
+          starcolor.setAttribute('animation__vanish', "property: material.opacity; from: 0.4; to: 0;");
+          break; 
+      }
+      this.index++;
+      var starcolor = document.querySelector('#starcolor');
+    }
+  }
+});
+
+AFRAME.registerComponent('removetunnels', {
+  init: function () {
+    this.el.addEventListener('beat', function (event) {
+      switch(event.detail) {
+        case 352:
+          var ring = document.querySelector('#ringportal');
+          ring.parentNode.removeChild(ring);
+          var building = document.querySelector('#buildingportal');
+          building.parentNode.removeChild(building);
+          this.setAttribute('class', 'beatlistener' + (event.detail + 32));
+          console.log("Removing ring and building!");
+          break;
+        case 384:
+          var disco = document.querySelector('#discotunnel');
+          disco.parentNode.removeChild(disco);
+          var electric = document.querySelector('#electrictunnel');
+          electric.parentNode.removeChild(electric);
+          this.setAttribute('class', 'beatlistener' + (event.detail + 8));
+          console.log("Removing disco and electric!");
+          break;
+        case 392:
+          var kal = document.querySelector('#kaltunnel');
+          kal.setAttribute('animation__scale2', "property: scale; from: 1 1 1; to: 0.01 0.01 0.01;");
+          kal.setAttribute('animation__visible', "property: visible; from: true; to: false; delay: 1000");
+      }
+    });
+  },
 });
 
 /*

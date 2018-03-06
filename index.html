@@ -115,7 +115,7 @@
     </script>
   </head>
   <body>
-    <a-scene id="fog" fog="type: exponential; density: 0.035; color: #101010"
+    <a-scene id="fog" fog="type: exponential; density: 0.035; color: #101010" stats
              animation__fog="property: fog.density; easing: easeOutCirc; to: 0.0; dur: 40000; startEvents: beat">
       <a-assets>
         <img id="stars" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fstarfield.png?1513307410255">
@@ -192,11 +192,11 @@
       </a-assets>   
       
       <!-- Basic environment assets -->
-      <a-sky visible="true" id="sunsky" src="#sunsetblur" radius="6000" rotation="0 -60 0" position="0 -50 -2000"></a-sky>
-      <a-sky visible="true" id="starcolor" material="color:#FF00FF; opacity: 0" radius="5900" rotation="0 10 0" position="0 -50 -2000" class="beatlistener231"
+      <a-sky visible="true" id="sunsky" src="#sunsetblur" radius="5500" rotation="0 -60 0" position="0 -50 -2000"></a-sky>
+      <a-sky visible="true" id="starcolor" material="color:#FF00FF; opacity: 0" radius="5000" rotation="0 10 0" position="0 -50 -2000" class="beatlistener231"
              animation__opacity="property: material.opacity; from: 0; to: 0.4; easing: easeInQuint; dur: 4752.472; startEvents: beat"></a-sky>
-      <a-sky visible="false" id="starsky" src="#stars" radius="6000" rotation="0 10 0" position="0 -50 -2000"></a-sky>
-      <a-sky visible="false" mixin="gridpatternsky" radius="6000" rotation="0 10 0" position="0 -50 -2000"></a-sky>
+      <a-sky visible="true" id="starsky" src="#stars" radius="6000" rotation="0 10 0" position="0 -50 -2000"></a-sky>
+      <a-sky visible="true" mixin="gridpatternsky" radius="6500" rotation="0 10 0" position="0 -50 -2000"></a-sky>
       <a-entity light="type: ambient; intensity: 0.3; distance: 50; decay: 2" position="0 10 10"></a-entity>
       
       <a-plane id="floorleft" position="2900 0 -4210" rotation="-90 0 0" width="5000" height="5000" color="#303030"></a-plane>
@@ -257,23 +257,40 @@
                               loadmult: 3.83; stopfollow: -450; unload: -900"
                 class="beatlistener116" rotation = "0 0 0" position="-62 -750 -1245" scale = "1 1 1"></a-entity>
       
-      <a-entity rng-building-snakes="load: 550; start: 230; unload: -730" position="-40 -180 -1900"></a-entity>
-      <a-entity rng-building-snakes="load: 750; start: 260; unload: -230" position="-40 -180 -2400"></a-entity>
-      <a-entity position="-600 -240 -1882.5" 
-                rng-building-snake="width:8; height:45; speed: 0.25; triggerstart: 230; triggerspeed: 8;
+      <a-entity rng-building-snakes="load: 550; start: 230; unload: -650" position="-40 -180 -1900"></a-entity>
+      <a-entity rng-building-snakes="load: 750; start: 250; unload: -180" position="-40 -180 -2325"></a-entity>
+      <a-entity position="-600 -240 -1802.5" 
+                rng-building-snake="width:8; height:45; speed: 0.35; triggerstart: 234; triggerspeed: 6; unload: -2550;
                                     path:+x, +y, +x, +x, -y, -z, -x, -x, -z, -z, +x, -y"></a-entity>
-      <a-entity position="600 -320 -1920" 
-                rng-building-snake="width:8; height:45; speed: 0.25; triggerstart: 230; triggerspeed: 8;
+      <a-entity position="600 -320 -1840" 
+                rng-building-snake="width:8; height:45; speed: 0.35; triggerstart: 234; triggerspeed: 6; unload: -2550;
                                     path:-x, +y, -x, -x, -y, -z, +x, +x, -z, -z, -x, +y"></a-entity>
       
+      <a-entity id="ringportal" class="beatlistener319" position="0 0 -2514" geometry="primitive: torus; radius: 25; radiusTubular: 3" scale="0.01 0.01 0.01"
+                material="shader: grid-shader; speed: 1.0; intensity: 10.0; resolution: 5.0; color: white; backgroundColor: black"
+                animation__rotate="property: rotation; from: 0 0 0; to: 0 0 -360; loop: true; easing: linear; dur: 10000"
+                animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInOutQuart; dur: 2376.236; startEvents: beat"></a-entity>
+      <a-entity id="buildingportal" position="0 0 -2514" rotation="0 90 -90" scale="0.01 0.01 0.01"
+                rng-building-shader="side: double; speed: 0; width: 5; height: 7.5; static: 0 1; grow_slide: 1 0; triggeraction: portal; triggerbeat: 323;
+                                     grows: 1 0 0 0; winheight: 0 0 1 0; winwidth: 0 1 0; colorstyle: 0 0 0 1;"></a-entity>
+      <a-entity id="discotunnel" class="beatlistener335" rng-disco-tunnel position="0 0 -2607" scale="0.01 0.01 0.01"
+                animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInExpo; dur: 5000; startEvents: beat"></a-entity>
+      <a-entity id="electrictunnel" class="beatlistener335" position="0 0 -2687" scale="0.01 0.01 0.01" rotation="90 0 0" 
+                geometry="primitive: cylinder; openEnded: true; radius: 10; height: 72"
+                material="side: double; shader: electric-shader; speed: 1.0; speed: 0.5; brightness: 2.0; 
+                          displacement: 2.0; scale: 8.0; resolution: 2.0; color: cyan; backgroundColor: red"
+                animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInExpo; dur: 5000; startEvents: beat"></a-entity>
+      <a-entity id="kaltunnel" class="beatlistener335" position="0 0 -2758" scale="0.01 0.01 0.01" rotation="90 0 0" 
+                geometry="primitive: cylinder; openEnded: false; radius: 20; height: 70"
+                material="side: double; shader: kal-shader; zoom: 100.0;"
+                animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInExpo; dur: 5000; startEvents: beat"></a-entity>
+      
+      <a-entity gotospace class="beatlistener350"></a-entity>
+      <a-entity removetunnels class="beatlistener352"></a-entity>
+      
       <a-entity id="TBC" text-geometry="value: To Be Continued...;" material="shader: disco-shader; resolution: 0.5; color: #001040; backgroundColor: #FF00FF; speed: 1" position="0 1000 10" scale="2 2 2"
-                class="beatlistener300" animation__move="property: position; from: -5 0 -5000; to: -5 0 -2730; easing: easeOutCubic; dur: 30000; startEvents: beat"></a-entity>
-      
-      <a-entity id="buildingportal" position="0 0 -2630" rotation="-90 0 0" scale="0.01 0.01 0.01"
-                rng-building-shader="side: double; speed: 0; width: 10; height: 20; static: 0 1; grow_slide: 1 0; triggeraction: reset; triggerbeat: 340;
-                                     grows: 1 0 0 0; winheight: 0 0 1 0; winwidth: 0 1 0; colorstyle: 0 0 0 1;"
-                animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeOutElastic; dur: 10000; startEvents: beat"></a-entity>
-      
+                class="beatlistener330" animation__move="property: position; from: -5 0 -5000; to: -5 0 -2910; easing: easeOutCubic; dur: 30000; startEvents: beat"></a-entity>
+
       <!-- Main menu -->
       <a-entity id="menu" position="0 1.5 28.75" rotation="0 0 0">
         <a-entity id="menu-layout" layout="type: circle; radius: 12" scale="0.05 0.05 0.05">
@@ -290,7 +307,7 @@
       
       <!-- Camera and children -->
       <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0.1 30" look-controls
-                camera-manager="speed: 12; stop: -2720; id: main" rotation="0 0 0">
+                camera-manager="speed: 12; stop: -2900; id: main" rotation="0 0 0">
         <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
         <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>
         

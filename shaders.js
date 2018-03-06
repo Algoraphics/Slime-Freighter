@@ -345,46 +345,6 @@ void main() {
 `
 });
 
-var electricfrag = `
-float surface3 ( vec3 coord ) {
-
-    float frequency = 7.0;
-    float n = 0.4;
-
-    n -= 1.0    * abs( cnoise( coord * frequency ) );
-    n -= 1.5    * abs( cnoise( coord * frequency * 4.0 ) );
-    n -= 1.25   * abs( cnoise( coord * frequency * 4.0 ) );
-
-    return clamp( n, -0.6, 1.0 );
-}
-
-void main( void ) {
-    float time = 0.05 * timeMsec / 1000.0; // Convert from A-Frame milliseconds to typical time in seconds.
-    vec2 uvMax = ( 2.0 * asin( sin( 2.0 * PI * vUv ) ) ) / PI;
-    
-    vec2 uvScale = vec2(resolution, resolution);
-    float n = surface3(vec3(uvMax * uvScale * 0.2, time * speed));
-
-    vec3 s = vec3( clamp( n, 0.0, 1.0 ) ) * color * brightness * 4.0;
-    gl_FragColor = vec4( s, 1.0 );
-}
-`
-// see https://shaderfrog.com/app/view/43
-AFRAME.registerShader('electric-shader', {
-  schema: {
-    timeMsec: {type: 'time', is: 'uniform'},
-    speed: {type: 'float', is: 'uniform'},
-    brightness: {type: 'float', is: 'uniform'},
-    resolution: {type: 'float', is: 'uniform'},
-    
-    color: {type: 'color', is: 'uniform'},
-    backgroundColor: {type: 'color', is: 'uniform'},
-  },
-
-  vertexShader: basic,
-  fragmentShader: randomripple + electricfrag
-});
-
 // see https://shaderfrog.com/app/view/269
 AFRAME.registerShader('lightspeed-shader', {
   schema: {
@@ -650,6 +610,57 @@ void main( void ) {
 	gl_FragColor = vec4(outcolor , 1.);
 }	
 `
+});
+
+var electricfrag = `
+float surface3 ( vec3 coord ) {
+
+    float frequency = 7.0;
+    float n = 0.4;
+
+    n -= 1.0    * abs( cnoise( coord * frequency ) );
+    n -= 1.5    * abs( cnoise( coord * frequency * 4.0 ) );
+    n -= 1.25   * abs( cnoise( coord * frequency * 4.0 ) );
+
+    return clamp( n, -0.6, 1.0 );
+}
+
+void main( void ) {
+    float time = 0.05 * timeMsec / 1000.0; // Convert from A-Frame milliseconds to typical time in seconds.
+    vec2 uvMax = ( 2.0 * asin( sin( 2.0 * PI * vUv ) ) ) / PI;
+    
+    vec2 uvScale = vec2(resolution, resolution);
+    float n = surface3(vec3(uvMax * uvScale * 0.2, time * speed));
+
+    vec3 s = vec3( clamp( n, 0.0, 1.0 ) ) * color * brightness * 4.0;
+    gl_FragColor = vec4( s, 1.0 );
+}
+`
+// see https://shaderfrog.com/app/view/43
+AFRAME.registerShader('electric-shader', {
+  schema: {
+    timeMsec: {type: 'time', is: 'uniform'},
+    speed: {type: 'float', is: 'uniform'},
+    brightness: {type: 'float', is: 'uniform'},
+    resolution: {type: 'float', is: 'uniform'},
+    displacement: {type: 'float', is: 'uniform'},
+    scale: {type: 'float', is: 'uniform'},
+    
+    color: {type: 'color', is: 'uniform'},
+  },
+
+  vertexShader: randomripple + `
+
+void main() {
+  float time = timeMsec / 2000.0;
+  vUv = uv;
+  vPosition = position;
+  vNoise = cnoise(normalize(position) * scale + time * speed * 0.25);
+  vec3 pos = position + normal * vNoise * vec3(displacement);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+}
+`,
+  fragmentShader: randomripple + electricfrag
 });
 
 var fractalvert = randomripple + `
