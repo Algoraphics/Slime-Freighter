@@ -206,7 +206,7 @@ AFRAME.registerComponent('rng-building-flower', {
     height: {default: 1},
     preset: {default: 'flower'},
     num: {default: '2 0 1'},
-    start: {default: -150},
+    start: {default: -2},
   },
   init: function () {
     var data = this.data;
@@ -228,7 +228,7 @@ AFRAME.registerComponent('rng-building-flower', {
       fallover = 45;
     }
     if (data.preset == 'cross') {
-      moveup = 10;
+      moveup = 100;
       fallout = 0;
       fallover = 90;
     }
@@ -724,11 +724,13 @@ AFRAME.registerComponent('rng-building-shader', {
     color2: {default: ''},
     usecolor: {default: '1 1'},
     colorstyle: {default: '1 1 1 1'}, // single color, two color, one color to gradient, gradient
+    coloroffset: {default: 0},
     winheight: {default: '1 2 8 1'},
     winwidth: {default: '2 8 4'},
     triggerbeat: {default: -1},
-    triggeraction: {default: ''},
+    action: {default: ''},
     speed: {default: 1.0},
+    timeskip: {default: 0},
     side: {default: 'single'},
   },
   init: function () {
@@ -775,7 +777,7 @@ AFRAME.registerComponent('rng-building-shader', {
       color1 = getRandomColor();
     }
     var color2 = data.color2
-    if (data.color2 != '') {
+    if (data.color2 == '') {
       color2 = getRandomColor();
     }
     
@@ -798,11 +800,13 @@ AFRAME.registerComponent('rng-building-shader', {
       usecolor2 = 0.0;
       colorgrid = rng([1.0, 0.0], data.usecolor);
     }
+    var coloroffset = data.coloroffset;
+    var timeskip = data.timeskip;
     
     var building = document.createElement('a-entity');
     
     // Special case changes for physical grow animation
-    if (data.triggeraction == 'grow') {
+    if (data.action == 'grow') {
         this.el.setAttribute("visible", false);
         building.setAttribute('scale', "1 0.001 1");
         
@@ -828,13 +832,27 @@ AFRAME.registerComponent('rng-building-shader', {
       }
     }
     
-    building.setAttribute('material', "side: " + data.side + "; shader: building-shader;"
+    // Spaceship blocks have no top, and are centered
+    if (data.action != 'spaceship') {
+      // Cover top of building so we don't see windows
+      var top = document.createElement('a-entity');
+      top.setAttribute('geometry', "primitive: plane; width: " + buildingwidth + "; height: " + buildingwidth);
+      top.setAttribute('material', "shader: flat; color: #000000");
+      top.setAttribute('position', "0 " + (buildingheight + 0.02) + " 0");
+      top.setAttribute('rotation', "-90 0 0");
+      this.el.appendChild(top);
+    }
+    else {
+      midheight = 0;
+    }
+    
+    building.setAttribute('material', "side: " + data.side + "; shader: building-shader; timeskip: " + timeskip
                           + "; color1: " + color1 + "; color2: " + color2 + "; numrows: " + numrows + "; numcols: " + numcols
                           + "; grow: " + grow + "; growsine: " + growsine + "; growvert: " + growvert + "; growclamp: " + growclamp + "; growstart: " + 0.0 + "; invertcolors: " + invertcolors
                           + "; slide: " + slide + "; slidereverse: " + slidereverse + "; slideaxis: " + axis
                           + "; colorslide: " + slide + "; coloraxis: " + axis + "; colorgrid: " + colorgrid
                           + "; speed: " + speed + "; height: " + winheight + "; width: " + winwidth
-                          + "; coloroffset: " + 0 + "; usecolor1: " + usecolor1 + "; usecolor2: " + usecolor2);
+                          + "; coloroffset: " + data.coloroffset + "; usecolor1: " + usecolor1 + "; usecolor2: " + usecolor2);
     building.setAttribute('geometry', "primitive: box; width: " + buildingwidth + "; height: " + buildingheight + "; depth: " + buildingwidth);
     building.setAttribute('position', "0 " + midheight + " 0");
     this.el.appendChild(building);
@@ -843,47 +861,39 @@ AFRAME.registerComponent('rng-building-shader', {
     this.el.midheight = buildingheight/2;
     this.el.width = width;
     
-    // Cover top of building so we don't see windows
-    var top = document.createElement('a-entity');
-    top.setAttribute('geometry', "primitive: plane; width: " + buildingwidth + "; height: " + buildingwidth);
-    top.setAttribute('material', "shader: flat; color: #000000");
-    top.setAttribute('position', "0 " + (buildingheight + 0.02) + " 0");
-    top.setAttribute('rotation', "-90 0 0");
-    this.el.appendChild(top);
-    
     if (data.triggerbeat >= 0) {
       this.el.setAttribute('class', 'beatlistener' + data.triggerbeat);
-      if (data.triggeraction == 'grow') {
+      if (data.action == 'grow') {
         this.el.addEventListener('beat', function () {
           // Animate building geometry to grow from a 2D plane at the base
-          this.children[0].setAttribute("animation__grow", "property: scale; from: 1 0.001 1; to: 1 1 1; dur: " + (beat*height/data.speed) + "; easing: linear");
-          this.children[0].setAttribute("animation__move", "property: position; from: 0 0 0; to: 0 " + this.midheight + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
+          this.children[1].setAttribute("animation__grow", "property: scale; from: 1 0.001 1; to: 1 1 1; dur: " + (beat*height/data.speed) + "; easing: linear");
+          this.children[1].setAttribute("animation__move", "property: position; from: 0 0 0; to: 0 " + this.midheight + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
           // Animate topper too
-          this.children[1].setAttribute("animation__move", "property: position; from: 0 0.5 0; to: 0 " + (this.midheight*2 + this.width*0.02) + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
+          this.children[0].setAttribute("animation__move", "property: position; from: 0 0.5 0; to: 0 " + (this.midheight*2 + this.width*0.02) + " 0; dur: " + (beat*height/data.speed) + "; easing: linear");
           // Move shader time back to origin to reset window animation
-          var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
-          this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
+          var time = this.children[1].getObject3D('mesh').material.uniforms['timeMsec']['value'];
+          this.children[1].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
           this.setAttribute("visible", true);
         });
       }
-      else if (data.triggeraction == 'lights') {
+      else if (data.action == 'lights') {
         this.el.addEventListener('beat', function () {
-          var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
-          this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time - (2.2*594.094);
-          var color = this.children[0].getObject3D('mesh').material.uniforms['color2']['value'];
+          var time = this.children[1].getObject3D('mesh').material.uniforms['timeMsec']['value'];
+          this.children[1].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time - (2.2*594.094);
+          var color = this.children[1].getObject3D('mesh').material.uniforms['color2']['value'];
           var nextcolor = hexToRgb(getRandomColor());
           color.x = nextcolor.r / 255;
           color.y = nextcolor.g / 255;
           color.z = nextcolor.b / 255;
-          this.children[0].getObject3D('mesh').material.uniforms['color2']['value'] = color;
+          this.children[1].getObject3D('mesh').material.uniforms['color2']['value'] = color;
         });
       }
-      else if (data.triggeraction == 'portal') {
+      else if (data.action == 'portal') {
         this.el.addEventListener('beat', function () {
           if (this.activated) {
-            var time = this.children[0].getObject3D('mesh').material.uniforms['timeMsec']['value'];
-            this.children[0].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
-            this.children[0].getObject3D('mesh').material.uniforms['speed']['value'] = 10.0;
+            var time = this.children[1].getObject3D('mesh').material.uniforms['timeMsec']['value'];
+            this.children[1].getObject3D('mesh').material.uniforms['timeskip']['value'] -= -time;
+            this.children[1].getObject3D('mesh').material.uniforms['speed']['value'] = 10.0;
           }
           else {
             this.setAttribute('class', 'beatlistener' + (data.triggerbeat + 8));
@@ -892,6 +902,131 @@ AFRAME.registerComponent('rng-building-shader', {
           }
         });
       }
+    }
+  }
+});
+
+AFRAME.registerComponent('rng-capital-ship', {
+  schema: {
+    startbeat: {default: 0},
+    load: {default: 0},
+  },
+  init: function () {
+    var data = this.data;
+    
+    // Need to hardcode a lot of shapes here. So they'll be put into a list
+    // and slowly loaded later
+    this.loadlist = [];
+    this.loadex = 0;
+    
+    var guncore = document.createElement('a-entity');
+    guncore.setAttribute('position', "0 0 -5");
+    guncore.setAttribute('geometry', 'primitive: sphere; radius: 15; segmentsWidth: 80; segmentsHeight: 80;');
+    guncore.setAttribute('material', 'side: double; shader: building-shader; grow: 200.0; height: 0.95; width: 0.95;'
+                         + 'numrows: 200; numcols: 200; speed: 10; invertcolors: 1; color1: #FFFFFF; color2: #FFFF00; usecolor1: 1; usecolor2: 1');
+    this.loadlist.push(guncore);
+    
+    var guncone = document.createElement('a-entity');
+    guncone.setAttribute('rotation', "-90 0 0");
+    guncone.setAttribute('geometry', 'primitive: cone; radiusBottom: 20; radiusTop:10; height: 50; openEnded: true');
+    guncone.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 20; numcols: 20; color1: #FF0000; color2: #000000; usecolor1: 1; usecolor2: 1');
+    this.loadlist.push(guncone);
+    
+    var ringmat = 'side: double; shader: building-shader; height: 0.65; width: 0.5; numrows: 6; numcols: 40; '
+                  + 'speed: 0; invertcolors: 0; color1: #FF0000; color2: #000000; usecolor1: 1; usecolor2: 1';
+    var animring = 'property: rotation; from: 0 0 0; to: 0 0 360; easing: linear; dur: 40000; loop: true';
+    var gunring = document.createElement('a-entity');
+    gunring.setAttribute('position', "0 0 25");
+    gunring.setAttribute('geometry', 'primitive: torus; radius: 22; radiusTubular: 2;');
+    gunring.setAttribute('material', ringmat + "; timeskip: 300");
+    gunring.setAttribute('animation__rotation', animring);
+    this.loadlist.push(gunring);
+    
+    var gunring = document.createElement('a-entity');
+    gunring.setAttribute('position', "0 0 25");
+    gunring.setAttribute('geometry', 'primitive: torus; radius: 30; radiusTubular: 3;');
+    gunring.setAttribute('material', ringmat + "; timeskip: 600");
+    gunring.setAttribute('animation__rotation', animring + "; dir: reverse");
+    this.loadlist.push(gunring);
+    
+    var gunbarrel = document.createElement('a-entity');
+    gunbarrel.setAttribute('position', "0 0 -50");
+    gunbarrel.setAttribute('rotation', "-90 180 0");
+    gunbarrel.setAttribute('geometry', 'primitive: cylinder; radius: 35; height: 150; openEnded: true');
+    gunbarrel.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 80; numcols: 80; coloroffset: 1.0');
+    this.loadlist.push(gunbarrel);
+    
+    var longbody = document.createElement('a-entity');
+    longbody.setAttribute('position', "0 0 -250");
+    longbody.setAttribute('geometry', 'primitive: box; height: 100; width: 125; depth: 300;');
+    longbody.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 50; numcols: 50; colorgrid: 1; color1: #FFFF00; color2: #000000; usecolor1: 1; usecolor2: 1');
+    this.loadlist.push(longbody);
+    
+    var leftwing = document.createElement('a-entity');
+    leftwing.setAttribute('position', "-250 0 -435");
+    leftwing.setAttribute('rotation', "0 0 0");
+    leftwing.setAttribute('geometry', 'primitive: box; height: 150; width: 100; depth: 420;');
+    leftwing.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 70; numcols: 70; color1: #000000; color2: #FFFF00; usecolor1: 1; usecolor2: 1');
+    this.loadlist.push(leftwing);
+    
+    var rightwing = document.createElement('a-entity');
+    rightwing.setAttribute('position', "250 0 -435");
+    rightwing.setAttribute('rotation', "0 0 0");
+    rightwing.setAttribute('geometry', 'primitive: box; height: 150; width: 100; depth: 420;');
+    rightwing.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 70; numcols: 70; color1: #000000; color2: #FFFF00; usecolor1: 1; usecolor2: 1');
+    this.loadlist.push(rightwing);
+    
+    var bigprism = document.createElement('a-entity');
+    bigprism.setAttribute('position', "0 0 -355");
+    bigprism.setAttribute('rotation', "90 0 0");
+    bigprism.setAttribute('geometry', 'primitive: cone; radiusBottom: 250; radiusTop: 50; height: 500; segmentsRadial: 5');
+    bigprism.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 160; numcols: 150; colorgrid: 1; color1: #FF00FF; color2: #FF00FF; usecolor1: 1; usecolor2: 1; coloroffset: 1');
+    this.loadlist.push(bigprism);
+    
+    var leftangle = document.createElement('a-entity');
+    leftangle.setAttribute('position', "-50 -45 -125");
+    leftangle.setAttribute('rotation', "135 90 90");
+    leftangle.setAttribute('geometry', 'primitive: cylinder; height: 300; radius: 20; segmentsRadial: 3;');
+    leftangle.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 120; numcols: 40; colorgrid: 1');
+    this.loadlist.push(leftangle);
+  
+    var rightangle = document.createElement('a-entity');
+    rightangle.setAttribute('position', "50 -45 -125");
+    rightangle.setAttribute('rotation', "45 90 90");
+    rightangle.setAttribute('geometry', 'primitive: cylinder; height: 300; radius: 20; segmentsRadial: 3;');
+    rightangle.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 120; numcols: 40; colorgrid: 1');
+    this.loadlist.push(rightangle);
+    
+    var topleftangle = document.createElement('a-entity');
+    topleftangle.setAttribute('position', "-50 45 -125");
+    topleftangle.setAttribute('rotation', "-135 90 90");
+    topleftangle.setAttribute('geometry', 'primitive: cylinder; height: 300; radius: 20; segmentsRadial: 3;');
+    topleftangle.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 120; numcols: 40; colorgrid: 1');
+    this.loadlist.push(topleftangle);
+  
+    var toprightangle = document.createElement('a-entity');
+    toprightangle.setAttribute('position', "50 45 -125");
+    toprightangle.setAttribute('rotation', "-45 90 90");
+    toprightangle.setAttribute('geometry', 'primitive: cylinder; height: 300; radius: 20; segmentsRadial: 3;');
+    toprightangle.setAttribute('material', 'side: double; shader: building-shader; height: 0.65; width: 0.5;'
+                         + 'numrows: 120; numcols: 40; colorgrid: 1');
+    this.loadlist.push(toprightangle);
+  },
+  tick: function () {
+    // Simple slow load given a list of entities
+    var campos = document.querySelector('#camera').getAttribute('position');
+    if (campos.z < this.data.load && this.loadex < this.loadlist.length) {
+      this.el.appendChild(this.loadlist[this.loadex]);
+      this.loadex++;
     }
   }
 });
@@ -1005,7 +1140,7 @@ AFRAME.registerComponent('rng-building-snake', {
     this.loadbar = data.load + Math.floor(Math.random() * 20);
     
     // Unload considers input location, with a randomized offset so the whole group doesn't vanish at once
-    this.unloadbar = data.unload - Math.floor(Math.random() * 100);
+    this.unloadbar = data.unload - Math.floor(Math.random() * 200);
   },
   tick: function () {
     var data = this.data;
@@ -1026,7 +1161,7 @@ AFRAME.registerComponent('rng-building-snake', {
       building.setAttribute('rng-building-shader', "; width: " + this.width + "; height: " + this.height + "; color1: " + this.color1 + "; color2: " + this.color2
                             + "; static: 1 0; grow_slide: 1 0; speed: " + this.speed + "; colorstyle: " + this.colorstyle
                             + "; winheight: " + this.winheight + "; winwidth: " + this.winwidth
-                            + "; triggeraction: grow; triggerbeat: " + this.triggerbeat);
+                            + "; action: grow; triggerbeat: " + this.triggerbeat);
       this.el.appendChild(building);
       
       var mult = 6;
@@ -1110,6 +1245,247 @@ AFRAME.registerComponent('rng-building-snake', {
       this.el.parentNode.removeChild(this.el);
     }
   }
+});
+
+AFRAME.registerComponent('rng-building-asteroid', {
+  schema: {
+    start: {default: 0},
+  },
+  init: function () {
+    var rotations = ["0 0 0", "45 0 0", "0 0 45"];
+    var scale = 1;
+    var height = rng([1, 2], '4 1');
+    for (var i = 0; i < 3; i++) {
+      var building = document.createElement('a-entity');
+      building.setAttribute('rng-building-shader', "height: " + height + "; static: 1 0; colorstyle: 1 0 0 0; winheight: 0 0 1 0; winwidth: 0 1 0; color1: black; action: spaceship");
+      building.setAttribute('audio-react',"property: shader-color; analyserEl: #analyser; multiplier: 0.75; build: 1; startbeat: " + this.data.start);
+      building.setAttribute('rotation', rotations[i]);
+      building.setAttribute('scale', scale + " " + scale + " " + scale);
+      this.el.appendChild(building);
+      scale -= 0.1;
+    }
+  },
+  tick: function () {
+    
+  }
+});
+
+AFRAME.registerComponent('rng-asteroids', {
+  schema: {
+    start: {default: 0},
+  },
+  init: function () {
+    this.loadex = 0;
+    this.load = this.el.object3D.position.z + 200;
+    this.loaded = false;
+  },
+  tick: function () {
+    var pos = this.el.object3D.position;
+    var campos = document.querySelector('#camera').getAttribute('position');
+    while (campos.z < this.load && this.loadex < 200) {
+      this.load -= 1;
+      
+      var building = document.createElement('a-entity');
+      var inner = 25;
+      var outer = 200;
+      var x = (Math.random() * 4000) - 2000;
+      var y = (Math.random() * 4000) - 2000;
+      var z = (Math.random() * 4000) - 2000;
+      var scale = 0;
+      
+      var checkx = Math.abs(x); var checky = Math.abs(y); var checkz = Math.abs(z);
+      // Special case put an asteroid right below camera
+      if (this.loadex == 0) {x = -3; y = -4; z = -6; scale = 1}
+      // For the rest, make sure they aren't on a collision course with cam or nearby ships
+      else {
+        // Don't place an asteroid if it would collide with a ship
+        if (checkx > inner && checkx < outer) { continue;}
+        if (checky > inner && checky < outer) { continue;}
+        if (checkz < 5) { continue;}
+        // Decrease scale for far away asteroids (illusion of greater distance)
+        if (checkx > outer || checky > outer) {
+          var scale = Math.random() * 10;
+          outer *= 4;
+          if (checkx > outer || checky > outer) { scale -= 1; }
+          outer *= 2;
+          if (checkx > outer || checky > outer) { scale -= 1; }
+        }
+      }
+      var postr = x + " " + y + " " + z;
+      var scalestr = scale + " " + scale + " " + scale;
+      
+      building.setAttribute('rng-building-asteroid', 'start: ' + this.data.start);
+      building.setAttribute('position', postr);
+      building.setAttribute('rotation', postr);
+      building.setAttribute('allrotate', '');
+      building.setAttribute('scale', scalestr);
+      this.el.appendChild(building);
+      this.loadex++;
+    }
+  }
+});
+
+AFRAME.registerComponent('rng-building-spacefleet', {
+  schema: {
+    startbeat: {default: 0},
+  },
+  init: function () {
+    var data = this.data;
+    var pos = this.el.object3D.position;
+    
+    var x = -800;
+    var delay = 0;
+    var startbeat = data.startbeat
+    
+    for (var i = 0; i < 6; i++) {
+      var building = document.createElement('a-entity');
+      
+      var y = -300;
+      // Raise middle ships
+      if (i == 1 || i == 4) {
+        var y = -50; 
+      }
+      var z = 400 + Math.random() * 200;
+      var start = x + " " + -20000 + " " + z;
+      var incoming = "0 0 " + (z - 10000);
+      var postr = x + " " + y + " " + z;
+      building.setAttribute('position', start);
+      building.setAttribute('class', 'beatlistener' + startbeat);
+      building.setAttribute('rng-building-spaceship', 'load: ' + (pos.z + 250));
+      building.setAttribute('animation__position', "property: position; from: " + incoming + "; to: " + postr
+                            + "; dur: 2376.236; delay: " + delay + "; easing: easeInExpo; startEvents: beat");
+      this.el.appendChild(building);
+      // Divide into two sections, by timing and position
+      if (i == 2) {
+        x += 800;
+        delay = 0;
+        startbeat += 1;
+      }
+      else { 
+        x += 200;
+        delay += 100;
+      }
+    }
+    
+    var delay = 0;
+    startbeat += 1;
+    
+    for (var i = 0; i < 4; i++) {
+      var building = document.createElement('a-entity');
+      var y = 0;
+      var x = 0;
+      var offset = 150;
+      
+      if (i == 0) { y = offset; }
+      if (i == 1) { x = -offset }
+      if (i == 2) { x = offset }
+      if (i == 3) { y = -offset; }
+      
+      var z = Math.random() * 200;
+      var start = x + " " + -20000 + " " + z;
+      var incoming = "0 0 " + (z - 10000);
+      var postr = x + " " + y + " " + z;
+      building.setAttribute('position', start);
+      building.setAttribute('class', 'beatlistener' + startbeat);
+      building.setAttribute('rng-building-spaceship', 'load: ' + (pos.z + 200));
+      building.setAttribute('animation__position', "property: position; from: " + incoming + "; to: " + postr
+                            + "; dur: 2376.236; delay: " + delay + "; easing: easeInExpo; startEvents: beat;");
+      this.el.appendChild(building);
+      // Divide into two sections, by timing and position
+      delay += 100;
+    }
+    
+    startbeat += 30;
+    var capital = document.createElement('a-entity');
+    capital.setAttribute('rng-capital-ship', 'load: ' + (pos.z + 150));
+    capital.setAttribute('position', "0 -15000 0");
+    capital.setAttribute('scale', "3 3 3");
+    var incoming = "0 0 -20000";
+    var postr = "0 100 -950";
+    capital.setAttribute('class', 'beatlistener' + startbeat);
+    capital.setAttribute('animation__position', "property: position; from: " + incoming + "; to: " + postr
+                            + "; dur: 2376.236; easing: easeInExpo; startEvents: beat;");
+    this.el.appendChild(capital);
+  }
+});
+
+AFRAME.registerComponent('rng-building-spaceship', {
+  schema: {
+    length: {default: 10}, // Ship length
+    speed: {default: 1}, // Flight speed
+    load: {default: 0}, // Distance from entity at which we should begin loading
+  },
+  init: function () {
+    var data = this.data;
+    
+    this.winheight = 0.65;
+    this.winwidth = 0.5;
+    
+    this.pos = {x: 0, y: 0, z: 0};
+    this.rotate = {x: 0, y: 0, z: 0};
+    this.scale = 1;
+    
+    this.partdex = 0;
+    this.partmax = data.length;
+    this.z = 0;
+    
+    // Pick specifically complimentary colors
+    var colorlist = ["#FF0000", "#FF7700", "#FFFF00", "#77FF00", "#00FF00", "#00FF77", "#00FFFF", "#0077FF", "#0000FF", "#7700FF", "#FF00FF", "#FF0077"];
+    var index1 = Math.floor(Math.random() * 11);
+    var index2 = index1 + pick_one([3,4,5,6]);
+    if (index2 > 11) {
+      index2 = index2 - 11;
+    }
+    this.color1 = colorlist[index1];
+    this.color2 = colorlist[index2];
+    
+    this.colorstyle = rng(['single', 'double', 'singlegrad', 'doublegrad'], "0 1 0 0");
+    
+    this.speed = data.speed;
+    
+    // Load bar considers original position, a random offset, and an input multiplier for user control
+    this.loadbar = data.load;
+  },
+  tick: function () {
+    var data = this.data;
+    
+    var campos = document.querySelector('#camera').getAttribute('position');
+    if (this.partdex < this.partmax && campos.z < this.loadbar) {
+      var height = rng([3, 5, 7], "1 1 1");
+      var width = rng([5, 6, 7], "1 1 1");
+      var zbuffer = -50;
+      
+      var building = document.createElement('a-entity');
+      var posy = 0;
+      var offsety = 10;
+      if (this.partdex > data.length / 3) {
+        width += 2;
+        height += 10;
+        if (this.shiftz) {
+          zbuffer -= 5;
+        }
+        offsety += 20;
+        this.shiftz = true;
+      }
+      if (this.partdex % 2 == 0) {
+        posy = pick_one([-offsety, offsety]);
+        height += 1;
+      }
+      this.scale -= 0.01;
+      var postr = "0 " + posy + " " + this.partdex * zbuffer;
+      var rostr = pick_one(["0 0 0", "90 0 0", "0 0 90"]);
+      var scalestr = this.scale + " " + this.scale + " " + this.scale;
+      
+      building.setAttribute('position', postr);
+      building.setAttribute('rotation', rostr);
+      building.setAttribute('scale', scalestr);
+      building.setAttribute('rng-building-shader', "; width: " + (width * 2) + "; height: " + (height * 2) + "; color1: " + this.color1 + "; color2: " + this.color2
+                            + "; static: 1 0; colorstyle: " + this.colorstyle + "; winheight: " + this.winheight + "; winwidth: " + this.winwidth
+                            + "; action: spaceship; timeskip: " + this.partdex*-250);
+      this.el.appendChild(building);
+      this.partdex++;
+    }
+  },
 });
 
 

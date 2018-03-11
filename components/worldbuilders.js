@@ -339,7 +339,7 @@ function colorCity(builder, data) {
 
     var rngbuilding = document.createElement('a-entity');
     var randtrigger = 169 + Math.floor(Math.random() * 20); // 151 If we want colors earlier
-    rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height + "; triggerbeat: " + randtrigger + "; triggeraction: lights"
+    rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height + "; triggerbeat: " + randtrigger + "; action: lights"
                                + "; color1: #FFFF00; usecolor: 1 0; grow_slide: 1 1; static: 1 0; axis: 1 1; colorstyle: 1 0 0 0");
 
     // Flip buildings on right
