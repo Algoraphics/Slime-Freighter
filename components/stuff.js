@@ -27,7 +27,7 @@ AFRAME.registerComponent('justrotate', {
 */
 AFRAME.registerComponent('allrotate', {
   tick: function () {
-    rotato(this.el, 0.5, 0.5, 0.5);
+    rotato(this.el, 0.25, 0.25, 0.25);
   }
 });
 

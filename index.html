@@ -195,8 +195,7 @@
       <a-sky visible="true" id="sunsky" src="#sunsetblur" radius="5500" rotation="0 -60 0" position="0 -50 -2000"></a-sky>
       <a-sky visible="true" id="starcolor" material="color:#FF00FF; opacity: 0" radius="5000" rotation="0 10 0" position="0 -50 -2000" class="beatlistener231"
              animation__opacity="property: material.opacity; from: 0; to: 0.4; easing: easeInQuint; dur: 4752.472; startEvents: beat"></a-sky>
-      <a-sky visible="true" id="starsky" src="#stars" radius="6000" rotation="0 10 0" position="0 -50 -2000"></a-sky>
-      <a-sky visible="true" mixin="gridpatternsky" radius="6500" rotation="0 10 0" position="0 -50 -2000"></a-sky>
+      <a-sky visible="true" id="starsky" src="#stars" radius="9500" rotation="0 10 0" position="0 -50 -2800"></a-sky>
       <a-entity light="type: ambient; intensity: 0.3; distance: 50; decay: 2" position="0 10 10"></a-entity>
       
       <a-plane id="floorleft" position="2900 0 -4210" rotation="-90 0 0" width="5000" height="5000" color="#303030"></a-plane>
@@ -244,7 +243,6 @@
              animation__move="property: position; from: 0 -2501 -7500; to: 0 -2301 -7500; easing: easeInQuint; dur: 4752.472; startEvents: beat"></a-box>
       
       
-      
       <!-- Structural components for Road -->
       <a-entity id="movingWorld" visible="false" worldbuilder=" buildingfunction: movingCity;
                                   blockx: 4; blockz: 10; grid: 30; buildgrids: false; loadmult: 1; loadslow: 5; stopfollow: -500; unload: -600"
@@ -257,7 +255,7 @@
                               loadmult: 3.83; stopfollow: -450; unload: -900"
                 class="beatlistener116" rotation = "0 0 0" position="-62 -750 -1245" scale = "1 1 1"></a-entity>
       
-      <a-entity rng-building-snakes="load: 550; start: 230; unload: -650" position="-40 -180 -1900"></a-entity>
+      <a-entity rng-building-snakes="load: 550; start: 230; unload: -450" position="-40 -180 -1900"></a-entity>
       <a-entity rng-building-snakes="load: 750; start: 250; unload: -180" position="-40 -180 -2325"></a-entity>
       <a-entity position="-600 -240 -1802.5" 
                 rng-building-snake="width:8; height:45; speed: 0.35; triggerstart: 234; triggerspeed: 6; unload: -2550;
@@ -271,28 +269,39 @@
                 animation__rotate="property: rotation; from: 0 0 0; to: 0 0 -360; loop: true; easing: linear; dur: 10000"
                 animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInOutQuart; dur: 2376.236; startEvents: beat"></a-entity>
       <a-entity id="buildingportal" position="0 0 -2514" rotation="0 90 -90" scale="0.01 0.01 0.01"
-                rng-building-shader="side: double; speed: 0; width: 5; height: 7.5; static: 0 1; grow_slide: 1 0; triggeraction: portal; triggerbeat: 323;
+                rng-building-shader="side: double; speed: 0; width: 5; height: 7.5; static: 0 1; grow_slide: 1 0; action: portal; triggerbeat: 323;
                                      grows: 1 0 0 0; winheight: 0 0 1 0; winwidth: 0 1 0; colorstyle: 0 0 0 1;"></a-entity>
       <a-entity id="discotunnel" class="beatlistener335" rng-disco-tunnel position="0 0 -2607" scale="0.01 0.01 0.01"
                 animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInExpo; dur: 5000; startEvents: beat"></a-entity>
       <a-entity id="electrictunnel" class="beatlistener335" position="0 0 -2687" scale="0.01 0.01 0.01" rotation="90 0 0" 
                 geometry="primitive: cylinder; openEnded: true; radius: 10; height: 72"
-                material="side: double; shader: electric-shader; speed: 1.0; speed: 0.5; brightness: 2.0; 
-                          displacement: 2.0; scale: 8.0; resolution: 2.0; color: cyan; backgroundColor: red"
+                material="side: double; shader: electric-shader; speed: 0.5; brightness: 2.0; 
+                          displacement: 2.0; scale: 8.0; resolution: 2.0; color: cyan;"
                 animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInExpo; dur: 5000; startEvents: beat"></a-entity>
       <a-entity id="kaltunnel" class="beatlistener335" position="0 0 -2758" scale="0.01 0.01 0.01" rotation="90 0 0" 
                 geometry="primitive: cylinder; openEnded: false; radius: 20; height: 70"
                 material="side: double; shader: kal-shader; zoom: 100.0;"
                 animation__scale="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; easing: easeInExpo; dur: 5000; startEvents: beat"></a-entity>
-      
-      <a-entity gotospace class="beatlistener350"></a-entity>
-      <a-entity removetunnels class="beatlistener352"></a-entity>
-      
-      <a-entity id="TBC" text-geometry="value: To Be Continued...;" material="shader: disco-shader; resolution: 0.5; color: #001040; backgroundColor: #FF00FF; speed: 1" position="0 1000 10" scale="2 2 2"
-                class="beatlistener330" animation__move="property: position; from: -5 0 -5000; to: -5 0 -2910; easing: easeOutCubic; dur: 30000; startEvents: beat"></a-entity>
 
+      <a-entity removetunnels class="beatlistener352"></a-entity>
+      <a-entity gotospace class="beatlistener350"></a-entity>
+
+      <a-entity id="electricwarp" position="0 0 -10000" geometry="primitive: sphere; radius: 250;" rotation="0 45 0"
+                material="side: double; shader: electric-shader; speed: 5.0; brightness: 2.0; 
+                          displacement: 2.0; scale: 8.0; resolution: 1.0; color: red;"
+                ></a-entity>
+      
+      <a-entity class="beatlistener350" geometry="primitive: sphere; radius: 20000; segmentsWidth: 80; segmentsHeight: 80;" rotation="0 90 10"
+                material="shader: gasplanet-shader; permutations: 1.0; iterations: 1.0; speed: 2.0; 
+                          brightness: 0.75; resolution: 10.0; color1: #00FF00; color2: #FF00FF; color3: #0000FF"
+                animation__position="property: position; from: 0 -100000 0; to: 0 -12000 16000; easing: easeInExpo; dur: 1000; startEvents: beat"></a-entity>
+      
+      <a-entity rng-building-spacefleet="startbeat: 411;" class="beatlistener411" position="0 -10000 -2800"
+                animation__position="property: position; from: 0 0 -4000; to: 0 0 -2000; dur: 30000; easing: easeOutSine; startEvents: beat"></a-entity>
+      <a-entity rng-asteroids="start: 386" position="0 0 -2800"></a-entity>
+      
       <!-- Main menu -->
-      <a-entity id="menu" position="0 1.5 28.75" rotation="0 0 0">
+      <a-entity id="menu" position="0 1.5 28.75">
         <a-entity id="menu-layout" layout="type: circle; radius: 12" scale="0.05 0.05 0.05">
           <a-entity template="src: #fractal-link"></a-entity>
           <a-entity template="src: #about-link" data-thumb="#exbot"></a-entity>
@@ -307,7 +316,7 @@
       
       <!-- Camera and children -->
       <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0.1 30" look-controls
-                camera-manager="speed: 12; stop: -2900; id: main" rotation="0 0 0">
+                camera-manager="speed: 12; stop: -2800; id: main" rotation="0 0 0">
         <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
         <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>
         
@@ -329,7 +338,15 @@
       </a-entity>
       
       <!--
+      <a-entity id="TBC" text-geometry="value: To Be Continued...;" material="shader: disco-shader; resolution: 0.5; color: #001040; backgroundColor: #FF00FF; speed: 1" position="0 1000 10" scale="2 2 2"
+                class="beatlistener330" animation__move="property: position; from: -5 0 -5000; to: -5 0 -2910; easing: easeOutCubic; dur: 30000; startEvents: beat"></a-entity>
+
+      <a-entity rng-building-shader="static: 1 0; colorstyle: 1 0 0 0; color1: black; action: spaceship" position="0 0 -60" allrotate
+                audio-react="property: shader-color; analyserEl: #analyser; multiplier: 0.75; build: 1; startbeat: 2"></a-entity>
       <a-box height="100" width="1000" position="0 0 -900" ></a-box>
+      Cool skybox that didn't fit in anywhere
+      <a-sky visible="true" mixin="gridpatternsky" radius="6500" rotation="0 10 0" position="0 -50 -2000"></a-sky>
+      Car with shader (need to find a way to feasibly get this on the road)
       <a-entity mixin="car" position="1 1.2 28" rotation="0 180 0"
                 material="shader: caustic-shader; resolution: 2; color: yellow; backgroundColor: black; speed: 0.3; brightness: 1"></a-entity>
       

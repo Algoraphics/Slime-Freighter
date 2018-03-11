@@ -1,6 +1,6 @@
 /* global AFRAME, THREE, beat, bind, Uint8Array, isMobile, checkHeadsetConnected */
 
-var debug = false;
+var debug = true;
 
 /*
   Animate a menu item to grow around the camera. Assumes a mini menu is used
@@ -304,6 +304,12 @@ AFRAME.registerComponent('music-manager', {
         if (this.beatcount == 135) {
           this.el.sceneEl.emit('beat');
         }
+        if (this.beatcount == 10) {
+          var end = this.el.sceneEl.querySelectorAll('.asteroid');
+          for (var i = 0; i < end.length; i++) {
+            end[i].emit('songEnd');
+          }
+        }
         this.beatcount++;
       }
       else {
@@ -446,8 +452,11 @@ AFRAME.registerComponent('camera-manager', {
     if (el.getAttribute('id') == 'camera') {
       if (checkHeadsetConnected()) {
         el.setAttribute('look-controls','');
-        el.setAttribute('position', '0 0.01 30');
+        el.setAttribute('position', '0 1.6 30');
         document.querySelector('#click-instruction').setAttribute('visible', 'false');
+        if (isMobile()) {
+          el.setAttribute('position', '0 1.6 30');
+        }
       }
       else {
         el.setAttribute('my-look-controls', '');
@@ -464,7 +473,7 @@ AFRAME.registerComponent('camera-manager', {
     
     // Only the main camera manager should have freedom of movement in debug mode
     if (debug && this.data.id == 'main') {
-      this.el.setAttribute('wasd-controls', "acceleration: 500; fly: true");
+      this.el.setAttribute('wasd-controls', "acceleration: 1500; fly: true");
     }
   },
   tick: function (time, timeDelta) {
@@ -599,18 +608,18 @@ AFRAME.registerComponent('removetunnels', {
           ring.parentNode.removeChild(ring);
           var building = document.querySelector('#buildingportal');
           building.parentNode.removeChild(building);
-          this.setAttribute('class', 'beatlistener' + (event.detail + 32));
+          this.setAttribute('class', 'beatlistener' + (event.detail + 30));
           console.log("Removing ring and building!");
           break;
-        case 384:
+        case 382:
           var disco = document.querySelector('#discotunnel');
           disco.parentNode.removeChild(disco);
           var electric = document.querySelector('#electrictunnel');
           electric.parentNode.removeChild(electric);
-          this.setAttribute('class', 'beatlistener' + (event.detail + 8));
+          this.setAttribute('class', 'beatlistener' + (event.detail + 2));
           console.log("Removing disco and electric!");
           break;
-        case 392:
+        case 384:
           var kal = document.querySelector('#kaltunnel');
           kal.setAttribute('animation__scale2', "property: scale; from: 1 1 1; to: 0.01 0.01 0.01;");
           kal.setAttribute('animation__visible', "property: visible; from: true; to: false; delay: 1000");
@@ -620,7 +629,7 @@ AFRAME.registerComponent('removetunnels', {
 });
 
 /*
-  Uses kevin ngo's audioanalyser component to make an entity scale or move
+  Uses kevin ngo's audioanalyser component to make an entity scale, move, or light up
   to the beat of a song
 */
 AFRAME.registerComponent('audio-react', {
@@ -644,8 +653,12 @@ AFRAME.registerComponent('audio-react', {
     else this.build = 0.5;
     this.el.setAttribute('class', 'beatlistener' + this.data.startbeat);
     this.el.addEventListener('beat', function (event) {
+      if (this.started) {
+        this.ended = true
+      }
       this.started = true;
-    })
+      this.setAttribute('class', 'beatlistener464');
+    });
   },
   tick: function () {
     var data = this.data;
@@ -697,6 +710,17 @@ AFRAME.registerComponent('audio-react', {
           z: curpos.z
         });
       }
+    }
+    else if (data.property == 'shader-color') {
+      val = val / 4;
+      var color = this.el.children[0].getObject3D('mesh').material.uniforms['color1']['value'];
+      color.x = val*val;
+      color.y = val*val;
+      if (this.el.ended) {
+        color.x = 1; color.y = 1;
+      }
+      this.el.children[0].getObject3D('mesh').material.uniforms['color1']['value'] = color;
+      this.el.children[0].getObject3D('mesh').material.uniforms['color2']['value'] = color;
     }
   }
 });
