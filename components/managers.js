@@ -1,6 +1,6 @@
 /* global AFRAME, THREE, beat, bind, Uint8Array, isMobile, checkHeadsetConnected */
 
-var debug = true;
+var debug = false;
 
 /*
   Animate a menu item to grow around the camera. Assumes a mini menu is used
@@ -303,12 +303,6 @@ AFRAME.registerComponent('music-manager', {
         // TODO this could be an argument? Maybe a list of "scene beats"
         if (this.beatcount == 135) {
           this.el.sceneEl.emit('beat');
-        }
-        if (this.beatcount == 10) {
-          var end = this.el.sceneEl.querySelectorAll('.asteroid');
-          for (var i = 0; i < end.length; i++) {
-            end[i].emit('songEnd');
-          }
         }
         this.beatcount++;
       }
