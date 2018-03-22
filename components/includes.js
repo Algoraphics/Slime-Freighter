@@ -606,8 +606,8 @@ AFRAME.registerComponent('my-look-controls', {
       this.mouseLocked = true;
       this.el.sceneEl.canvas.style.cursor = 'none';
       if (this.clickInstruction) {
-        document.querySelector('#click-instruction').setAttribute('animation__scale', "property: text.opacity; from: 1; to: 0; dur: 1000");
-        document.querySelector('#click-instruction').setAttribute('animation__opacity', "property: scale; from: 2 2 2; to: 0.01 0.01 0.01; delay: 1000; dur: 1");
+        document.querySelector('#click-instruction').setAttribute('animation__opacity', "property: text.opacity; from: 1; to: 0; dur: 1000");
+        document.querySelector('#click-instruction').setAttribute('animation__scale', "property: scale; from: 1.5 1.5 1.5; to: 0.01 0.01 0.01; delay: 1000; dur: 1");
       }
     }
     this.previousMouseEvent = evt;
@@ -629,7 +629,7 @@ AFRAME.registerComponent('my-look-controls', {
       this.mouseLocked = false;
       this.el.sceneEl.canvas.style.cursor = 'crosshair';
       if (this.clickInstruction) {
-        document.querySelector('#click-instruction').setAttribute('animation__scale', "property: scale; from: 0.01 0.01 0.01; to: 2 2 2; dur: 1");
+        document.querySelector('#click-instruction').setAttribute('animation__scale', "property: scale; from: 0.01 0.01 0.01; to: 1.5 1.5 1.5; dur: 1");
         document.querySelector('#click-instruction').setAttribute('animation__opacity', "property: text.opacity; from: 0; to: 1; dur: 1000");
       }
     }
