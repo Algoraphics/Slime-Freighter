@@ -5,6 +5,10 @@
 This is a music video style VR experience made with [A-Frame](https://aframe.io). 
 Currently it is not supported on mobile devices.
 
+**Credits**
+- Music: *Side of the Road* by [@BigBlackDelta](https://twitter.com/bigblackdelta)
+- Programming, Direction, and Asset Design (except lamp from Google Poly) by Ethan Rabb
+
 **Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?**
 - Email:  *algoraphics@gmail.com*
 - Twitter:  [@algoraphics](https://twitter.com/algoraphics)
