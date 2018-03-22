@@ -3,6 +3,7 @@
 **What is this?**
 
 This is a music video style VR experience made with [A-Frame](https://aframe.io). 
+Currently it is not supported on mobile devices.
 
 **Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?**
 - Email:  *algoraphics@gmail.com*
@@ -46,6 +47,10 @@ This is a music video style VR experience made with [A-Frame](https://aframe.io)
 - Performance:
   - Displaying the webpage on both your VR headset and desktop will hurt performance. Minimize the window on desktop or open another random tab instead.
 
+**Where can it run?**
+
+Theoretically, it should work on Rift, Windows MR, etc, as long as you follow [A-Frame conventions for getting WebVR to run.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html)
+
 List of devices on which this is confirmed to work:
 - Vive running with Firefox 10 on Windows 10
 - Google Chrome on Windows 10
@@ -53,12 +58,6 @@ List of devices on which this is confirmed to work:
 - Google Chrome on iOS
 - Safari on iOS
 - Firefox 10 on Windows 10
-
-Mobile Devices on which it has run (no audio):
-- Android Devices (Moto Z, Samsung Galaxy)
-- iPad
-
-Theoretically, it should work on Rift, Gear VR, etc as long as you follow [A-Frame conventions for getting WebVR to run.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html)
 
 **Future Work:**
 - Would like to add controller support, interactivity with elements
