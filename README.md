@@ -4,7 +4,7 @@
 
 This is a music video style VR experience made with [A-Frame](https://aframe.io). 
 
-Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?
+**Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?**
 - Email:  *algoraphics@gmail.com*
 - Twitter:  [@algoraphics](https://twitter.com/algoraphics)
 
