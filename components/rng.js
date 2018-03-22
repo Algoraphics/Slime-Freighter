@@ -1568,7 +1568,6 @@ AFRAME.registerComponent('rng-disco-tunnel', {
     if (data.floaters) {
       numFloaters = Math.floor(Math.random() * 4) + 5;
     }
-    console.log("Numfloaters is " + numFloaters);
     
     for (var i = 0; i < numFloaters + 1; i++) {
       var radius = data.radius*2;

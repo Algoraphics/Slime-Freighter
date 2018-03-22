@@ -61,7 +61,6 @@ AFRAME.registerComponent('worldbuilder', {
     
     // Set the line at which buildings should begin to be loaded. Zpos here is the full z length of the world
     this.el.loadbar = pos.z + data.loadmult * this.zpos;
-    this.el.startedload = false;
     
     this.showbar = pos.z + this.zpos + data.showbar;
     // Debug
@@ -76,6 +75,9 @@ AFRAME.registerComponent('worldbuilder', {
     // Setup for unloading
     this.unloadbar = this.stopfollow;
     
+    // Set startedload immediately, to be disabled if we want a start button in a menu
+    //this.el.startedload = true;
+    //this.el.loadbar = 150;
     this.el.addEventListener('start', function () {
       // Only do this once. If the user presses start but decides to go back, we don't need to load more.
       if (!this.startedload) {

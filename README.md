@@ -2,7 +2,7 @@
 
 **What is this?**
 
-This project is basically a showcase of things I've made while playing with [A-Frame](https://aframe.io). It's a work in progress.
+This is a music video style VR experience made with [A-Frame](https://aframe.io). 
 
 Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?
 - Email:  *algoraphics@gmail.com*
@@ -16,21 +16,20 @@ Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?
 3. Start your VR headset (Boot up SteamVR, open Oculus Home, etc)
 4. Open WebVR supported browser and load up [Slime-Freighter](https://horse-machine.glitch.me/).
 5. Hit the button in the bottom-right corner to enter VR. Put on your headset.
-6. Hold the center cursor over a menu item to select it.
+6. Hold the center cursor over the start button.
 
 *2D:*
 1. Open a browser which [supports A-Frame.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html#which-browsers-does-a-frame-support)
 2. Load up [Slime-Freighter](https://horse-machine.glitch.me/).
 3. Follow on-screen instructions. If you have a mouse, click the screen to lock your mouse to the "VR cursor"(gray circle). This is the same cursor VR users will control.
-4. Hold the cursor over a menu item or click/touch to select.
+4. Hold the VR cursor over the start button.
 
 **Troubleshooting/FAQ:**
 
 - Refreshing the page will fix many problems:
   - Buttons out of place/missing, not responding to click/touch/hover, etc.
   - Seems like not everything has loaded (sky is white, main menu is missing, etc.)
-- I'm in a colorful bubble and I don't see any buttons! What do?
-  - Look down. The info menu might be minimized, and the toggle button is below you.
+  - The "Click to use VR cursor" prompt showing up in VR
 - The screen is just...white.
   - If you're on a tablet/mobile phone, this is probably a good thing. This takes a bit longer to load on mobile devices, so give it a minute.
   - If it still hasn't loaded, make sure your browser [supports A-Frame.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html#which-browsers-does-a-frame-support)
@@ -61,16 +60,7 @@ Mobile Devices on which it has run (no audio):
 
 Theoretically, it should work on Rift, Gear VR, etc as long as you follow [A-Frame conventions for getting WebVR to run.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html)
 
-**Project Completion:**
-- Road (80%): 1 final "world" to add before the experience is complete.
-- About (80%): The link goes somewhere kinda useful and opens a new tab!
-- Menu (100%): It does menu things.
-- Fractal (100%): Colors are pretty.
-- Ganzfeld (100%) It's a colorful bubble.
-- Testing (70%): Need VR and 2D testing on other devices, more user testing
-
 **Future Work:**
-- Would like to add controller support, keyboard only controls are less fun
-  - Movement-based interaction with fractals?
+- Would like to add controller support, interactivity with elements
   - Allow users to affect color or motion of worlds using controller/cursor?
 - Add "Infinite" mode to worlds

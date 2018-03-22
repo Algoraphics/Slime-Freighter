@@ -42,11 +42,11 @@ function about(el) {
 function start(el) {
   document.querySelector("#movingWorld").emit('start');
   // Tell all menu links to hide
-  emitToClass(el, 'link', 'togglehide');
+  //emitToClass(el, 'link', 'togglehide');
   // Display Load/Begin text
   var begin = document.querySelector('#begin');
-  begin.emit('show');
-  begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 -0.25; to: -0.375 0.3 -0.5; dur: 500');
+  //begin.emit('togglehide');
+  begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 -0.25; to: -0.375 0.4 -0.5; dur: 500');
   begin.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 5 5 5; dur: 500');
   // Only disable this button if it's going to be showing a "loading" text
   if (!el.loaded) {
@@ -54,18 +54,22 @@ function start(el) {
   }
   else { // If we've already loaded, move main button into position
     var main = document.querySelector('#main');
-    main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
+    if (main) {
+      main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
+    }
   }
   // Hide the toggle button (it may be trying to hang out below the user)
   var toggle = document.querySelector('#toggle');
-  toggle.setAttribute('visible', false);
+  if (toggle) {
+    toggle.setAttribute('visible', false);
+  }
 }
 
 // Begin button hit, actually begin animation
 function begin(el) {
   document.querySelector('#swoop').play();
   // Hide begin button
-  el.setAttribute('animation__position', 'property: position; from: 0 0 0; to: 0 0 -8; dur: 1000; easing: linear');
+  //el.setAttribute('animation__position', 'property: position; from: 0 0 -2; to: 0 0 -8; dur: 1000; easing: linear');
   el.emit('togglehide');
   // No cursor for road
   document.querySelector('#cursor').setAttribute("visible", false);
@@ -159,6 +163,10 @@ AFRAME.registerComponent('menu-item', {
     
     this.minimenu = false;
     
+    if (this.el.tag == 'begin') {
+      start(this.el);
+    }
+    
     //Call action by input parameter
     var action = window[this.data.action];
     if (typeof action === "function") {
@@ -212,13 +220,14 @@ AFRAME.registerComponent('menu-item', {
         this.setAttribute('text-geometry', "value: |Begin|; size: 0.03;");
         // Move main button into position
         var main = document.querySelector('#main');
-        main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
+        if (main) {
+          main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
+        }
         // Hide info text
         var infotext = document.querySelector('#info-text');
-        infotext.setAttribute('visible', false);
-      }
-      if (this.tag == 'main') {
-        this.emit('show');
+        if (infotext) {
+          infotext.setAttribute('visible', false);
+        }
       }
     });
     // Each time this is called, it will switch whether the button is "hidden"
@@ -446,10 +455,10 @@ AFRAME.registerComponent('camera-manager', {
     if (el.getAttribute('id') == 'camera') {
       if (checkHeadsetConnected()) {
         el.setAttribute('look-controls','');
-        el.setAttribute('position', '0 1.6 30');
+        el.setAttribute('position', '0 0.25 2');
         document.querySelector('#click-instruction').setAttribute('visible', 'false');
         if (isMobile()) {
-          el.setAttribute('position', '0 1.6 30');
+          el.setAttribute('position', '0 1.6 0');
         }
       }
       else {
