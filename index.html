@@ -5,9 +5,7 @@
     <meta name="description" content="Road.">
     <!-- Included components -->
     <script src="https://aframe.io/releases/0.7.0/aframe.min.js"></script>
-    <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
-    <script src="https://unpkg.com/aframe-animation-component/dist/aframe-animation-component.min.js"></script>
-    <script src="https://cdn.rawgit.com/zcanter/aframe-gradient-sky/master/dist/gradientsky.min.js"></script>
+    <script src="https://unpkg.com/aframe-animation-component@4.1.1/dist/aframe-animation-component.min.js"></script>
     <script src="https://npmcdn.com/aframe-event-set-component@3.0.1"></script>
     <script src="https://npmcdn.com/aframe-template-component@3.1.1"></script>
     <script src="https://unpkg.com/aframe-text-geometry-component@^0.5.0/dist/aframe-text-geometry-component.min.js"></script> 
@@ -19,10 +17,9 @@
     <script src="components/rng.js"></script>
     <script src="components/stuff.js"></script>
     <script src="components/worldbuilders.js"></script>
-    
     <!-- Custom shaders -->
     <script src="shaders.js"></script>
-    
+    <!-- Button templates -->
     <script id="begin-link" type="text/html">
       <a-entity class="link" id="begin"
         material="shader: caustic-shader; resolution: 2; color: yellow; backgroundColor: black; speed: 0.3; brightness: 2" 
@@ -34,15 +31,15 @@
     </script>
   </head>
   <body>
-    <a-scene id="fog" fog="type: exponential; density: 0.035; color: #101010"
+    <a-scene id="fog" fog="type: exponential; density: 0.025; color: #101010"
              animation__fog="property: fog.density; easing: easeOutCirc; to: 0.0; dur: 40000; startEvents: beat">
       <a-assets>
         <img id="stars" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fstarfield.png?1513307410255">
         <img id="sunsetblur" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fsunset_blur.jpg?1513871737795">
         <img id="milky" crossorigin="anonymous" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2F16025063950_61e0c94540_o.jpg?1513823844529">
-        
+
         <audio id="side" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fside-of-the-road%5BMp3-Gratis.eu%20-%20Download%20Free%20Mp3%5D.mp3?1514392665329"></audio>
-        
+
         <audio id="noise" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2F02-White-Noise-10min.mp3?1518906350264"></audio>
         <audio id="click" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fbutton-click.mp3?1519576783848"></audio>
         <audio id="swoop" src="https://cdn.glitch.com/c43f301b-a64d-4479-87e0-4646a6a065cb%2Fbutton-start.mp3?1519577574614"></audio>
@@ -58,7 +55,7 @@
           geometry="primitive: box; height: 0.5; width: 0.5; depth: 0.5"
           material="color: #0000FF; shader: flat"
         ></a-mixin>
-        
+
         <a-mixin id="window"
           material="color: #FFFF00; shader: flat"></a-mixin>
         <a-mixin id="rect" mixin="window"
@@ -78,7 +75,7 @@
         <a-mixin id="buildingblock" entity-circle="mixin: windows; num: 3; axis: y; angle: 90;" layout="type: building; radius: 1"
              geometry="primitive: box; width: 6.8; height: 7.5; depth: 6.8" material="color: #000000"></a-mixin>
         <a-mixin id="building" building-builder></a-mixin>
-        
+
         <a-mixin id="roadash" geometry="primitive: plane; width:0.25; height:2" material="color: #ffdf00; shader: flat" rotation="0 0 90"></a-mixin>
         <a-mixin id="spot" light="type: spot; castShadow: true; angle: 30; color: #FFFF00"></a-mixin>
         <a-mixin id="lit" geometry="primitive:circle; radius: 5"
@@ -93,23 +90,21 @@
         <a-mixin id="gridpattern" material="side: double; shader: grid-shader; resolution: 65.0; intensity: 10.0; speed: 0.5; color: #00FFFF; backgroundColor: #001020"></a-mixin>
         <a-mixin id="gridpattern2" material="side: double; shader: grid-shader; resolution: 250.0; intensity: 10.0; speed: 0.5; color: #FFFF00; backgroundColor: #101010"></a-mixin>
         <a-mixin id="gridpatternsky" material="shader: grid-shader; resolution: 100.0; intensity: 10.0; speed: 0.5; color: white; backgroundColor: #000000"></a-mixin>
-      <!-- Comment section -->
-      
       </a-assets>   
-      
+
       <!-- Basic environment assets -->
       <a-sky visible="true" id="sunsky" src="#sunsetblur" radius="5500" rotation="0 -60 0" position="0 -50 -2000"></a-sky>
       <a-sky visible="true" id="starcolor" material="color:#FF00FF; opacity: 0" radius="5000" rotation="0 10 0" position="0 -50 -2000" class="beatlistener231"
-             animation__opacity="property: material.opacity; from: 0; to: 0.4; easing: easeInQuint; dur: 4752.472; startEvents: beat"></a-sky>
+             animation__opacity="property: components.material.material.opacity; from: 0; to: 0.4; easing: easeInQuint; dur: 4752.472; startEvents: beat"></a-sky>
       <a-sky visible="true" id="starsky" src="#stars" radius="9500" rotation="0 10 0" position="0 -50 -2800"></a-sky>
       <a-entity light="type: ambient; intensity: 0.3; distance: 50; decay: 2" position="0 10 10"></a-entity>
-      
+
       <a-plane id="floorleft" position="2900 0 -4210" rotation="-90 0 0" width="5000" height="5000" color="#303030"></a-plane>
       <a-plane id="flooright" position="-2900 0 -4210" rotation="-90 0 0" width="5000" height="5000" color="#303030"></a-plane>
-      
+
       <a-plane id="floor" position="0 0 0" rotation="-90 0 0" width="10000" height="3420" color="#303030"></a-plane>
       <a-plane id="road" position="0 0.025 0" rotation="-90 0 0" width="8" height="3420" color="#606060"></a-plane>
-      
+
       <a-entity id="roadline1" followcamera="length:500; stopfollow: -1400; delete: -2200" slide
                 entity-colors="analyserEl: #analyser; max: 50; multiplier: 0.01; 
                                mixin: roadash; num: 50; color_type: none; slower: 4; reverse: true;
@@ -120,7 +115,7 @@
                                mixin: roadash; num: 50; color_type: none; slower: 4;
                                audio_property: position; audio_levels: true; audio_buildup: 1;"
                 layout="type: line; margin: 10" position="0 0.05 -90" rotation="-90 90 0"></a-entity>
-      
+
       <!-- comment starter -->
       <a-entity id="streetlightsright" position="4 0 75" rotation="0 90 0" slide
                 entity-generator-merger="num: 6; mixins: blur, lamp, lcone, lit; 
@@ -134,9 +129,9 @@
                                          rotations: 90 0 0, 0 0 0, -15 0 0, -90 0 0
                                          layout_type:line; layout_margin: 50; flip_delay: 0.25; flip_shift: 0"
                                          followcamera="length: 250; stopfollow: -800; delete: -1000"></a-entity>
-      
+
       <a-plane id="blocker" timedinvisible class="beatlistener170" position="0 0 -1710" width="5000" height="15" color="#303030"></a-plane>
-      
+
       <a-plane id="gridleft" mixin="gridpattern2" position="-2500.75 -180 -4206.5" rotation="-90 0 0" width="-5000" height="5000"></a-plane>
       <a-plane id="gridright" mixin="gridpattern2" position="2499.25 -180 -4206.5" rotation="-90 0 0" width="5000" height="5000"></a-plane>
       <a-box id="boxleft" mixin="gridpattern" position="-2900 -2501 -4210" width="5000" height="5000" depth="-5000" class="beatlistener231"
@@ -147,20 +142,19 @@
              animation__move="property: position;  from: 0 -2501 -710; to: 0 -2301 -710; easing: easeInQuint; dur: 4752.472; startEvents: beat"></a-box>
       <a-box id="boxback" mixin="gridpattern" position="0 -2501 -7500" width="5000" height="5000" depth="5000" class="beatlistener231"
              animation__move="property: position; from: 0 -2501 -7500; to: 0 -2301 -7500; easing: easeInQuint; dur: 4752.472; startEvents: beat"></a-box>
-      
-      
+
       <!-- Structural components for Road -->
       <a-entity id="movingWorld" visible="false" worldbuilder=" buildingfunction: movingCity;
                                   blockx: 4; blockz: 10; grid: 30; buildgrids: false; loadmult: 1; loadslow: 5; stopfollow: -500; unload: -600"
-                animation__rise="property: position; from: -48 -12 -370; to: -48 0 -370; easing: easeInCubic; dur: 594.059; startEvents: beat"
-                class="beatlistener32" position = "-48 -12 -370" rotation = "0 0 0"></a-entity>
-      
+                animation__rise="property: position; from: -48 -13.25 -370; to: -48 0 -370; easing: easeInCubic; dur: 594.059; startEvents: beat"
+                class="beatlistener32" position = "-48 -13.25 -370" rotation = "0 0 0"></a-entity>
+
       <a-entity id="colorWorld" visible="false" worldbuilder=" buildingfunction: colorCity; 
                               blockx: 5; blockz: 15; numblockx: 4; numblockz: 4; gapwidth: 2; 
                               widthprobs: 0.1 0.15 0.1 0.07 0.04; maxheight: 7; heightprobs: 1 1 1 1 1 1 1;
                               loadmult: 3.83; stopfollow: -450; unload: -900"
                 class="beatlistener116" rotation = "0 0 0" position="-62 -750 -1245" scale = "1 1 1"></a-entity>
-      
+
       <a-entity rng-building-snakes="load: 550; start: 230; unload: -450" position="-40 -180 -1900"></a-entity>
       <a-entity rng-building-snakes="load: 750; start: 250; unload: -180" position="-40 -180 -2325"></a-entity>
       <a-entity position="-600 -240 -1802.5" 
@@ -169,7 +163,7 @@
       <a-entity position="600 -320 -1840" 
                 rng-building-snake="width:8; height:45; speed: 0.35; triggerstart: 234; triggerspeed: 6; unload: -2550;
                                     path:-x, +y, -x, -x, -y, -z, +x, +x, -z, -z, -x, +y"></a-entity>
-      
+
       <a-entity id="ringportal" class="beatlistener319" position="0 0 -2514" geometry="primitive: torus; radius: 25; radiusTubular: 3" scale="0.01 0.01 0.01"
                 material="shader: grid-shader; speed: 1.0; intensity: 10.0; resolution: 5.0; color: white; backgroundColor: black"
                 animation__rotate="property: rotation; from: 0 0 0; to: 0 0 -360; loop: true; easing: linear; dur: 10000"
@@ -195,21 +189,26 @@
       <a-entity id="electricwarp" position="0 0 -10000" geometry="primitive: sphere; radius: 250;" rotation="0 45 0"
                 material="side: double; shader: electric-shader; speed: 5.0; brightness: 2.0; 
                           displacement: 2.0; scale: 8.0; resolution: 1.0; color: #FF00FF;"></a-entity>
-      
-      <a-entity class="beatlistener350" geometry="primitive: sphere; radius: 20000; segmentsWidth: 80; segmentsHeight: 80;" rotation="0 90 10"
+
+      <a-entity id="gasplanet" class="beatlistener350" geometry="primitive: sphere; radius: 20000; segmentsWidth: 80; segmentsHeight: 80;" rotation="0 90 10"
                 material="shader: gasplanet-shader; permutations: 1.0; iterations: 1.0; speed: 2.0; 
                           brightness: 0.75; resolution: 10.0; color1: #00FF00; color2: #FF00FF; color3: #0000FF"
                 animation__position="property: position; from: 0 -100000 0; to: 0 -12000 16000; easing: easeInExpo; dur: 1000; startEvents: beat"></a-entity>
-      
+
+      <a-entity rng-asteroids="start: 386" position="0 0 -2800"></a-entity>
       <a-entity rng-building-spacefleet="startbeat: 411;" class="beatlistener411" position="0 -10000 -2800"
                 animation__position="property: position; from: 0 0 -4000; to: 0 0 -2000; dur: 30000; easing: easeOutSine; startEvents: beat"></a-entity>
-      <a-entity rng-asteroids="start: 386" position="0 0 -2800"></a-entity>
       
+      <a-entity id="Credits" class="beatlistener462" text-geometry="value: Built by: Ethan Rabb; size: 1;"
+                material="shader: caustic-shader; resolution: 0.5; color: #00FF00; backgroundColor: #000075; speed: 0.3; brightness: 2"
+                position="-28 -5000 -7000" scale="5 5 5" rotation="-45 0 0"
+                animation__move="property: position; from: -28 -5000 -7000; to: -28 -25 -2825; easing: easeInQuad; dur: 1188.118; startEvents: beat"></a-entity>
+
       <!-- Main menu -->
       <a-entity id="menu" position="0 1.5 -1">
         <a-entity id="begin" template="src: #begin-link" scale="1 1 1" position="0 0 -1" rotation="0 0 0"></a-entity>
       </a-entity>
-      
+
       <!-- Camera and children -->
       <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0 0" look-controls
                 camera-manager="speed: 12; stop: -2800; id: main" rotation="20 0 0">
@@ -225,15 +224,17 @@
           fuse="true"
           raycaster="objects: .link">
         </a-cursor>
-        
+
         <a-entity id="click-instruction" text="value: Click to use VR cursor.\n\nHover to select. \nESC to unlock cursor.; color: orange; align: center"
                   scale="1.5 1.5 1.5" position="0 -0.025 -1" rotation="0 0 0" animation__opacity="property: text.opacity; from: 0; to: 1; dur: 10000"></a-entity>
       </a-entity>
-      
+
       <!--
-      <a-entity id="TBC" text-geometry="value: To Be Continued...;" material="shader: disco-shader; resolution: 0.5; color: #001040; backgroundColor: #FF00FF; speed: 1" position="0 1000 10" scale="2 2 2"
-                class="beatlistener330" animation__move="property: position; from: -5 0 -5000; to: -5 0 -2910; easing: easeOutCubic; dur: 30000; startEvents: beat"></a-entity>
+      <a-entity id="fogtest" rng-building-shader="height: 5; width: 5; color1: #FFFF00; colorstyle: 1 0 0 0; static: 1 0" position="-30 5 -25"></a-entity>
       
+      <a-entity id="TBC" text-geometry="value: Built by: Ethan Rabb;" material="shader: disco-shader; resolution: 0.5; color: #001040; backgroundColor: #FF00FF; speed: 1" position="0 1000 10" scale="2 2 2"
+                class="beatlistener330" animation__move="property: position; from: -5 0 -5000; to: -5 0 -2910; easing: easeOutCubic; dur: 30000; startEvents: beat"></a-entity>
+
       Cool skybox that didn't fit in anywhere
       <a-sky visible="true" mixin="gridpatternsky" radius="6500" rotation="0 10 0" position="0 -50 -2000"></a-sky>
       

@@ -110,23 +110,25 @@ function arcBuildings(building, buildingAttrs, angle, dist, scale, axis, depth) 
       xangle = angle;
     }
     
-    //var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
+    /*var animAttrs = ' dir: alternate; loop: true; easing: easeInOutExpo; dur: ' + dur;
     var mover = document.createElement('a-entity');
     mover.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + -xoffset + ' ' + yoffset + ' ' + zoffset + ';'
                        + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + (dur / 2));
-    mover.setAttribute('class', 'arc');
+    mover.setAttribute('class', 'arc');*/
 
     var nextbuilding = document.createElement('a-entity');
-    nextbuilding.setAttribute('building', buildingAttrs);
+    nextbuilding.setAttribute('rng-building-shader', buildingAttrs);
     //nextbuilding.setAttribute('position', "0 0 0");
     nextbuilding.setAttribute('scale', scale + " " + scale + " " + scale);
     nextbuilding.setAttribute('animation__turn', 'property: rotation; from: 0 0 0; to: 0 ' + xangle + ' ' + yangle + ';'
                               + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + (dur / 2));
+    nextbuilding.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + -xoffset + ' ' + yoffset + ' ' + zoffset + ';'
+                       + animAttrs + 'easing: easeInOutExpo; startEvents: started; dur: ' + (dur / 2));
     nextbuilding.setAttribute('class', 'arc');
 
     arcBuildings(nextbuilding, buildingAttrs, angle, dist, scale, axis, depth - 1);
-    mover.appendChild(nextbuilding);
-    building.appendChild(mover);
+    //mover.appendChild(nextbuilding);
+    building.appendChild(nextbuilding);
   }
 }
 
@@ -143,7 +145,7 @@ AFRAME.registerComponent('rng-building-arc', {
     angle: {default: -1}, // If not specified, will be 0 through 6
     axis: {default: 'y'},
     spread: {default: 1}, // How far apart to spread buildings. 1 is flush
-    num: {default: 4},
+    num: {default: "1 1 1 1 1"},
     slide: {default: false},
     scale: {default: '1 1 1'},
     start: {default: '1 2 1'},
@@ -157,24 +159,26 @@ AFRAME.registerComponent('rng-building-arc', {
     var width = data.width;
     var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
-    var scale = rng([1, 0.9, 0.8], data.scale);
+    var scale = rng([0.99, 0.85, 0.7], data.scale);
     var angle = data.angle;
     if (angle < 0) {
       angle = rng([0, 5, 10, 15, 20, 25, 30, 45], '2 2 1 1 1 1 2 1');
     }
-    var num = rng([2, 3, 4], '0 3 1');
+    var num = rng([3, 4, 5, 6, 7], data.num);
     
     var building = document.createElement('a-entity');
-    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                          + "; width: " + width + "; height: " + height + "; optimize: false";
-    building.setAttribute('building', buildingAttrs);
+    var buildingAttrs = "; colorstyle: 1 0 0 0; static: 1 0; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + width + "; height: " + height + "; winwidth: 0.5; winheight: 0.65; fog: true";
+    building.setAttribute('rng-building-shader', buildingAttrs);
+    building.setAttribute('class', 'arcstart');
     
     
     if (data.axis == 'y') {
-      building.setAttribute('position', "0 6 0");
+      building.setAttribute('position', "0 6.5 0");
       
       var bottom = document.createElement('a-entity');
-      bottom.setAttribute('building', buildingAttrs);
+      bottom.setAttribute('rng-building-shader', buildingAttrs);
+      bottom.setAttribute('class', 'booty');
       this.el.appendChild(bottom);
     }
     else if (data.axis == 'x') {
@@ -240,9 +244,12 @@ AFRAME.registerComponent('rng-building-flower', {
                          + animAttrs + 'easing: easeInOutQuart; startEvents: started; dur: ' + dur);
       mover.setAttribute('class', "flower");
       var building = document.createElement('a-entity');
-      var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                            + "; width: " + width + "; height: " + height + "; optimize: false";
-      building.setAttribute('building', buildingAttrs);
+      var buildingAttrs = "; colorstyle: 1 0 0 0; static: 1 0; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + width + "; height: " + height + "; winwidth: 0.5; winheight: 0.65; fog: true";
+      building.setAttribute('rng-building-shader', buildingAttrs);
+      if (i == 0) {
+        building.setAttribute('scale', "0.99 0.99 0.99");
+      }
       building.setAttribute('animation__move', 'property: position; from: 0 0 0; to: ' + moveup + ' ' + fallout + ' 0;'
                             + animAttrs + 'easing: easeInOutQuart; startEvents: started; dur: ' + dur);
       mover.setAttribute('class', "flower");
@@ -276,9 +283,9 @@ AFRAME.registerComponent('rng-building-dance', {
     var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
     
-    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                            + "; width: " + width + "; height: " + height;
-    this.el.setAttribute('building', buildingAttrs);
+    var buildingAttrs = "; colorstyle: 1 0 0 0; static: 1 0; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + width + "; height: " + height + "; winwidth: 0.5; winheight: 0.65; fog: true";
+    this.el.setAttribute('rng-building-shader', buildingAttrs);
     // TODO: These float a little. Run a quick test to figure out why
     this.el.setAttribute('audio-react',"analyserEl: #analyser; multiplier: 0.75; build: 1; startbeat: " + data.start);
   }
@@ -367,7 +374,7 @@ AFRAME.registerComponent('rng-building-sine', {
     color2: {default: ''},
     width: {default: 1},
     height: {default: 2},
-    num: {default: 3}, // Number of elements
+    num: {default: 6}, // Number of elements
     numbeats: {default: 2}, // Number of beats per movement
     reverse: {default: false},
     start: {default: -250},
@@ -408,16 +415,17 @@ AFRAME.registerComponent('rng-building-sine', {
     }
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
     
-    
-    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                    + "; width: " + width + "; height: " + height + "; optimize: false";
-    
+    var buildingAttrs = "; colorstyle: 1 0 0 0; static: 1 0; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + width + "; height: " + height + "; winwidth: 0.5; winheight: 0.65; fog: true";
+    var scale = 1;
     for (var i = 0; i < data.num; i++) {
       var building = document.createElement('a-entity');
-      building.setAttribute('building', buildingAttrs);
+      building.setAttribute('rng-building-shader', buildingAttrs);
       building.setAttribute('rotation', "0 0 0");
+      building.setAttribute('scale', scale + " " + scale + " " + scale);
       
       this.el.appendChild(building);
+      scale -= 0.01;
     }
     addBeatListener(this, '');
   },
@@ -450,11 +458,11 @@ AFRAME.registerComponent('rng-building-pulse', {
     var window = rng(['rect', 'circle', 'triangle', 'diamond', 'bars'], data.windowtype);
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
     
-    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                          + "; width: " + width + "; height: " + height;
-    
+    var buildingAttrs = "; colorstyle: 1 0 0 0; static: 1 0; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + width + "; height: " + height + "; winwidth: 0.5; winheight: 0.65; fog: true";
     var center = document.createElement('a-entity');
-    center.setAttribute('building', buildingAttrs);
+    center.setAttribute('rng-building-shader', buildingAttrs);
+    center.setAttribute('scale', "0.99 0.99 0.99");
     this.el.appendChild(center);
     
     var front = document.createElement('a-entity');
@@ -510,8 +518,8 @@ AFRAME.registerComponent('rng-building-split', {
           //reverse = false;
           angle = 180;
         }
-        piece.setAttribute('position', (x*20) + " -24.5 " + (z*20));
-        piece.setAttribute('rng-building-sine', "num: 1; numbeats: 4; height: 6; color1: #ffff00; diag: true"
+        piece.setAttribute('position', (x*20) + " -26 " + (z*20));
+        piece.setAttribute('rng-building-sine', "num: 1; numbeats: 4; height: 7; color1: #ffff00; diag: true"
                            + "; dist: " + dist + "; reverse: " + reverse + "; start: " + data.start);
         piece.setAttribute('rotation', "0 " + angle + " 0");
         //piece.setAttribute('scale', "1.05 1.05 1.05");
@@ -521,7 +529,7 @@ AFRAME.registerComponent('rng-building-split', {
       angle = 90;
     }
     var from = "" + pos.x + " " + pos.y + " " + pos.z;
-    var to = pos.x + " " + (pos.y + 25) + " " + pos.z;
+    var to = pos.x + " " + (pos.y + 26) + " " + pos.z;
     this.el.setAttribute('animation__up', 'property: position; from: ' + from + '; to: ' + to + '; dir: alternate; loop: true' 
                          + '; easing: easeInOutQuint; startEvents: started; delay: 1000; dur: ' + dur);
     addBeatListener(this, '');
@@ -559,10 +567,8 @@ AFRAME.registerComponent('rng-building-robot', {
     var colortype = rng(['static', 'shimmer', 'rainbow', 'rainbow_shimmer', 'flip', 'flip_audio'], data.colortype);
     
     this.firstpos = this.el.getAttribute('position');
-    
-    var buildingAttrs = "windowtype: " + window + "; colortype: " + colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                          + "; width: 1; height: 3; optimize: false";
-    
+    var buildingAttrs = "; colorstyle: 1 0 0 0; static: 1 0; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + 1 + "; height: " + 3 + "; winwidth: 0.5; winheight: 0.65; fog: true";
     // Make legs, add to body
     var left = document.createElement('a-entity');
     var right = document.createElement('a-entity');
@@ -587,7 +593,7 @@ AFRAME.registerComponent('rng-building-robot', {
       
       var cpos = center.getAttribute('position');
       center.setAttribute('rotation', "0 0 0");
-      center.setAttribute('building', buildingAttrs);
+      center.setAttribute('rng-building-shader', buildingAttrs);
       core.appendChild(center);
     }
     
@@ -641,25 +647,25 @@ AFRAME.registerComponent('rng-robotlegs', {
     
     this.firstpos = this.el.getAttribute('position');
     
-    var buildingAttrs = "windowtype: " + data.windowtype + "; colortype: " + data.colortype + "; color1: " + data.color1 + "; color2: " + data.color2
-                          + "; width: " + 1 + "; height: " + 2 + "; optimize: false";
-
+    var buildingAttrs = "; colorstyle: 1 0 0 0; static: 1 0; color1: " + data.color1 + "; color2: " + data.color2
+                          + "; width: " + 1 + "; height: " + 2 + "; winwidth: 0.5; winheight: 0.65; fog: true";
     var core = document.createElement('a-entity');
     
     var bar = document.createElement('a-entity');
     bar.setAttribute('position', "6 10.3 0");
     bar.setAttribute('rotation', "0 0 90");
-    bar.setAttribute('building', buildingAttrs);
+    bar.setAttribute('rng-building-shader', buildingAttrs);
+    bar.setAttribute('scale',"0.95 0.95 0.95");
     core.appendChild(bar);
     
     var front = document.createElement('a-entity');
     front.setAttribute('position', "8 0 0");
-    front.setAttribute('building', buildingAttrs);
+    front.setAttribute('rng-building-shader', buildingAttrs);
     core.appendChild(front);
     
     var back = document.createElement('a-entity');
     back.setAttribute('position', "-8 0 0");
-    back.setAttribute('building', buildingAttrs);
+    back.setAttribute('rng-building-shader', buildingAttrs);
     core.appendChild(back);
 
     this.el.appendChild(core);
@@ -732,6 +738,7 @@ AFRAME.registerComponent('rng-building-shader', {
     speed: {default: 1.0},
     timeskip: {default: 0},
     side: {default: 'single'},
+    fog: {default: false},
   },
   init: function () {
     var data = this.data;
@@ -903,6 +910,26 @@ AFRAME.registerComponent('rng-building-shader', {
         });
       }
     }
+  },
+  tick: function () {
+    var data = this.data;
+    var cam = document.querySelector('#camera');
+    if (cam && data.fog) {
+      var campos = cam.getAttribute('position');
+      var pos = this.el.object3D.getWorldPosition();
+      var size = this.el.children.length;
+      var check = this.el.children[size-1].getObject3D('mesh').material.uniforms
+      if (check) {
+        var dist = Math.sqrt(Math.pow((pos.x - campos.x), 2) + Math.pow((pos.y - campos.y), 2) + Math.pow((pos.z - campos.z), 2));
+        this.el.children[size-1].getObject3D('mesh').material.uniforms['camdist']['value'] = dist;
+      }
+    }
+    /*if (!this.fog) {
+      var mat = this.el.children[1].getObject3D('mesh').material;
+      mat.fog = true;
+      this.el.children[1].getObject3D('mesh').material = mat;
+      this.fog = true;
+    }*/
   }
 });
 
@@ -1295,7 +1322,7 @@ AFRAME.registerComponent('rng-asteroids', {
       
       var checkx = Math.abs(x); var checky = Math.abs(y); var checkz = Math.abs(z);
       // Special case put an asteroid right below camera
-      if (this.loadex == 0) {x = -3; y = -4; z = -6; scale = 1}
+      if (this.loadex == 0) {x = -6; y = 6; z = 0; scale = 1}
       // For the rest, make sure they aren't on a collision course with cam or nearby ships
       else {
         // Don't place an asteroid if it would collide with a ship
