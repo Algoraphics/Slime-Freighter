@@ -153,6 +153,8 @@ AFRAME.registerShader('building-shader', {
     height: {type: 'float', is: 'uniform'}, // Fractional height of the box
     width: {type: 'float', is: 'uniform'}, // Fractional width of the box
     
+    camdist: {type: 'float', is: 'uniform'},
+    
     color1: {type: 'color', is: 'uniform'},
     color2: {type: 'color', is: 'uniform'},
     usecolor1: {type: 'float', is: 'uniform'}, // If 0.0, blue-green gradient used instead
@@ -176,7 +178,7 @@ AFRAME.registerShader('building-shader', {
     growclamp: {type: 'float', is: 'uniform'}, // 0.0 or 1.0. If grow should clamp.
     growvert: {type: 'float', is: 'uniform'}, // 0.0 or 1.0. If grow should be vertical only
   },
-
+  fog: true,
   vertexShader: basic,
   fragmentShader: `
 varying vec2 vUv;
@@ -189,6 +191,8 @@ uniform float speed;
 
 uniform float height;
 uniform float width;
+
+uniform float camdist;
 
 uniform float usecolor1;
 uniform float usecolor2;
@@ -279,12 +283,15 @@ void main() {
                                   + usecolor1 * 1.0 
                                   + usecolor2 * 0.5)
                  + (oscillate * 0.25 + 0.55) * usecolors;
-
+  // Smoothstep from 0 to 1 for fog
+  float camz = smoothstep(0., 1., (1. - abs(camdist) * 0.01));
   gl_FragColor = mix(
     vec4(merge1, 1.0),
     vec4(merge2, 1.0),
     combo
   );
+  // Mix in fog (TODO currently val 0.0625 is hardcoded, can be updated to fog val)
+  gl_FragColor = mix(vec4(vec3(0.0625),1.0), gl_FragColor, camz);
 }
 `
 });

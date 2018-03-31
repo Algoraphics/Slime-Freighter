@@ -398,12 +398,12 @@ function movingCity(builder, data) {
     //console.log("a is " + (builder.x == 0));
     //console.log("b is " + (builder.x == (builder.xmax - 1)));
     if (builder.x == 0 || (builder.x == (builder.xmax - 1))) { // Edges have less, they're far away
-      if (rng([true, false], '5 1')) { // True means no building
+      if (rng([true, false], '1 2')) { // True means no building
         return; 
       }
     }
     else {
-      if (rng([true, false], '1 1')) { // True means no building
+      if (rng([true, false], '1 3')) { // True means no building
         return; 
       }
     }
@@ -414,12 +414,12 @@ function movingCity(builder, data) {
     yrotation = rng([90, 180, 270], '1 6 1');
     xoffset = fullrange;
     zoffset = fullrange;
-    rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; width: 1; height: 1"
+    rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; num: 1 1 2 2 2; width: 1; height: 1;"
                              + typestr + "; start: " + start);
   }
   else if (type == 'arcx') {
-    height = rng([1,2,3],'1 2 1');
-    rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; axis: x; width: 1; height: "
+    height = rng([1,2,3],'1 2 10');
+    rngbuilding.setAttribute('rng-building-arc', "color1: #ffff00; axis: x; num: 1 1 1 0 0; width: 1; height: "
                              + height + typestr + "; start: " + start);
     yrotation = rng([90, 180, 270], '1 4 1');
     if (yrotation == 180) {
@@ -434,20 +434,20 @@ function movingCity(builder, data) {
     }
   }
   else if (type == 'dance') {
-    height = rng([1,2,3],'1 1 1');
-    width = rng([1,2], '1 1');
+    height = rng([1,2,3,4,5],'1 1 1 1 1');
+    width = rng([1,2,3], '1 1 1');
     xoffset = fullrange / 2;
     zoffset = fullrange / 2;
     rngbuilding.setAttribute('rng-building-dance', "color1: #ffff00; width: " + width + "; height: " + height + typestr + "; start: " + (start + 15));
   }
   else if (type == 'flower') {
-    height = rng([1,1],'1 1');
+    height = rng([1,2,3],'1 1 1');
     xoffset = fullrange;
     zoffset = fullrange;
     rngbuilding.setAttribute('rng-building-flower', "color1: #ffff00; width: 1; height: " + height + typestr + "; start: " + start);
   }
   else if (type == 'pulse') {
-    height = rng([1,2,3],'2 2 1');
+    height = rng([1,2,3,4],'1 2 2 1');
     xoffset = fullrange - 3;
     if (builder.x >= xcenter) {
       xoffset = -xoffset;
@@ -463,9 +463,10 @@ function movingCity(builder, data) {
     }
   }
   else if (type == 'sine') {
-    height = rng([1,2,3],'3 2 1');
+    height = rng([1,2,3,4], '2 1 1 1');
+    width = rng([1,2], '2 1');
     var skip = rng([true, false], '1 1');
-    rngbuilding.setAttribute('rng-building-sine', "color1: #ffff00; width: 1; dist: 10; skip: " + skip
+    rngbuilding.setAttribute('rng-building-sine', "color1: #ffff00; width: " + width + "; dist: 10; skip: " + skip
                              + "; height: " + height + typestr + "; start: " + (start + 12));
     yrotation = rng([0, 90, 270], '1 1 1');
     if (yrotation == 0) {
@@ -491,7 +492,7 @@ function movingCity(builder, data) {
     }
     
     var jumper = document.createElement('a-entity');
-    jumper.setAttribute('rng-building-sine', "color1: #ffff00; width: 2; dist: 20; skip: true; cont: true; num: 2" +
+    jumper.setAttribute('rng-building-sine', "color1: #ffff00; width: 2; dist: 20; skip: true; cont: true; num: 6" +
                              + "; height: 2" + typestr + "; start: " + jumpstart);
     jumper.setAttribute('position', (builder.xpos + xoffset) + " 0 " + (builder.zpos + zoffset));
     jumper.setAttribute('rotation', "0 " + yrotation + " 0");
