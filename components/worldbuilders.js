@@ -75,13 +75,10 @@ AFRAME.registerComponent('worldbuilder', {
     // Setup for unloading
     this.unloadbar = this.stopfollow;
     
-    // Set startedload immediately, to be disabled if we want a start button in a menu
-    //this.el.startedload = true;
-    //this.el.loadbar = 150;
     this.el.addEventListener('start', function () {
       // Only do this once. If the user presses start but decides to go back, we don't need to load more.
       if (!this.startedload) {
-        this.loadbar = 150;
+        this.loadbar = 300;
         this.startedload = true;
       }
     });
@@ -403,7 +400,7 @@ function movingCity(builder, data) {
       }
     }
     else {
-      if (rng([true, false], '1 3')) { // True means no building
+      if (rng([true, false], '1 2')) { // True means no building
         return; 
       }
     }
