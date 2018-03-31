@@ -455,14 +455,14 @@ AFRAME.registerComponent('camera-manager', {
     if (el.getAttribute('id') == 'camera') {
       if (checkHeadsetConnected()) {
         el.setAttribute('look-controls','');
-        el.setAttribute('position', '0 0.25 52');
+        el.setAttribute('position', '0 0.25 27');
         if (isMobile()) {
-          el.setAttribute('position', '0 1.6 50');
+          el.setAttribute('position', '0 1.6 25');
         }
       }
       else {
         el.setAttribute('my-look-controls', '');
-        el.setAttribute('position', '0 1.6 50');
+        el.setAttribute('position', '0 1.6 25');
       }
     }
     

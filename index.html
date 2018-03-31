@@ -205,12 +205,12 @@
                 animation__move="property: position; from: -28 -5000 -7000; to: -28 -25 -2825; easing: easeInQuad; dur: 1188.118; startEvents: beat"></a-entity>
 
       <!-- Main menu -->
-      <a-entity id="menu" position="0 1.5 49">
+      <a-entity id="menu" position="0 1.5 24">
         <a-entity id="begin" template="src: #begin-link" scale="1 1 1" position="0 0 -1" rotation="0 0 0"></a-entity>
       </a-entity>
 
       <!-- Camera and children -->
-      <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0 50" look-controls
+      <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0 25" look-controls
                 camera-manager="speed: 12; stop: -2800; id: main" rotation="20 0 0">
         <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
         <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>
