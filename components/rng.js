@@ -924,12 +924,6 @@ AFRAME.registerComponent('rng-building-shader', {
         this.el.children[size-1].getObject3D('mesh').material.uniforms['camdist']['value'] = dist;
       }
     }
-    /*if (!this.fog) {
-      var mat = this.el.children[1].getObject3D('mesh').material;
-      mat.fog = true;
-      this.el.children[1].getObject3D('mesh').material = mat;
-      this.fog = true;
-    }*/
   }
 });
 
