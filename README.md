@@ -2,18 +2,33 @@
 
 **What is this?**
 
-This is a music video style VR experience made with [A-Frame](https://aframe.io). 
-Currently it is not supported on mobile devices.
+This is a music video style VR experience made with [A-Frame](https://aframe.io).
 
 **Credits**
 - Music: *Side of the Road* by [@BigBlackDelta](https://twitter.com/bigblackdelta)
-- Programming, Direction, and Asset Design (except lamp from Google Poly) by Ethan Rabb
+- Literally everything else (except a lamp asset from Google Poly) by Ethan Rabb
 
 **Questions? Comments? Bugs? Job Offers? Cool Links? Angry Rants?**
 - Email:  *algoraphics@gmail.com*
 - Twitter:  [@algoraphics](https://twitter.com/algoraphics)
 
-**How to use** (Sorry for non-trivial instructions, it's a new platform)
+**Where can it run?**
+
+It should work on most laptops, desktop PCs, and VR headsets that work with those devices.
+Mobile is currently not supported.
+
+List of devices on which this is confirmed to work:
+- Vive running with Firefox 10 on Windows 10
+- Google Chrome on Windows 10
+- Google Chrome on Ubuntu
+- Google Chrome on OSX (Sierra)
+- Safari on OSX (Sierra)
+- Firefox 10 on Windows 10
+- Firefox 10 on Ubuntu
+
+Theoretically, it should work with Rift, Windows MR, etc, as long as you follow [A-Frame conventions for getting WebVR to run.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html)
+
+**How to use** *(Sorry for non-trivial instructions, it's a new platform)*
 
 *VR:*
 1. Have Firefox 10, or another browser which [supports A-Frame VR.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html)
@@ -50,18 +65,6 @@ Currently it is not supported on mobile devices.
     - If this does not work, close browser window, reboot SteamVR, and re-open window.
 - Performance:
   - Displaying the webpage on both your VR headset and desktop will hurt performance. Minimize the window on desktop or open another random tab instead.
-
-**Where can it run?**
-
-Theoretically, it should work on Rift, Windows MR, etc, as long as you follow [A-Frame conventions for getting WebVR to run.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html)
-
-List of devices on which this is confirmed to work:
-- Vive running with Firefox 10 on Windows 10
-- Google Chrome on Windows 10
-- Google Chrome on Ubuntu
-- Google Chrome on iOS
-- Safari on iOS
-- Firefox 10 on Windows 10
 
 **Future Work:**
 - Would like to add controller support, interactivity with elements
