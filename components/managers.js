@@ -456,13 +456,13 @@ AFRAME.registerComponent('camera-manager', {
       if (checkHeadsetConnected()) {
         el.setAttribute('look-controls','');
         el.setAttribute('position', '0 0.25 2');
-        document.querySelector('#click-instruction').setAttribute('visible', 'false');
         if (isMobile()) {
           el.setAttribute('position', '0 1.6 0');
         }
       }
       else {
         el.setAttribute('my-look-controls', '');
+        el.setAttribute('position', '0 1.6 0');
       }
     }
     
