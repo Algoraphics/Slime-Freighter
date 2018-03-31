@@ -455,14 +455,14 @@ AFRAME.registerComponent('camera-manager', {
     if (el.getAttribute('id') == 'camera') {
       if (checkHeadsetConnected()) {
         el.setAttribute('look-controls','');
-        el.setAttribute('position', '0 0.25 2');
+        el.setAttribute('position', '0 0.25 52');
         if (isMobile()) {
-          el.setAttribute('position', '0 1.6 0');
+          el.setAttribute('position', '0 1.6 50');
         }
       }
       else {
         el.setAttribute('my-look-controls', '');
-        el.setAttribute('position', '0 1.6 0');
+        el.setAttribute('position', '0 1.6 50');
       }
     }
     
@@ -649,7 +649,7 @@ AFRAME.registerComponent('audio-react', {
     var analyser = document.createElement('a-entity');
     
     this.analyserEl = analyser;
-    this.firstpos = this.el.getAttribute('position');
+    this.firstpos = this.el.getAttribute('position').y;
     if (!this.data.build) {
       this.build = 1;
     }
@@ -706,10 +706,11 @@ AFRAME.registerComponent('audio-react', {
       });
       if (data.stablebase) {
         var curpos = this.el.getAttribute('position');
+        var sety = this.firstpos + val/2;
         this.el.setAttribute('position', {
           x: curpos.x,
           // TODO: this may not work with moving objects, will always reset y position to initial
-          y: this.firstpos.y + val/2,
+          y: sety,
           z: curpos.z
         });
       }
