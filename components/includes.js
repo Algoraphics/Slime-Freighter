@@ -326,23 +326,20 @@ function PolyfillControls (object) {
   };
 };
 
-
 // To avoid recalculation at every mouse movement tick
 var GRABBING_CLASS = 'a-grabbing';
 var PI_2 = Math.PI / 2;
 var radToDeg = THREE.Math.radToDeg;
-
-//var checkHasPositionalTracking = utils.device.checkHasPositionalTracking;
 
 AFRAME.registerComponent('my-look-controls', {
   dependencies: ['position', 'rotation'],
 
   schema: {
     enabled: {default: true},
-    touchEnabled: {default: true},
     hmdEnabled: {default: true},
+    pointerLockEnabled: {default: true},
     reverseMouseDrag: {default: false},
-    userHeight: {default: 1.6}
+    touchEnabled: {default: true}
   },
 
   init: function () {
@@ -358,29 +355,18 @@ AFRAME.registerComponent('my-look-controls', {
     this.rotation = {};
     this.deltaRotation = {};
     this.savedPose = null;
+    this.pointerLocked = false;
     this.setupMouseControls();
     this.bindMethods();
 
-    // Call enter VR handler if the scene has entered VR before the event listeners attached.
-    if (this.el.sceneEl.is('vr-mode')) { 
-      this.onEnterVR();
-      document.querySelector('#click-instruction').setAttribute('visible', 'false');
-      this.clickInstruction = false;
-    }
-    else if (isMobile() || debug) {
-      document.querySelector('#click-instruction').setAttribute('visible', 'false');
-      this.clickInstruction = false;
-    }
-    else {
-      this.clickInstruction = true;
-    }
+    this.savedPose = {
+      position: new THREE.Vector3(),
+      rotation: new THREE.Euler()
+    };
   },
 
   update: function (oldData) {
     var data = this.data;
-
-    // Update height offset.
-    this.addHeightOffset(oldData.userHeight);
 
     // Disable grab cursor classes if no longer enabled.
     if (data.enabled !== oldData.enabled) {
@@ -392,12 +378,17 @@ AFRAME.registerComponent('my-look-controls', {
       this.pitchObject.rotation.set(0, 0, 0);
       this.yawObject.rotation.set(0, 0, 0);
     }
+
+    if (oldData && !data.pointerLockEnabled !== oldData.pointerLockEnabled) {
+      this.removeEventListeners();
+      this.addEventListeners();
+      if (this.pointerLocked) { document.exitPointerLock(); }
+    }
   },
 
   tick: function (t) {
     var data = this.data;
     if (!data.enabled) { return; }
-    this.updatePosition();
     this.updateOrientation();
   },
 
@@ -417,19 +408,20 @@ AFRAME.registerComponent('my-look-controls', {
     this.onMouseDown = bind(this.onMouseDown, this);
     this.onMouseMove = bind(this.onMouseMove, this);
     this.onMouseUp = bind(this.onMouseUp, this);
-    this.onKeyDown = bind(this.onKeyDown, this);
     this.onTouchStart = bind(this.onTouchStart, this);
     this.onTouchMove = bind(this.onTouchMove, this);
     this.onTouchEnd = bind(this.onTouchEnd, this);
     this.onEnterVR = bind(this.onEnterVR, this);
     this.onExitVR = bind(this.onExitVR, this);
+    this.onPointerLockChange = bind(this.onPointerLockChange, this);
+    this.onPointerLockError = bind(this.onPointerLockError, this);
   },
 
  /**
   * Set up states and Object3Ds needed to store rotation data.
   */
   setupMouseControls: function () {
-    this.mouseLocked = false;
+    this.mouseDown = false;
     this.pitchObject = new THREE.Object3D();
     this.yawObject = new THREE.Object3D();
     this.yawObject.position.y = 10;
@@ -453,9 +445,6 @@ AFRAME.registerComponent('my-look-controls', {
     canvasEl.addEventListener('mousedown', this.onMouseDown, false);
     window.addEventListener('mousemove', this.onMouseMove, false);
     window.addEventListener('mouseup', this.onMouseUp, false);
-    
-    // Key events.
-    window.addEventListener("keydown", this.onKeyDown, false);
 
     // Touch events.
     canvasEl.addEventListener('touchstart', this.onTouchStart);
@@ -465,6 +454,13 @@ AFRAME.registerComponent('my-look-controls', {
     // sceneEl events.
     sceneEl.addEventListener('enter-vr', this.onEnterVR);
     sceneEl.addEventListener('exit-vr', this.onExitVR);
+
+    // Pointer Lock events.
+    if (this.data.pointerLockEnabled) {
+      document.addEventListener('pointerlockchange', this.onPointerLockChange, false);
+      document.addEventListener('mozpointerlockchange', this.onPointerLockChange, false);
+      document.addEventListener('pointerlockerror', this.onPointerLockError, false);
+    }
   },
 
   /**
@@ -478,18 +474,22 @@ AFRAME.registerComponent('my-look-controls', {
 
     // Mouse events.
     canvasEl.removeEventListener('mousedown', this.onMouseDown);
-    canvasEl.removeEventListener('mousemove', this.onMouseMove);
-    canvasEl.removeEventListener('mouseup', this.onMouseUp);
-    canvasEl.removeEventListener('mouseout', this.onMouseUp);
+    window.removeEventListener('mousemove', this.onMouseMove);
+    window.removeEventListener('mouseup', this.onMouseUp);
 
     // Touch events.
     canvasEl.removeEventListener('touchstart', this.onTouchStart);
-    canvasEl.removeEventListener('touchmove', this.onTouchMove);
-    canvasEl.removeEventListener('touchend', this.onTouchEnd);
+    window.removeEventListener('touchmove', this.onTouchMove);
+    window.removeEventListener('touchend', this.onTouchEnd);
 
     // sceneEl events.
     sceneEl.removeEventListener('enter-vr', this.onEnterVR);
     sceneEl.removeEventListener('exit-vr', this.onExitVR);
+
+    // Pointer Lock events.
+    document.removeEventListener('pointerlockchange', this.onPointerLockChange, false);
+    document.removeEventListener('mozpointerlockchange', this.onPointerLockChange, false);
+    document.removeEventListener('pointerlockerror', this.onPointerLockError, false);
   },
 
   /**
@@ -497,11 +497,11 @@ AFRAME.registerComponent('my-look-controls', {
    * Mouse-drag only enabled if HMD is not active.
    */
   updateOrientation: function () {
+    var el = this.el;
     var hmdEuler = this.hmdEuler;
     var pitchObject = this.pitchObject;
     var yawObject = this.yawObject;
     var sceneEl = this.el.sceneEl;
-    var rotation = this.rotation;
 
     // In VR mode, THREE is in charge of updating the camera rotation.
     if (sceneEl.is('vr-mode') && sceneEl.checkHeadsetConnected()) { return; }
@@ -509,58 +509,11 @@ AFRAME.registerComponent('my-look-controls', {
     // Calculate polyfilled HMD quaternion.
     this.polyfillControls.update();
     hmdEuler.setFromQuaternion(this.polyfillObject.quaternion, 'YXZ');
+
     // On mobile, do camera rotation with touch events and sensors.
-    rotation.x = radToDeg(hmdEuler.x) + radToDeg(pitchObject.rotation.x);
-    rotation.y = radToDeg(hmdEuler.y) + radToDeg(yawObject.rotation.y);
-    rotation.z = 0;
-
-    this.el.setAttribute('rotation', rotation);
-  },
-
-  /**
-   * Handle positional tracking.
-   */
-  updatePosition: function () {
-    var el = this.el;
-    var currentHMDPosition;
-    var currentPosition;
-    var position = this.position;
-    var previousHMDPosition = this.previousHMDPosition;
-    var sceneEl = this.el.sceneEl;
-
-    if (!sceneEl.is('vr-mode') || !sceneEl.checkHeadsetConnected()) { return; }
-
-    // Calculate change in position.
-    currentHMDPosition = this.calculateHMDPosition();
-    currentPosition = el.getAttribute('position');
-
-    position.copy(currentPosition).sub(previousHMDPosition).add(currentHMDPosition);
-    el.setAttribute('position', position);
-    previousHMDPosition.copy(currentHMDPosition);
-  },
-
-  calculateHMDPosition: (function () {
-    var position = new THREE.Vector3();
-    return function () {
-      var object3D = this.el.object3D;
-      object3D.updateMatrix();
-      position.setFromMatrixPosition(object3D.matrix);
-      return position;
-    };
-  })(),
-
-  /**
-   * Calculate delta rotation for mouse-drag and touch-drag.
-   */
-  calculateDeltaRotation: function () {
-    var currentRotationX = radToDeg(this.pitchObject.rotation.x);
-    var currentRotationY = radToDeg(this.yawObject.rotation.y);
-    this.deltaRotation.x = currentRotationX - (this.previousRotationX || 0);
-    this.deltaRotation.y = currentRotationY - (this.previousRotationY || 0);
-    // Store current rotation for next tick.
-    this.previousRotationX = currentRotationX;
-    this.previousRotationY = currentRotationY;
-    return this.deltaRotation;
+    el.object3D.rotation.x = hmdEuler.x + pitchObject.rotation.x;
+    el.object3D.rotation.y = hmdEuler.y + yawObject.rotation.y;
+    el.object3D.rotation.z = 0;
   },
 
   /**
@@ -570,27 +523,30 @@ AFRAME.registerComponent('my-look-controls', {
    * Dragging left and right rotates the camera around the Y-axis (pitch).
    */
   onMouseMove: function (event) {
-    var pitchObject = this.pitchObject;
-    var yawObject = this.yawObject;
-    var previousMouseEvent = this.previousMouseEvent;
+    var direction;
     var movementX;
     var movementY;
+    var pitchObject = this.pitchObject;
+    var previousMouseEvent = this.previousMouseEvent;
+    var yawObject = this.yawObject;
 
     // Not dragging or not enabled.
-    if (!this.mouseLocked || !this.data.enabled) { return; }
+    if (!this.data.enabled || (!this.mouseDown && !this.pointerLocked)) { return; }
 
-     // Calculate delta.
-    movementX = event.movementX || event.mozMovementX;
-    movementY = event.movementY || event.mozMovementY;
-    if (movementX === undefined || movementY === undefined) {
+    // Calculate delta.
+    if (this.pointerLocked) {
+      movementX = event.movementX || event.mozMovementX || 0;
+      movementY = event.movementY || event.mozMovementY || 0;
+    } else {
       movementX = event.screenX - previousMouseEvent.screenX;
       movementY = event.screenY - previousMouseEvent.screenY;
     }
     this.previousMouseEvent = event;
 
     // Calculate rotation.
-    yawObject.rotation.y -= movementX * 0.005;
-    pitchObject.rotation.x -= movementY * 0.005;
+    direction = this.data.reverseMouseDrag ? 1 : -1;
+    yawObject.rotation.y += movementX * 0.003 * direction;
+    pitchObject.rotation.x += movementY * 0.003 * direction;
     pitchObject.rotation.x = Math.max(-PI_2, Math.min(PI_2, pitchObject.rotation.x));
   },
 
@@ -601,38 +557,29 @@ AFRAME.registerComponent('my-look-controls', {
     if (!this.data.enabled) { return; }
     // Handle only primary button.
     if (evt.button !== 0) { return; }
-    // Lock mouse if unlocked and click is in lock area
-    if (!this.mouseLocked) { // Needs to be able to read screen width: && event.screenX > 350 && event.screenX < 700 && event.screenY > 520 && event.screenY < 620) {
-      this.mouseLocked = true;
-      this.el.sceneEl.canvas.style.cursor = 'none';
-      if (this.clickInstruction) {
-        document.querySelector('#click-instruction').setAttribute('animation__opacity', "property: text.opacity; from: 1; to: 0; dur: 1000");
-        document.querySelector('#click-instruction').setAttribute('animation__scale', "property: scale; from: 1.5 1.5 1.5; to: 0.01 0.01 0.01; delay: 1000; dur: 1");
-      }
-    }
+
+    var sceneEl = this.el.sceneEl;
+    var canvasEl = sceneEl && sceneEl.canvas;
+
+    this.mouseDown = true;
     this.previousMouseEvent = evt;
     document.body.classList.add(GRABBING_CLASS);
+
+    if (this.data.pointerLockEnabled && !this.pointerLocked) {
+      if (canvasEl.requestPointerLock) {
+        canvasEl.requestPointerLock();
+      } else if (canvasEl.mozRequestPointerLock) {
+        canvasEl.mozRequestPointerLock();
+      }
+    }
   },
 
   /**
    * Register mouse up to detect release of mouse drag.
    */
   onMouseUp: function () {
+    this.mouseDown = false;
     document.body.classList.remove(GRABBING_CLASS);
-  },
-  
-  /**
-   * Register key press to escape mouse lock
-   */
-  onKeyDown: function (evt) {
-    if(evt.keyCode === 27) { // Escape key code
-      this.mouseLocked = false;
-      this.el.sceneEl.canvas.style.cursor = 'crosshair';
-      if (this.clickInstruction) {
-        document.querySelector('#click-instruction').setAttribute('animation__scale', "property: scale; from: 0.01 0.01 0.01; to: 1.5 1.5 1.5; dur: 1");
-        document.querySelector('#click-instruction').setAttribute('animation__opacity', "property: text.opacity; from: 0; to: 1; dur: 1000");
-      }
-    }
   },
 
   /**
@@ -646,10 +593,7 @@ AFRAME.registerComponent('my-look-controls', {
     };
     this.touchStarted = true;
   },
-
-  /**
-   * Translate touch move to Y-axis rotation.
-   */
+  
   onTouchMove: function (evt) {
     var canvas = this.el.sceneEl.canvas;
     var deltaX;
@@ -676,8 +620,6 @@ AFRAME.registerComponent('my-look-controls', {
    */
   onTouchEnd: function () {
     this.touchStarted = false;
-    // Tell all the links we got a touch
-    emitToClass(this.el, 'link', 'touchend');
   },
 
   /**
@@ -685,7 +627,6 @@ AFRAME.registerComponent('my-look-controls', {
    */
   onEnterVR: function () {
     this.saveCameraPose();
-    this.removeHeightOffset();
   },
 
   /**
@@ -697,13 +638,27 @@ AFRAME.registerComponent('my-look-controls', {
   },
 
   /**
+   * Update Pointer Lock state.
+   */
+  onPointerLockChange: function () {
+    this.pointerLocked = !!(document.pointerLockElement || document.mozPointerLockElement);
+  },
+
+  /**
+   * Recover from Pointer Lock error.
+   */
+  onPointerLockError: function () {
+    this.pointerLocked = false;
+  },
+
+  /**
    * Toggle the feature of showing/hiding the grab cursor.
    */
   updateGrabCursor: function (enabled) {
     var sceneEl = this.el.sceneEl;
 
-    function enableGrabCursor () { sceneEl.canvas.style.cursor = 'crosshair' }
-    function disableGrabCursor () { sceneEl.canvas.style.cursor = 'crosshair' }
+    function enableGrabCursor () { sceneEl.canvas.style.cursor = 'crosshair'; }
+    function disableGrabCursor () { sceneEl.canvas.style.cursor = 'crosshair'; }
 
     if (!sceneEl.canvas) {
       if (enabled) {
@@ -722,65 +677,19 @@ AFRAME.registerComponent('my-look-controls', {
   },
 
   /**
-   * Offsets the position of the camera to set a human scale perspective
-   * This offset is not necessary when using a headset because the SDK
-   * will return the real user's head height and position.
-   */
-  addHeightOffset: function (oldOffset) {
-    var el = this.el;
-    var currentPosition;
-    var userHeightOffset = this.data.userHeight;
-
-    oldOffset = oldOffset || 0;
-    currentPosition = el.getAttribute('position') || {x: 0, y: 0, z: 0};
-    el.setAttribute('position', {
-      x: currentPosition.x,
-      y: currentPosition.y - oldOffset + userHeightOffset,
-      z: currentPosition.z
-    });
-  },
-
-  /**
-   * Remove the height offset (called when entering VR) since WebVR API gives absolute
-   * position.
-   */
-  removeHeightOffset: function () {
-    var currentPosition;
-    var el = this.el;
-    var hasPositionalTracking;
-    var userHeightOffset = this.data.userHeight;
-
-    // Remove the offset if there is positional tracking when entering VR.
-    // Necessary for fullscreen mode with no headset.
-    // Checking this.hasPositionalTracking to make the value injectable for unit tests.
-    hasPositionalTracking = this.hasPositionalTracking !== undefined
-      ? this.hasPositionalTracking
-      : checkHasPositionalTracking();
-
-    if (!userHeightOffset || !hasPositionalTracking) { return; }
-
-    currentPosition = el.getAttribute('position') || {x: 0, y: 0, z: 0};
-    el.setAttribute('position', {
-      x: currentPosition.x,
-      y: currentPosition.y - userHeightOffset,
-      z: currentPosition.z
-    });
-  },
-
-  /**
    * Save camera pose before entering VR to restore later if exiting.
    */
   saveCameraPose: function () {
     var el = this.el;
-    var position = el.getAttribute('position');
-    var rotation = el.getAttribute('rotation');
-    var hasPositionalTracking = this.hasPositionalTracking !== undefined ? this.hasPositionalTracking : checkHasPositionalTracking();
+    var hasPositionalTracking = this.hasPositionalTracking !== undefined
+      ? this.hasPositionalTracking
+      : checkHasPositionalTracking();
 
-    if (this.savedPose || !hasPositionalTracking) { return; }
-    this.savedPose = {
-      position: this.savedPosition.copy(position),
-      rotation: this.savedRotation.copy(rotation)
-    };
+    if (this.hasSavedPose || !hasPositionalTracking) { return; }
+
+    this.savedPose.position.copy(el.object3D.position);
+    this.savedPose.rotation.copy(el.object3D.rotation);
+    this.hasSavedPose = true;
   },
 
   /**
@@ -789,14 +698,16 @@ AFRAME.registerComponent('my-look-controls', {
   restoreCameraPose: function () {
     var el = this.el;
     var savedPose = this.savedPose;
-    var hasPositionalTracking = this.hasPositionalTracking !== undefined ? this.hasPositionalTracking : checkHasPositionalTracking();
+    var hasPositionalTracking = this.hasPositionalTracking !== undefined
+      ? this.hasPositionalTracking
+      : checkHasPositionalTracking();
 
-    if (!savedPose || !hasPositionalTracking) { return; }
+    if (!this.hasSavedPose || !hasPositionalTracking) { return; }
 
     // Reset camera orientation.
-    el.setAttribute('position', savedPose.position);
-    el.setAttribute('rotation', savedPose.rotation);
-    this.savedPose = null;
+    el.object3D.position.copy(savedPose.position);
+    el.object3D.rotation.copy(savedPose.rotation);
+    this.hasSavedPose = false;
   }
 });
 
