@@ -51,7 +51,6 @@ Theoretically, it should work with Rift, Windows MR, etc, as long as you follow 
   - Seems like not everything has loaded (sky is white, main menu is missing, etc.)
   - The "Click to use VR cursor" prompt showing up in VR
 - The screen is just...white.
-  - If you're on a tablet/mobile phone, this is probably a good thing. This takes a bit longer to load on mobile devices, so give it a minute.
   - If it still hasn't loaded, make sure your browser [supports A-Frame.](https://aframe.io/docs/0.7.0/introduction/vr-headsets-and-webvr-browsers.html#which-browsers-does-a-frame-support)
 - Are those cones on the side of the road supposed to be streetlights?
   - If the streetlights aren't loading, [clearing your browser cache](http://www.refreshyourcache.com/en/home/) might help.
@@ -60,9 +59,12 @@ Theoretically, it should work with Rift, Windows MR, etc, as long as you follow 
     - Find your browser and call end process on it. Restart SteamVR.
     - If unsuccessful, close browsers and restart Steam.
     - Open browsers only after SteamVR has started up again.
-  - Loading forever (from within VR, even if display shows up on desktop):
+  - Loading forever (from within VR, display may be working, glitched or frozen on desktop):
     - Refresh page and try again.
-    - If this does not work, close browser window, reboot SteamVR, and re-open window.
+    - If that doesn't help, restart your browser.
+    - If that didn't help either, close browser window, reboot SteamVR, then re-open browser.
+  - Position seems way off (You should be in the center of the road, which is matched to the actual ground)
+    - Exit browser, make sure your SteamVR home floor is correctly placed, then re-open browser.
 - Performance:
   - Displaying the webpage on both your VR headset and desktop will hurt performance. Minimize the window on desktop or open another random tab instead.
 

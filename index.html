@@ -4,7 +4,7 @@
     <title>Road.</title>
     <meta name="description" content="Road.">
     <!-- Included components -->
-    <script src="https://rawgit.com/aframevr/aframe/4d90df5/dist/aframe-master.min.js"></script>
+    <script src="https://aframe.io/releases/0.7.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-animation-component@4.1.1/dist/aframe-animation-component.min.js"></script>
     <script src="https://npmcdn.com/aframe-event-set-component@3.0.1"></script>
     <script src="https://npmcdn.com/aframe-template-component@3.1.1"></script>
@@ -210,7 +210,7 @@
       </a-entity>
 
       <!-- Camera and children -->
-      <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0 25" look-controls
+      <a-entity id="camera" camera="userHeight: 0.075; near: 0.25" position="0 0.1 25" look-controls
                 camera-manager="speed: 12; stop: -2800; id: main" rotation="20 0 0">
         <a-entity id="analyser" audioanalyser="src: #side; enableBeatDetection: false;" ></a-entity>
         <a-entity music-manager="startpos: -50; showbeats: true"></a-entity>

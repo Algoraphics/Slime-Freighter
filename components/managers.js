@@ -1,4 +1,4 @@
-/* global AFRAME, THREE, beat, bind, Uint8Array, isMobile, checkHeadsetConnected */
+/* global AFRAME, THREE, beat, bind, Uint8Array, isMobile, checkHeadsetConnected, checkHasPositionalTracking */
 
 var debug = false;
 
@@ -451,11 +451,10 @@ AFRAME.registerComponent('camera-manager', {
   init: function () {
     var el = this.el;
     
-    // Use regular look controls for VR. Custom look controls don't work. Codebase is inconsistent.
+    // Use regular look controls for VR. Custom look controls don't work.
     if (el.getAttribute('id') == 'camera') {
       if (checkHeadsetConnected()) {
-        el.setAttribute('look-controls','');
-        el.setAttribute('position', '0 0.25 27');
+        el.setAttribute('my-look-controls','');
         if (isMobile()) {
           el.setAttribute('position', '0 1.6 25');
         }
@@ -706,7 +705,7 @@ AFRAME.registerComponent('audio-react', {
       });
       if (data.stablebase) {
         var curpos = this.el.getAttribute('position');
-        var sety = this.firstpos + val/2;
+        var sety = this.firstpos + val/2 - 0.5;
         this.el.setAttribute('position', {
           x: curpos.x,
           // TODO: this may not work with moving objects, will always reset y position to initial
