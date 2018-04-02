@@ -337,7 +337,7 @@ function colorCity(builder, data) {
     height *= width * Math.floor(1 + Math.random() * 3);
 
     var rngbuilding = document.createElement('a-entity');
-    var randtrigger = 169 + Math.floor(Math.random() * 20); // 151 If we want colors earlier
+    var randtrigger = 169 + Math.floor(Math.random() * 30); // 151 If we want colors earlier
     rngbuilding.setAttribute('rng-building-shader', "width: " + width + "; height: " + height + "; triggerbeat: " + randtrigger + "; action: lights"
                                + "; color1: #FFFF00; usecolor: 1 0; grow_slide: 1 1; static: 1 0; axis: 1 1; colorstyle: 1 0 0 0");
 
@@ -383,26 +383,17 @@ function movingCity(builder, data) {
   if (builder.x == 0 && builder.z == 4) {
     robostart = 82;
     jumpstart = 62;
-    type = 'robot';//rng([type, 'robot'], '0 1');
+    type = 'robot';
   }
   else if (builder.x == 0 && builder.z == 7) {
     robostart = 66;
     jumpstart = 48;
-    type = 'robot';//rng([type, 'robot'], '0 1');
+    type = 'robot';
   }
   // Find out whether the space will have a building if it doesn't have a robot
   else {
-    //console.log("a is " + (builder.x == 0));
-    //console.log("b is " + (builder.x == (builder.xmax - 1)));
-    if (builder.x == 0 || (builder.x == (builder.xmax - 1))) { // Edges have less, they're far away
-      if (rng([true, false], '1 2')) { // True means no building
+    if (rng([true, false], '1 2')) { // True means no building
         return; 
-      }
-    }
-    else {
-      if (rng([true, false], '1 2')) { // True means no building
-        return; 
-      }
     }
     // If we made it to here, there's no robot and we need a building. Time to pick a type.
     var type = rng(['arcy', 'arcx', 'flower', 'sine', 'pulse', 'split', 'dance'], '2 1 1 2 2 1 3');
@@ -479,11 +470,11 @@ function movingCity(builder, data) {
   }
   else if (type == 'robot') {
     builder.x = builder.xmax - 1;
-    var reverse = rng([true, false], '1 1');
-    rngbuilding.setAttribute('rng-building-robot', "color1: #ffff00; reverse: " + reverse + typestr + "; start: " + robostart);
+    this.reverse = !this.reverse;
+    rngbuilding.setAttribute('rng-building-robot', "color1: #ffff00; reverse: " + this.reverse + typestr + "; start: " + robostart);
     xoffset = 187;
     yrotation = 180;
-    if (reverse) {
+    if (this.reverse) {
       xoffset = -101.5;
       yrotation = 0;
     }

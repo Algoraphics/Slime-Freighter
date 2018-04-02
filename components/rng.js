@@ -462,7 +462,8 @@ AFRAME.registerComponent('rng-building-pulse', {
                           + "; width: " + width + "; height: " + height + "; winwidth: 0.5; winheight: 0.65; fog: true";
     var center = document.createElement('a-entity');
     center.setAttribute('rng-building-shader', buildingAttrs);
-    center.setAttribute('scale', "0.99 0.99 0.99");
+    center.setAttribute('scale', "1.01 1.01 1.01");
+    center.setAttribute('position', '0 -0.1 0');
     this.el.appendChild(center);
     
     var front = document.createElement('a-entity');
@@ -883,6 +884,7 @@ AFRAME.registerComponent('rng-building-shader', {
           this.setAttribute("visible", true);
         });
       }
+      
       else if (data.action == 'lights') {
         this.el.addEventListener('beat', function () {
           var time = this.children[1].getObject3D('mesh').material.uniforms['timeMsec']['value'];
@@ -893,6 +895,11 @@ AFRAME.registerComponent('rng-building-shader', {
           color.y = nextcolor.g / 255;
           color.z = nextcolor.b / 255;
           this.children[1].getObject3D('mesh').material.uniforms['color2']['value'] = color;
+          /* Randomly slide in a direction (disabled due to motion sickness)
+          var slide = rng([0, 2, 4, 6, 8], '1 1 1 1 1');
+          this.children[1].getObject3D('mesh').material.uniforms['slide']['value'] = slide;
+          this.children[1].getObject3D('mesh').material.uniforms['colorslide']['value'] = slide;
+          this.children[1].getObject3D('mesh').material.uniforms['slidereverse']['value'] = rng([0, 1], '1 1');*/
         });
       }
       else if (data.action == 'portal') {
@@ -1271,11 +1278,12 @@ AFRAME.registerComponent('rng-building-snake', {
 AFRAME.registerComponent('rng-building-asteroid', {
   schema: {
     start: {default: 0},
+    height: {default: '4 1'},
   },
   init: function () {
     var rotations = ["0 0 0", "45 0 0", "0 0 45"];
     var scale = 1;
-    var height = rng([1, 2], '4 1');
+    var height = rng([1, 2], this.data.height);
     for (var i = 0; i < 3; i++) {
       var building = document.createElement('a-entity');
       building.setAttribute('rng-building-shader', "height: " + height + "; static: 1 0; colorstyle: 1 0 0 0; winheight: 0 0 1 0; winwidth: 0 1 0; color1: black; action: spaceship");
@@ -1313,10 +1321,11 @@ AFRAME.registerComponent('rng-asteroids', {
       var y = (Math.random() * 4000) - 2000;
       var z = (Math.random() * 4000) - 2000;
       var scale = 0;
+      var height = '4 1';
       
       var checkx = Math.abs(x); var checky = Math.abs(y); var checkz = Math.abs(z);
       // Special case put an asteroid right below camera
-      if (this.loadex == 0) {x = -6; y = 6; z = 0; scale = 1}
+      if (this.loadex == 0) {x = -10; y = 10; z = 0; scale = 1; height = '0 1'}
       // For the rest, make sure they aren't on a collision course with cam or nearby ships
       else {
         // Don't place an asteroid if it would collide with a ship
@@ -1335,7 +1344,7 @@ AFRAME.registerComponent('rng-asteroids', {
       var postr = x + " " + y + " " + z;
       var scalestr = scale + " " + scale + " " + scale;
       
-      building.setAttribute('rng-building-asteroid', 'start: ' + this.data.start);
+      building.setAttribute('rng-building-asteroid', 'start: ' + this.data.start + '; height: ' + height);
       building.setAttribute('position', postr);
       building.setAttribute('rotation', postr);
       building.setAttribute('allrotate', '');
