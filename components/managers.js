@@ -2,6 +2,17 @@
 
 var debug = false;
 
+function queryparams() {
+  // Parse query params
+  var url = window.location.search.substring(1);
+  var vars = url.split('&');
+  var paramap = {};
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split('=');
+    paramap[pair[0]] = pair[1];
+  }
+  return paramap;
+}
 /*
   Animate a menu item to grow around the camera. Assumes a mini menu is used
   to explain how to interact with the menu item.
@@ -41,10 +52,17 @@ function about(el) {
 // Road animation selected, begin loading
 function start(el) {
   document.querySelector("#movingWorld").emit('start');
-  // Tell all menu links to hide
-  //emitToClass(el, 'link', 'togglehide');
   // Display Load/Begin text
   var begin = document.querySelector('#begin');
+  
+  // Check query parameters. If disabled, hide menu and cursor and set button to disabled so it will be skipped
+  var paramap = queryparams();
+  if (paramap["autoplay"] == "true") {
+    begin.setAttribute('visible', false);
+    begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 -0.25; to: -0.375 -10 -0.5; dur: 1');
+    document.querySelector('#cursor').setAttribute("visible", false);
+    el.disabled = true;
+  }
   //begin.emit('togglehide');
   begin.setAttribute('animation__position', 'property: position; from: -0.25 -1 -0.25; to: -0.375 0.4 -0.5; dur: 500');
   begin.setAttribute('animation__scale', 'property: scale; from: 1 1 1; to: 5 5 5; dur: 500');
@@ -67,7 +85,9 @@ function start(el) {
 
 // Begin button hit, actually begin animation
 function begin(el) {
-  document.querySelector('#swoop').play();
+  if (!el.disabled) {
+    document.querySelector('#swoop').play();
+  }
   // Hide begin button
   //el.setAttribute('animation__position', 'property: position; from: 0 0 -2; to: 0 0 -8; dur: 1000; easing: linear');
   el.emit('togglehide');
@@ -175,7 +195,6 @@ AFRAME.registerComponent('menu-item', {
     // Click event is used by fuse
     this.el.addEventListener('click', function () {
       if (this.active) {
-        
         document.querySelector('#click').play();
         // Call action function, pass self in for access to variables
         this.action(this);
@@ -216,12 +235,18 @@ AFRAME.registerComponent('menu-item', {
       this.loaded = true;
       // Inactive item getting this message must be the begin button, which should now become active
       if (this.tag == 'begin') {
-        this.active = true;
-        this.setAttribute('text-geometry', "value: |Begin|; size: 0.03;");
-        // Move main button into position
-        var main = document.querySelector('#main');
-        if (main) {
-          main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
+        // If the menu button is disabled, just start right away
+        if (this.disabled) {
+          begin(this);
+        }
+        else {
+          this.active = true;
+          this.setAttribute('text-geometry', "value: |Begin|; size: 0.03;");
+          // Move main button into position
+          var main = document.querySelector('#main');
+          if (main) {
+            main.setAttribute('animation__position', 'property: position; from: 0 -10 0; to: 0.025 0.1 -0.3; dur: 1000');
+          }
         }
         // Hide info text
         var infotext = document.querySelector('#info-text');
@@ -475,7 +500,7 @@ AFRAME.registerComponent('camera-manager', {
     
     // Only the main camera manager should have freedom of movement in debug mode
     if (debug && this.data.id == 'main') {
-      this.el.setAttribute('wasd-controls', "acceleration: 1500; fly: true");
+      this.el.setAttribute('wasd-controls', "acceleration: 500; fly: false");
     }
   },
   tick: function (time, timeDelta) {
