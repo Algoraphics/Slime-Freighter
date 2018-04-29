@@ -14,7 +14,9 @@ This is a music video style VR experience made with [A-Frame](https://aframe.io)
 
 **Where can it run?**
 
-It should work on most laptops, desktop PCs, and VR headsets that work with those devices.
+It's currently featured on [Supermedium](https://supermedium.com/)!
+
+If you can't go see it there, it should also work on most laptops and desktop PCs, and VR headsets that work with those devices.
 Mobile is currently not supported.
 
 List of devices on which this is confirmed to work:
