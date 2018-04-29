@@ -1,6 +1,6 @@
 /* global AFRAME, THREE, beat, bind, Uint8Array, isMobile, checkHeadsetConnected, checkHasPositionalTracking */
 
-var debug = true;
+var debug = false;
 
 function queryparams() {
   // Parse query params
